@@ -3,21 +3,62 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
   <title>Convergence Signals</title>
 
-  <!-- PWA -->
+  <!-- PWA manifest kept, but everything else is self-contained -->
   <link rel="manifest" href="./manifest.webmanifest" />
   <meta name="theme-color" content="#0b0b0f" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    :root{
+      --bg:#0b0b0f; --card:#151522; --text:#fff; --muted:rgba(255,255,255,.7);
+      --border:rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+    .header{
+      padding:16px 16px 8px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      max-width:560px; margin:0 auto;
+    }
+    .h1{font-size:22px;font-weight:800}
+    .subtle{font-size:13px;color:var(--muted);margin-top:2px}
+    .pill{
+      border:1px solid var(--border); padding:8px 10px; border-radius:999px;
+      background:rgba(255,255,255,.03); font-size:13px; color:var(--text);
+    }
+    .container{max-width:560px;margin:0 auto;padding:8px 16px 92px}
+    .sectionTitle{
+      margin:18px 0 8px; font-size:12px; color:var(--muted);
+      letter-spacing:.04em; text-transform:uppercase;
+    }
+    .card{
+      border:1px solid var(--border); background:var(--card);
+      border-radius:14px; padding:12px; margin-bottom:10px;
+    }
+    .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .title{font-size:16px;font-weight:800}
+    .meta{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.35}
+    .badge{
+      font-size:11px;padding:5px 8px;border-radius:999px;border:1px solid var(--border);
+      background:rgba(255,255,255,.03); white-space:nowrap;
+    }
+    .tabs{
+      position:fixed; left:0; right:0; bottom:0;
+      background:rgba(21,21,34,.92); backdrop-filter:blur(12px);
+      border-top:1px solid var(--border);
+    }
+    .tabBar{
+      max-width:560px; margin:0 auto;
+      display:grid; grid-template-columns:repeat(4,1fr);
+    }
+    .tab{padding:12px 10px 18px;text-align:center;font-size:12px;color:var(--muted)}
+    .tabActive{color:var(--text)}
+  </style>
 </head>
 
 <body>
-
-  <!-- HEADER -->
   <header class="header">
     <div>
       <div class="h1">Today</div>
@@ -26,9 +67,7 @@
     <button class="pill" id="refreshBtn">Refresh</button>
   </header>
 
-  <!-- MAIN -->
   <main class="container">
-
     <div class="sectionTitle">Convergence 🔥</div>
     <div id="convergenceList"></div>
 
@@ -37,22 +76,72 @@
 
     <div class="sectionTitle">International fund signals</div>
     <div id="fundList"></div>
-
   </main>
 
-  <!-- NAV -->
   <nav class="tabs">
-    <div class="tab tabActive">Today</div>
-    <div class="tab">Signals</div>
-    <div class="tab">Search</div>
-    <div class="tab">Settings</div>
+    <div class="tabBar">
+      <div class="tab tabActive">Today</div>
+      <div class="tab">Signals</div>
+      <div class="tab">Search</div>
+      <div class="tab">Settings</div>
+    </div>
   </nav>
 
-  <!-- SCRIPT -->
-  <script src="./app.js"></script>
+  <script>
+    const DATA = {
+      date: "2026-01-29",
+      convergence: [
+        { id:"c1", ticker:"NVDA", companyName:"NVIDIA", demBuyers:2, repBuyers:1, funds:["Qatar Investment Authority","Norges Bank"], lastFiledAt:"2026-01-29", strength:"VERY HIGH" },
+        { id:"c2", ticker:"MSFT", companyName:"Microsoft", demBuyers:1, repBuyers:1, funds:["CPPIB"], lastFiledAt:"2026-01-29", strength:"HIGH" }
+      ],
+      bipartisanTickers: [
+        { id:"b1", ticker:"LLY", companyName:"Eli Lilly", demBuyers:1, repBuyers:1, funds:[], lastFiledAt:"2026-01-29", strength:"MED" }
+      ],
+      fundSignals: [
+        { id:"f1", ticker:"NVDA", companyName:"NVIDIA", signal:{ fundName:"Qatar Investment Authority", signalType:"13G_INCREASE", filedAt:"2026-01-29", ownershipChange:"5.2% → 6.1%" } },
+        { id:"f2", ticker:"AAPL", companyName:"Apple", signal:{ fundName:"Norges Bank", signalType:"13F_INCREASE", filedAt:"2026-01-29", ownershipChange:null } }
+      ]
+    };
 
-  <!-- SERVICE WORKER -->
-  
+    const el = (id) => document.getElementById(id);
 
+    function cardHTML(x){
+      const funds = x.funds && x.funds.length ? `Funds: ${x.funds.slice(0,2).join(", ")}${x.funds.length>2 ? " +" + (x.funds.length-2) : ""}` : "";
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="title">${x.ticker} · ${x.companyName}</div>
+            <div class="badge">${x.strength || ""}</div>
+          </div>
+          <div class="meta">D buyers: ${x.demBuyers} | R buyers: ${x.repBuyers}</div>
+          ${funds ? `<div class="meta">${funds}</div>` : ""}
+          ${x.lastFiledAt ? `<div class="meta">Last filed: ${x.lastFiledAt}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function fundRowHTML(r){
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="title">${r.ticker} · ${r.companyName}</div>
+            <div class="badge">${r.signal.signalType}</div>
+          </div>
+          <div class="meta">${r.signal.fundName} · Filed ${r.signal.filedAt}</div>
+          ${r.signal.ownershipChange ? `<div class="meta">${r.signal.ownershipChange}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function render(){
+      el("reportDate").textContent = DATA.date || "";
+      el("convergenceList").innerHTML = (DATA.convergence || []).map(cardHTML).join("");
+      el("bipartisanList").innerHTML = (DATA.bipartisanTickers || []).map(cardHTML).join("");
+      el("fundList").innerHTML = (DATA.fundSignals || []).map(fundRowHTML).join("");
+    }
+
+    el("refreshBtn").addEventListener("click", render);
+    render();
+  </script>
 </body>
 </html>
