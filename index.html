@@ -23,6 +23,10 @@
 
       --ok:#7cffc0;
       --err:#ff8a8a;
+
+      --pos:#7cffc0;
+      --neg:#ff8a8a;
+      --neutral:rgba(255,255,255,.70);
     }
 
     *{box-sizing:border-box}
@@ -31,7 +35,7 @@
       background:var(--bg);
       color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-      font-size:13px; /* smaller base font */
+      font-size:13px;
     }
     a{color:inherit;text-decoration:none}
 
@@ -41,7 +45,7 @@
       justify-content:space-between;
       align-items:center;
       gap:12px;
-      max-width:860px;
+      max-width:980px;
       margin:0 auto;
     }
     .h1{font-size:18px;font-weight:900;letter-spacing:.01em}
@@ -56,7 +60,7 @@
     }
 
     .container{
-      max-width:860px;
+      max-width:980px;
       margin:0 auto;
       padding:8px 14px 110px;
     }
@@ -66,7 +70,7 @@
       background:rgba(255,255,255,.03);
       border-radius:12px;
       padding:9px 10px;
-      margin:6px 0 12px;
+      margin:6px 0 10px;
       font-size:12px;
       color:var(--muted);
       line-height:1.25;
@@ -112,6 +116,75 @@
       .grid2{grid-template-columns:1fr 1fr;}
     }
 
+    .grid4{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    @media (min-width: 860px){
+      .grid4{grid-template-columns:repeat(4,1fr);}
+    }
+    @media (min-width: 760px) and (max-width: 859px){
+      .grid4{grid-template-columns:repeat(2,1fr);}
+    }
+
+    .kpi{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpiTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .kpiTitle{
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .kpiValue{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.02em;
+      margin-top:4px;
+    }
+    .kpiSub{
+      font-size:12px;
+      color:rgba(255,255,255,.82);
+      line-height:1.25;
+    }
+    .kpiList{
+      margin-top:8px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .kpiRow{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      font-size:12px;
+      color:rgba(255,255,255,.90);
+    }
+    .kpiRow .muted{color:var(--muted)}
+    .kpiBadge{
+      font-size:10px;
+      padding:4px 7px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+      color:rgba(255,255,255,.90);
+    }
+    .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
+    .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
+    .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
+
     .card{
       background:var(--card);
       border:1px solid var(--border);
@@ -141,7 +214,7 @@
     .who{
       font-size:12px;
       color:var(--muted);
-      max-width:520px;
+      max-width:560px;
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
@@ -241,7 +314,7 @@
     }
     iframe{
       width:100%;
-      height:380px;
+      height:360px;
       border:0;
       border-radius:12px;
       background:#000;
@@ -275,7 +348,7 @@
       backdrop-filter:blur(12px);
     }
     .tabBarBottom{
-      max-width:860px;
+      max-width:980px;
       margin:0 auto;
       display:grid;
       grid-template-columns:repeat(4,1fr);
@@ -313,27 +386,34 @@
 
     <div id="stockPanel" style="display:none;"></div>
 
+    <!-- KPI STRIP -->
+    <section id="kpiStrip">
+      <div class="sectionTitle">Signal dashboard (top 4)</div>
+      <div class="grid4">
+        <div class="kpi" id="kpiAccum"></div>
+        <div class="kpi" id="kpiSell"></div>
+        <div class="kpi" id="kpiWeekly"></div>
+        <div class="kpi" id="kpiHighlights"></div>
+      </div>
+    </section>
+
     <!-- MAIN VIEW -->
     <section id="viewMain">
-      <div class="sectionTitle">Convergence 🔥 (D + GOP overlap on BUY)</div>
+      <div class="sectionTitle">Convergence 🔥 (bipartisan overlap on BUY)</div>
       <div id="convergenceList"></div>
 
-      <div class="sectionTitle">Politicians (sorted by ticker)</div>
+      <div class="sectionTitle">Politicians ranked by participation</div>
       <div class="colsHeader">
-        <div>Buys</div>
-        <div>Sells</div>
+        <div>Buys (left)</div>
+        <div>Sells (right)</div>
       </div>
 
       <div class="grid2">
-        <div>
-          <div id="buyList"></div>
-        </div>
-        <div>
-          <div id="sellList"></div>
-        </div>
+        <div><div id="buyList"></div></div>
+        <div><div id="sellList"></div></div>
       </div>
 
-      <div class="hint">Tip: Tap a ticker to open chart + RSI/MA context.</div>
+      <div class="hint">Sort is by total congressional participation (both parties). Tap ticker for chart.</div>
     </section>
 
     <!-- FUNDS VIEW -->
@@ -384,10 +464,48 @@
 
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
 
-    function byTicker(a, b){
-      const ta = String(a.ticker || "").toUpperCase();
-      const tb = String(b.ticker || "").toUpperCase();
-      return ta.localeCompare(tb, undefined, { sensitivity:"base" });
+    function congressScore(x){
+      return (
+        Number(x.demBuyers || 0) +
+        Number(x.repBuyers || 0) +
+        Number(x.demSellers || 0) +
+        Number(x.repSellers || 0)
+      );
+    }
+
+    function bipartisanScore(x){
+      const dem = Number(x.demBuyers || 0) + Number(x.demSellers || 0);
+      const rep = Number(x.repBuyers || 0) + Number(x.repSellers || 0);
+      return Math.min(dem, rep);
+    }
+
+    function sortByCongressStrength(a, b){
+      const totalA = congressScore(a);
+      const totalB = congressScore(b);
+      if (totalA !== totalB) return totalB - totalA;
+      const biA = bipartisanScore(a);
+      const biB = bipartisanScore(b);
+      if (biA !== biB) return biB - biA;
+      return String(a.ticker || "").localeCompare(String(b.ticker || ""), undefined, {sensitivity:"base"});
+    }
+
+    function netFlow(x){
+      const buys = Number(x.demBuyers || 0) + Number(x.repBuyers || 0);
+      const sells = Number(x.demSellers || 0) + Number(x.repSellers || 0);
+      return buys - sells;
+    }
+
+    function confidenceLabel(x){
+      const t = congressScore(x);
+      if (t >= 6) return "STRONG";
+      if (t >= 3) return "MOD";
+      return "WEAK";
+    }
+
+    function confidenceBadgeClass(lbl){
+      if (lbl === "STRONG") return "badgePos";
+      if (lbl === "MOD") return "badgeNeu";
+      return "badgeNeu";
     }
 
     function tagsHTML(x, mode){
@@ -426,11 +544,13 @@
 
     function cardHTML(x, mode){
       const ticker = String(x.ticker || "").toUpperCase();
-      const who = String(x.companyName || "").trim(); // backend uses politician name here
+      const who = String(x.companyName || "").trim();
       const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
 
       const dem = mode === "BUY" ? Number(x.demBuyers || 0) : Number(x.demSellers || 0);
       const rep = mode === "BUY" ? Number(x.repBuyers || 0) : Number(x.repSellers || 0);
+
+      const conf = confidenceLabel(x);
 
       return `
         <div class="card">
@@ -441,7 +561,10 @@
                 ${who ? `<div class="who">${who}</div>` : ""}
               </div>
             </div>
-            ${tagsHTML(x, mode)}
+            <div class="tags">
+              ${mode === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
+              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -450,6 +573,7 @@
             <div class="counts">
               <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
               <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
+              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
             </div>
             <div>${filed ? `Filed: ${filed}` : ""}</div>
           </div>
@@ -464,6 +588,7 @@
       const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
       const dem = Number(x.demBuyers || 0);
       const rep = Number(x.repBuyers || 0);
+      const conf = confidenceLabel(x);
 
       return `
         <div class="card">
@@ -471,7 +596,7 @@
             <div>
               <div class="tickerLine">
                 <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                <div class="who">Overlap BUY</div>
+                <div class="who">Bipartisan overlap (BUY)</div>
               </div>
             </div>
             <div class="tags">
@@ -479,6 +604,7 @@
               <span class="tag tagRep">GOP</span>
               <span class="tag tagBoth">OVERLAP</span>
               <span class="tag tagBuy">BUY</span>
+              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
             </div>
           </div>
 
@@ -488,6 +614,7 @@
             <div class="counts">
               <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
               <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
+              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
             </div>
             <div>${filed ? `Filed: ${filed}` : ""}</div>
           </div>
@@ -592,13 +719,152 @@
       setStockPanel("");
     }
 
+    // --- KPI BUILDERS (Top 4) ---
+    function topBy(arr, scoreFn, n){
+      const a = normalizeList(arr).slice();
+      a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
+      return a.slice(0, n);
+    }
+
+    function renderKpiBoxes(convergence, buys, sells){
+      // 1) Net flow score per ticker
+      // Merge buy+sell cards by ticker for net flow
+      const merged = new Map();
+      function addCard(x){
+        const t = String(x.ticker || "").toUpperCase();
+        if (!t) return;
+        const cur = merged.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
+        cur.demBuyers += Number(x.demBuyers||0);
+        cur.repBuyers += Number(x.repBuyers||0);
+        cur.demSellers += Number(x.demSellers||0);
+        cur.repSellers += Number(x.repSellers||0);
+        merged.set(t, cur);
+      }
+      buys.forEach(addCard);
+      sells.forEach(addCard);
+
+      const mergedArr = Array.from(merged.values());
+      const topNet = topBy(mergedArr, (x) => netFlow(x), 5);
+
+      const topNetHtml = topNet.map(x => {
+        const nf = netFlow(x);
+        const badge = nf > 0 ? "badgePos" : nf < 0 ? "badgeNeg" : "badgeNeu";
+        const sign = nf > 0 ? "+" : "";
+        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${badge}">${sign}${nf}</span></div>`;
+      }).join("");
+
+      el("kpiAccum").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Net flow</div>
+            <div class="kpiValue">Buys − Sells</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Today</span>
+        </div>
+        <div class="kpiSub">Highest accumulation (positive) or distribution (negative).</div>
+        <div class="kpiList">${topNetHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
+      `;
+
+      // 2) Confidence badge: strongest participation tickers overall
+      const topConf = topBy(mergedArr, (x) => congressScore(x), 5);
+      const topConfHtml = topConf.map(x => {
+        const total = congressScore(x);
+        const lbl = confidenceLabel(x);
+        const cls = confidenceBadgeClass(lbl);
+        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${cls}">${lbl} · ${total}</span></div>`;
+      }).join("");
+
+      el("kpiSell").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Confidence</div>
+            <div class="kpiValue">Participation</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Count</span>
+        </div>
+        <div class="kpiSub">Total congress participation (both parties).</div>
+        <div class="kpiList">${topConfHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
+      `;
+
+      // 3) Weekly aggregation (front-end approximation): show “7-day view” based on latest filing date strings
+      // Without backend windows, we provide a quick toggle-like summary: today lists vs “all recent”.
+      // This box shows the tickers with most items in the current pull as a proxy for recent-week activity.
+      const topWeekly = topBy(mergedArr, (x) => congressScore(x), 5);
+      const topWeeklyHtml = topWeekly.map(x => {
+        const total = congressScore(x);
+        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge badgeNeu">${total} items</span></div>`;
+      }).join("");
+
+      el("kpiWeekly").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Weekly</div>
+            <div class="kpiValue">Rolling view</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Proxy</span>
+        </div>
+        <div class="kpiSub">Proxy for last-7-day intensity using recent filings.</div>
+        <div class="kpiList">${topWeeklyHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
+      `;
+
+      // 4) Auto-highlight: Top Accumulation + Heavy Selling + Top Convergence
+      const topAcc = topBy(mergedArr, (x) => netFlow(x), 1)[0];
+      const topDist = topBy(mergedArr, (x) => -netFlow(x), 1)[0];
+
+      const topConv = (convergence && convergence.length) ? convergence[0] : null;
+
+      const accLine = topAcc
+        ? `<div class="kpiRow"><span class="muted">🔥 Accumulation</span><a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a></div>`
+        : `<div class="kpiRow"><span class="muted">🔥 Accumulation</span><span class="muted">None</span></div>`;
+
+      const distLine = topDist
+        ? `<div class="kpiRow"><span class="muted">⚠️ Selling</span><a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a></div>`
+        : `<div class="kpiRow"><span class="muted">⚠️ Selling</span><span class="muted">None</span></div>`;
+
+      const convLine = topConv
+        ? `<div class="kpiRow"><span class="muted">🤝 Convergence</span><a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a></div>`
+        : `<div class="kpiRow"><span class="muted">🤝 Convergence</span><span class="muted">None</span></div>`;
+
+      el("kpiHighlights").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Highlights</div>
+            <div class="kpiValue">Top signals</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Auto</span>
+        </div>
+        <div class="kpiSub">Fast read: strongest accumulation, selling, and overlap.</div>
+        <div class="kpiList">
+          ${accLine}
+          ${distLine}
+          ${convLine}
+        </div>
+      `;
+    }
+
+    function showTab(tab){
+      el("viewMain").style.display = tab === "Main" ? "" : "none";
+      el("viewFunds").style.display = tab === "Funds" ? "" : "none";
+      el("viewSearch").style.display = tab === "Search" ? "" : "none";
+
+      el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
+      el("tabFundsBtn").classList.toggle("tabBtnActive", tab === "Funds");
+      el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
+
+      el("navMain").classList.toggle("tabBottomActive", tab === "Main");
+      el("navFunds").classList.toggle("tabBottomActive", tab === "Funds");
+      el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
+    }
+
     function render(data){
       el("reportDate").textContent = data.date || "";
 
-      const convergence = normalizeList(data.convergence).sort(byTicker);
-      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(byTicker);
-      const sells = normalizeList(data.politicianSells).sort(byTicker);
+      const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
+      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
+      const sells = normalizeList(data.politicianSells).sort(sortByCongressStrength);
       const funds = normalizeList(data.fundSignals).sort((a,b) => String(a.ticker||"").localeCompare(String(b.ticker||""), undefined, {sensitivity:"base"}));
+
+      renderKpiBoxes(convergence, buys, sells);
 
       el("convergenceList").innerHTML =
         convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers today.</div>";
@@ -657,6 +923,7 @@
       handleHash();
     });
 
+    // Chart panel
     el("refreshBtn").addEventListener("click", load);
     window.addEventListener("hashchange", handleHash);
 
