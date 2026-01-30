@@ -239,6 +239,8 @@
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
+    .tagFund{border-color:rgba(179,139,255,.35); color:rgba(255,255,255,.88)}
+    .tagSov{border-color:rgba(124,255,192,.25); color:rgba(255,255,255,.88)}
 
     .metaRow{
       margin-top:7px;
@@ -360,6 +362,44 @@
       color:var(--muted);
     }
     .tabBottomActive{color:#fff}
+
+    .rowControls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin:8px 0 10px;
+    }
+    .input{
+      flex:1;
+      min-width:180px;
+      padding:9px 10px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      font-size:12px;
+      outline:none;
+    }
+    .seg{
+      display:flex;
+      gap:0;
+      border:1px solid var(--border);
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(255,255,255,.03);
+    }
+    .seg button{
+      border:0;
+      background:transparent;
+      color:var(--muted);
+      font-size:12px;
+      padding:7px 10px;
+    }
+    .seg button.active{
+      color:#fff;
+      background:rgba(255,255,255,.08);
+    }
   </style>
 </head>
 
@@ -391,7 +431,7 @@
       <div class="sectionTitle">Signal dashboard (top 4)</div>
       <div class="grid4">
         <div class="kpi" id="kpiAccum"></div>
-        <div class="kpi" id="kpiSell"></div>
+        <div class="kpi" id="kpiConf"></div>
         <div class="kpi" id="kpiWeekly"></div>
         <div class="kpi" id="kpiHighlights"></div>
       </div>
@@ -419,8 +459,22 @@
     <!-- FUNDS VIEW -->
     <section id="viewFunds" style="display:none;">
       <div class="sectionTitle">Sovereign & international fund signals</div>
+
+      <div class="rowControls">
+        <input id="fundSearch" class="input" placeholder="Search fund or ticker (example: QIA or NVDA)" />
+        <div class="seg" role="tablist" aria-label="Funds filter">
+          <button id="segAll" class="active" type="button">All</button>
+          <button id="segSov" type="button">Sovereign</button>
+        </div>
+        <div class="seg" role="tablist" aria-label="Funds view">
+          <button id="segByFund" class="active" type="button">By fund</button>
+          <button id="segByTicker" type="button">By ticker</button>
+        </div>
+      </div>
+
+      <div id="fundBreadcrumb" class="hint" style="margin-top:0;"></div>
       <div id="fundList"></div>
-      <div class="hint">This tab fills when your backend returns fundSignals.</div>
+      <div class="hint">If empty, your backend is not returning fundSignals yet.</div>
     </section>
 
     <!-- SEARCH VIEW -->
@@ -431,8 +485,7 @@
           <div style="color:rgba(255,255,255,.9)">Type a ticker (example: NVDA)</div>
         </div>
         <div style="display:flex; gap:10px; margin-top:10px;">
-          <input id="searchInput" placeholder="Ticker" autocapitalize="characters"
-                 style="flex:1; padding:10px 10px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:13px;" />
+          <input id="searchInput" class="input" placeholder="Ticker" autocapitalize="characters" />
           <button class="pillBtn" id="searchBtn">Go</button>
         </div>
         <div class="hint" style="margin-top:10px;">Opens the chart panel for quick trend context.</div>
@@ -451,8 +504,33 @@
 
   <script>
     const BACKEND_URL = "https://finance-backend-dzta.onrender.com/report/today";
-
     const el = (id) => document.getElementById(id);
+
+    // Sovereign wealth fund keyword matchers (simple + practical)
+    const SOV_KEYWORDS = [
+      "qatar investment authority","qia",
+      "norges bank","norway",
+      "gic","government of singapore investment",
+      "temasek",
+      "abu dhabi investment authority","adia",
+      "mubadala",
+      "kuwait investment authority","kia",
+      "public investment fund","pif","saudi",
+      "china investment corporation","cic",
+      "korea investment corporation",
+      "hong kong monetary authority",
+      "future fund","australia future fund",
+      "qic","qatar",
+      "national investment and infrastructure fund","niif"
+    ].map(s => s.toLowerCase());
+
+    let APP_DATA = null;
+
+    // Funds tab state
+    let fundsMode = "all";      // "all" or "sov"
+    let fundsView = "fund";     // "fund" or "ticker"
+    let selectedFund = "";      // drilldown
+    let fundSearch = "";
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -508,27 +586,6 @@
       return "badgeNeu";
     }
 
-    function tagsHTML(x, mode){
-      const demB = Number(x.demBuyers || 0);
-      const repB = Number(x.repBuyers || 0);
-      const demS = Number(x.demSellers || 0);
-      const repS = Number(x.repSellers || 0);
-
-      const hasDem = mode === "BUY" ? demB > 0 : demS > 0;
-      const hasRep = mode === "BUY" ? repB > 0 : repS > 0;
-
-      const partyTags = [];
-      if (hasDem) partyTags.push(`<span class="tag tagDem">DEM</span>`);
-      if (hasRep) partyTags.push(`<span class="tag tagRep">GOP</span>`);
-      if (hasDem && hasRep) partyTags.push(`<span class="tag tagBoth">BOTH</span>`);
-
-      const txTag = mode === "BUY"
-        ? `<span class="tag tagBuy">BUY</span>`
-        : `<span class="tag tagSell">SELL</span>`;
-
-      return `<div class="tags">${partyTags.join("")}${txTag}</div>`;
-    }
-
     function tickerLinksHTML(ticker){
       const t = String(ticker || "").toUpperCase();
       const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
@@ -549,7 +606,6 @@
 
       const dem = mode === "BUY" ? Number(x.demBuyers || 0) : Number(x.demSellers || 0);
       const rep = mode === "BUY" ? Number(x.repBuyers || 0) : Number(x.repSellers || 0);
-
       const conf = confidenceLabel(x);
 
       return `
@@ -624,53 +680,7 @@
       `;
     }
 
-    function fundRowHTML(r){
-      const ticker = String(r.ticker || "").toUpperCase();
-      const sig = r.signal || {};
-      const fund = String(sig.fundName || "");
-      const typ = String(sig.signalType || "");
-      const filed = String(sig.filedAt || "");
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                ${fund ? `<div class="who">${fund}</div>` : ""}
-              </div>
-            </div>
-            <div class="tags">
-              ${typ ? `<span class="tag">${typ}</span>` : ""}
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="metaRow">
-            <div>${filed ? `Filed: ${filed}` : ""}</div>
-            <div>${sig.ownershipChange ? String(sig.ownershipChange) : ""}</div>
-          </div>
-
-          ${tickerLinksHTML(ticker)}
-        </div>
-      `;
-    }
-
-    function showTab(tab){
-      el("viewMain").style.display = tab === "Main" ? "" : "none";
-      el("viewFunds").style.display = tab === "Funds" ? "" : "none";
-      el("viewSearch").style.display = tab === "Search" ? "" : "none";
-
-      el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
-      el("tabFundsBtn").classList.toggle("tabBtnActive", tab === "Funds");
-      el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
-
-      el("navMain").classList.toggle("tabBottomActive", tab === "Main");
-      el("navFunds").classList.toggle("tabBottomActive", tab === "Funds");
-      el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
-    }
-
+    // ---------- Chart panel ----------
     function setStockPanel(ticker){
       const t = String(ticker || "").toUpperCase();
       if (!t){
@@ -719,16 +729,15 @@
       setStockPanel("");
     }
 
-    // --- KPI BUILDERS (Top 4) ---
+    // ---------- KPI section ----------
     function topBy(arr, scoreFn, n){
       const a = normalizeList(arr).slice();
       a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
       return a.slice(0, n);
     }
 
-    function renderKpiBoxes(convergence, buys, sells){
-      // 1) Net flow score per ticker
-      // Merge buy+sell cards by ticker for net flow
+    function renderKpis(convergence, buys, sells){
+      // Merge by ticker for net flow/participation
       const merged = new Map();
       function addCard(x){
         const t = String(x.ticker || "").toUpperCase();
@@ -742,17 +751,9 @@
       }
       buys.forEach(addCard);
       sells.forEach(addCard);
-
       const mergedArr = Array.from(merged.values());
+
       const topNet = topBy(mergedArr, (x) => netFlow(x), 5);
-
-      const topNetHtml = topNet.map(x => {
-        const nf = netFlow(x);
-        const badge = nf > 0 ? "badgePos" : nf < 0 ? "badgeNeg" : "badgeNeu";
-        const sign = nf > 0 ? "+" : "";
-        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${badge}">${sign}${nf}</span></div>`;
-      }).join("");
-
       el("kpiAccum").innerHTML = `
         <div class="kpiTop">
           <div>
@@ -761,20 +762,19 @@
           </div>
           <span class="kpiBadge badgeNeu">Today</span>
         </div>
-        <div class="kpiSub">Highest accumulation (positive) or distribution (negative).</div>
-        <div class="kpiList">${topNetHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
+        <div class="kpiSub">Accumulation vs distribution by ticker.</div>
+        <div class="kpiList">${
+          topNet.map(x => {
+            const nf = netFlow(x);
+            const badge = nf > 0 ? "badgePos" : nf < 0 ? "badgeNeg" : "badgeNeu";
+            const sign = nf > 0 ? "+" : "";
+            return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${badge}">${sign}${nf}</span></div>`;
+          }).join("") || `<div class="kpiRow"><span class="muted">No data</span></div>`
+        }</div>
       `;
 
-      // 2) Confidence badge: strongest participation tickers overall
       const topConf = topBy(mergedArr, (x) => congressScore(x), 5);
-      const topConfHtml = topConf.map(x => {
-        const total = congressScore(x);
-        const lbl = confidenceLabel(x);
-        const cls = confidenceBadgeClass(lbl);
-        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${cls}">${lbl} · ${total}</span></div>`;
-      }).join("");
-
-      el("kpiSell").innerHTML = `
+      el("kpiConf").innerHTML = `
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Confidence</div>
@@ -782,19 +782,18 @@
           </div>
           <span class="kpiBadge badgeNeu">Count</span>
         </div>
-        <div class="kpiSub">Total congress participation (both parties).</div>
-        <div class="kpiList">${topConfHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
+        <div class="kpiSub">Total congressional participation (both parties).</div>
+        <div class="kpiList">${
+          topConf.map(x => {
+            const total = congressScore(x);
+            const lbl = confidenceLabel(x);
+            const cls = confidenceBadgeClass(lbl);
+            return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${cls}">${lbl} · ${total}</span></div>`;
+          }).join("") || `<div class="kpiRow"><span class="muted">No data</span></div>`
+        }</div>
       `;
 
-      // 3) Weekly aggregation (front-end approximation): show “7-day view” based on latest filing date strings
-      // Without backend windows, we provide a quick toggle-like summary: today lists vs “all recent”.
-      // This box shows the tickers with most items in the current pull as a proxy for recent-week activity.
       const topWeekly = topBy(mergedArr, (x) => congressScore(x), 5);
-      const topWeeklyHtml = topWeekly.map(x => {
-        const total = congressScore(x);
-        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge badgeNeu">${total} items</span></div>`;
-      }).join("");
-
       el("kpiWeekly").innerHTML = `
         <div class="kpiTop">
           <div>
@@ -803,27 +802,16 @@
           </div>
           <span class="kpiBadge badgeNeu">Proxy</span>
         </div>
-        <div class="kpiSub">Proxy for last-7-day intensity using recent filings.</div>
-        <div class="kpiList">${topWeeklyHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
+        <div class="kpiSub">Proxy using most recent filings returned.</div>
+        <div class="kpiList">${
+          topWeekly.map(x => `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge badgeNeu">${congressScore(x)} items</span></div>`).join("")
+          || `<div class="kpiRow"><span class="muted">No data</span></div>`
+        }</div>
       `;
 
-      // 4) Auto-highlight: Top Accumulation + Heavy Selling + Top Convergence
       const topAcc = topBy(mergedArr, (x) => netFlow(x), 1)[0];
       const topDist = topBy(mergedArr, (x) => -netFlow(x), 1)[0];
-
       const topConv = (convergence && convergence.length) ? convergence[0] : null;
-
-      const accLine = topAcc
-        ? `<div class="kpiRow"><span class="muted">🔥 Accumulation</span><a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a></div>`
-        : `<div class="kpiRow"><span class="muted">🔥 Accumulation</span><span class="muted">None</span></div>`;
-
-      const distLine = topDist
-        ? `<div class="kpiRow"><span class="muted">⚠️ Selling</span><a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a></div>`
-        : `<div class="kpiRow"><span class="muted">⚠️ Selling</span><span class="muted">None</span></div>`;
-
-      const convLine = topConv
-        ? `<div class="kpiRow"><span class="muted">🤝 Convergence</span><a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a></div>`
-        : `<div class="kpiRow"><span class="muted">🤝 Convergence</span><span class="muted">None</span></div>`;
 
       el("kpiHighlights").innerHTML = `
         <div class="kpiTop">
@@ -835,13 +823,193 @@
         </div>
         <div class="kpiSub">Fast read: strongest accumulation, selling, and overlap.</div>
         <div class="kpiList">
-          ${accLine}
-          ${distLine}
-          ${convLine}
+          <div class="kpiRow"><span class="muted">🔥 Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">⚠️ Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">🤝 Convergence</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
         </div>
       `;
     }
 
+    // ---------- Funds tab helpers ----------
+    function isSovereignFundName(name){
+      const s = String(name || "").toLowerCase();
+      if (!s) return false;
+      return SOV_KEYWORDS.some(k => s.includes(k));
+    }
+
+    function matchFundSearch(item){
+      if (!fundSearch) return true;
+      const q = fundSearch.toLowerCase();
+      const t = String(item.ticker || "").toLowerCase();
+      const fn = String((item.signal && item.signal.fundName) || "").toLowerCase();
+      const st = String((item.signal && item.signal.signalType) || "").toLowerCase();
+      return t.includes(q) || fn.includes(q) || st.includes(q);
+    }
+
+    function renderFunds(){
+      const all = normalizeList((APP_DATA && APP_DATA.fundSignals) || []);
+      let filtered = all;
+
+      // filter sovereign-only if selected
+      if (fundsMode === "sov") {
+        filtered = filtered.filter(x => isSovereignFundName(x.signal && x.signal.fundName));
+      }
+
+      // text search
+      filtered = filtered.filter(matchFundSearch);
+
+      // Breadcrumb
+      if (selectedFund) {
+        el("fundBreadcrumb").innerHTML = `
+          Viewing: <strong>${selectedFund}</strong>
+          <span class="miniLinks" style="margin-top:6px;">
+            <a class="miniLink" href="#" id="backToFunds">Back</a>
+          </span>
+        `;
+        setTimeout(() => {
+          const b = document.getElementById("backToFunds");
+          if (b) b.onclick = (e) => { e.preventDefault(); selectedFund=""; renderFunds(); };
+        }, 0);
+      } else {
+        el("fundBreadcrumb").textContent = "";
+      }
+
+      // Drilldown
+      if (selectedFund) {
+        const byThis = filtered.filter(x => String((x.signal && x.signal.fundName) || "") === selectedFund);
+
+        // Group by ticker and count
+        const map = new Map();
+        for (const it of byThis) {
+          const t = String(it.ticker || "").toUpperCase();
+          if (!t) continue;
+          const cur = map.get(t) || { ticker:t, count:0, latest:"", types:new Set(), isSov:true };
+          cur.count += 1;
+          cur.latest = cur.latest || String((it.signal && it.signal.filedAt) || "");
+          cur.types.add(String((it.signal && it.signal.signalType) || "").toUpperCase());
+          map.set(t, cur);
+        }
+
+        const rows = Array.from(map.values()).sort((a,b) => (b.count - a.count) || a.ticker.localeCompare(b.ticker));
+
+        el("fundList").innerHTML = rows.length ? rows.map(r => `
+          <div class="card">
+            <div class="cardTop">
+              <div>
+                <div class="tickerLine">
+                  <a class="ticker" href="#stock=${r.ticker}">${r.ticker}</a>
+                  <div class="who">${selectedFund}</div>
+                </div>
+              </div>
+              <div class="tags">
+                <span class="tag tagFund">${r.count} signals</span>
+                ${fundsMode === "sov" ? `<span class="tag tagSov">SOV</span>` : (isSovereignFundName(selectedFund) ? `<span class="tag tagSov">SOV</span>` : ``)}
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="metaRow">
+              <div>${r.types.size ? `Types: ${Array.from(r.types).slice(0,3).join(", ")}${r.types.size>3 ? " +" + (r.types.size-3) : ""}` : ""}</div>
+              <div>${r.latest ? `Filed: ${r.latest}` : ""}</div>
+            </div>
+            ${tickerLinksHTML(r.ticker)}
+          </div>
+        `).join("") : `<div class="subtle">No fund signals found for this fund.</div>`;
+
+        return;
+      }
+
+      // View mode: by fund or by ticker
+      if (fundsView === "fund") {
+        const map = new Map();
+        for (const it of filtered) {
+          const fn = String((it.signal && it.signal.fundName) || "").trim();
+          if (!fn) continue;
+          const cur = map.get(fn) || { fundName: fn, count:0, sov: isSovereignFundName(fn), tickers:new Set(), latest:"" };
+          cur.count += 1;
+          cur.latest = cur.latest || String((it.signal && it.signal.filedAt) || "");
+          cur.tickers.add(String(it.ticker || "").toUpperCase());
+          map.set(fn, cur);
+        }
+
+        const rows = Array.from(map.values()).sort((a,b) => (b.count - a.count) || a.fundName.localeCompare(b.fundName));
+
+        el("fundList").innerHTML = rows.length ? rows.map(r => `
+          <div class="card">
+            <div class="cardTop">
+              <div>
+                <div class="tickerLine">
+                  <a class="ticker" href="#" data-fund="${encodeURIComponent(r.fundName)}">${r.fundName}</a>
+                  <div class="who">${r.tickers.size} tickers</div>
+                </div>
+              </div>
+              <div class="tags">
+                <span class="tag tagFund">${r.count} signals</span>
+                ${r.sov ? `<span class="tag tagSov">SOV</span>` : ``}
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="metaRow">
+              <div>${r.tickers.size ? `Top tickers: ${Array.from(r.tickers).slice(0,5).join(", ")}${r.tickers.size>5 ? " +" + (r.tickers.size-5) : ""}` : ""}</div>
+              <div>${r.latest ? `Filed: ${r.latest}` : ""}</div>
+            </div>
+          </div>
+        `).join("") : `<div class="subtle">No fund signals yet.</div>`;
+
+        // Click handler to drill down into a fund
+        setTimeout(() => {
+          document.querySelectorAll("[data-fund]").forEach(a => {
+            a.addEventListener("click", (e) => {
+              e.preventDefault();
+              selectedFund = decodeURIComponent(a.getAttribute("data-fund") || "");
+              renderFunds();
+            });
+          });
+        }, 0);
+
+        return;
+      }
+
+      // By ticker view
+      const map = new Map();
+      for (const it of filtered) {
+        const t = String(it.ticker || "").toUpperCase();
+        if (!t) continue;
+        const fn = String((it.signal && it.signal.fundName) || "").trim();
+        const cur = map.get(t) || { ticker:t, count:0, funds:new Set(), sovCount:0, latest:"" };
+        cur.count += 1;
+        cur.latest = cur.latest || String((it.signal && it.signal.filedAt) || "");
+        if (fn) cur.funds.add(fn);
+        if (isSovereignFundName(fn)) cur.sovCount += 1;
+        map.set(t, cur);
+      }
+
+      const rows = Array.from(map.values()).sort((a,b) => (b.count - a.count) || a.ticker.localeCompare(b.ticker));
+
+      el("fundList").innerHTML = rows.length ? rows.map(r => `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${r.ticker}">${r.ticker}</a>
+                <div class="who">${r.funds.size} funds</div>
+              </div>
+            </div>
+            <div class="tags">
+              <span class="tag tagFund">${r.count} signals</span>
+              ${r.sovCount > 0 ? `<span class="tag tagSov">${r.sovCount} sov</span>` : ``}
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="metaRow">
+            <div>${r.funds.size ? `Funds: ${Array.from(r.funds).slice(0,3).join(", ")}${r.funds.size>3 ? " +" + (r.funds.size-3) : ""}` : ""}</div>
+            <div>${r.latest ? `Filed: ${r.latest}` : ""}</div>
+          </div>
+          ${tickerLinksHTML(r.ticker)}
+        </div>
+      `).join("") : `<div class="subtle">No fund signals yet.</div>`;
+    }
+
+    // ---------- Tab routing ----------
     function showTab(tab){
       el("viewMain").style.display = tab === "Main" ? "" : "none";
       el("viewFunds").style.display = tab === "Funds" ? "" : "none";
@@ -854,17 +1022,21 @@
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
       el("navFunds").classList.toggle("tabBottomActive", tab === "Funds");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
+
+      // Render funds whenever switching to that tab
+      if (tab === "Funds") renderFunds();
     }
 
+    // ---------- Main render ----------
     function render(data){
+      APP_DATA = data;
       el("reportDate").textContent = data.date || "";
 
       const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
       const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
       const sells = normalizeList(data.politicianSells).sort(sortByCongressStrength);
-      const funds = normalizeList(data.fundSignals).sort((a,b) => String(a.ticker||"").localeCompare(String(b.ticker||""), undefined, {sensitivity:"base"}));
 
-      renderKpiBoxes(convergence, buys, sells);
+      renderKpis(convergence, buys, sells);
 
       el("convergenceList").innerHTML =
         convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers today.</div>";
@@ -875,8 +1047,8 @@
       el("sellList").innerHTML =
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
 
-      el("fundList").innerHTML =
-        funds.length ? funds.map(fundRowHTML).join("") : "<div class='subtle'>No fund signals yet.</div>";
+      // Funds tab can be rendered on demand
+      if (el("viewFunds").style.display !== "none") renderFunds();
 
       handleHash();
     }
@@ -904,17 +1076,15 @@
       }
     }
 
-    // Top tabs
+    // ---------- Wire up UI ----------
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
     el("tabFundsBtn").addEventListener("click", () => showTab("Funds"));
     el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
 
-    // Bottom tabs
     el("navMain").addEventListener("click", () => showTab("Main"));
     el("navFunds").addEventListener("click", () => showTab("Funds"));
     el("navSearch").addEventListener("click", () => showTab("Search"));
 
-    // Search
     el("searchBtn").addEventListener("click", () => {
       const t = String(el("searchInput").value || "").trim().toUpperCase();
       if (!t) return;
@@ -923,7 +1093,44 @@
       handleHash();
     });
 
-    // Chart panel
+    // Funds controls
+    el("fundSearch").addEventListener("input", (e) => {
+      fundSearch = String(e.target.value || "").trim();
+      renderFunds();
+    });
+
+    el("segAll").addEventListener("click", () => {
+      fundsMode = "all";
+      el("segAll").classList.add("active");
+      el("segSov").classList.remove("active");
+      selectedFund = "";
+      renderFunds();
+    });
+
+    el("segSov").addEventListener("click", () => {
+      fundsMode = "sov";
+      el("segSov").classList.add("active");
+      el("segAll").classList.remove("active");
+      selectedFund = "";
+      renderFunds();
+    });
+
+    el("segByFund").addEventListener("click", () => {
+      fundsView = "fund";
+      el("segByFund").classList.add("active");
+      el("segByTicker").classList.remove("active");
+      selectedFund = "";
+      renderFunds();
+    });
+
+    el("segByTicker").addEventListener("click", () => {
+      fundsView = "ticker";
+      el("segByTicker").classList.add("active");
+      el("segByFund").classList.remove("active");
+      selectedFund = "";
+      renderFunds();
+    });
+
     el("refreshBtn").addEventListener("click", load);
     window.addEventListener("hashchange", handleHash);
 
