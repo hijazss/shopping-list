@@ -14,7 +14,7 @@
       --bg:#0b0b0f;
       --card:#151522;
       --text:#ffffff;
-      --muted:rgba(255,255,255,.7);
+      --muted:rgba(255,255,255,.70);
       --border:rgba(255,255,255,.10);
 
       --dem:#4aa3ff;
@@ -23,51 +23,53 @@
 
       --ok:#7cffc0;
       --err:#ff8a8a;
-      --accent:rgba(255,255,255,.06);
     }
+
     *{box-sizing:border-box}
     body{
       margin:0;
       background:var(--bg);
       color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      font-size:13px; /* smaller base font */
     }
-    a{color:inherit; text-decoration:none}
+    a{color:inherit;text-decoration:none}
+
     .header{
-      padding:16px 16px 8px;
+      padding:14px 14px 8px;
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap:12px;
-      max-width:720px;
+      max-width:860px;
       margin:0 auto;
     }
-    .h1{font-size:22px;font-weight:800}
-    .subtle{font-size:13px;color:var(--muted);margin-top:2px}
+    .h1{font-size:18px;font-weight:900;letter-spacing:.01em}
+    .subtle{font-size:12px;color:var(--muted);margin-top:2px}
     .pillBtn{
       border:1px solid var(--border);
-      padding:8px 12px;
+      padding:7px 10px;
       border-radius:999px;
       background:rgba(255,255,255,.05);
       color:#fff;
-      font-size:13px;
+      font-size:12px;
     }
 
     .container{
-      max-width:720px;
+      max-width:860px;
       margin:0 auto;
-      padding:8px 16px 110px;
+      padding:8px 14px 110px;
     }
 
     .status{
       border:1px solid var(--border);
       background:rgba(255,255,255,.03);
       border-radius:12px;
-      padding:10px 12px;
-      margin:6px 0 14px;
-      font-size:13px;
+      padding:9px 10px;
+      margin:6px 0 12px;
+      font-size:12px;
       color:var(--muted);
-      line-height:1.35;
+      line-height:1.25;
     }
     .status strong{color:#fff}
     .ok{color:var(--ok)}
@@ -78,14 +80,14 @@
       display:flex;
       gap:8px;
       flex-wrap:wrap;
-      margin:10px 0 14px;
+      margin:8px 0 10px;
     }
     .tabBtn{
       border:1px solid var(--border);
       background:rgba(255,255,255,.04);
-      padding:8px 10px;
+      padding:7px 9px;
       border-radius:999px;
-      font-size:13px;
+      font-size:12px;
       color:var(--muted);
     }
     .tabBtnActive{
@@ -94,43 +96,50 @@
     }
 
     .sectionTitle{
-      margin:18px 0 8px;
-      font-size:12px;
+      margin:14px 0 8px;
+      font-size:11px;
       color:var(--muted);
-      letter-spacing:.06em;
+      letter-spacing:.08em;
       text-transform:uppercase;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    @media (min-width: 760px){
+      .grid2{grid-template-columns:1fr 1fr;}
     }
 
     .card{
       background:var(--card);
       border:1px solid var(--border);
-      border-radius:16px;
-      padding:12px 12px 11px;
-      margin-bottom:10px;
+      border-radius:14px;
+      padding:10px 10px 9px;
+      margin-bottom:8px;
     }
 
     .cardTop{
       display:flex;
       justify-content:space-between;
       align-items:flex-start;
-      gap:12px;
+      gap:10px;
     }
 
     .tickerLine{
       display:flex;
       align-items:baseline;
-      gap:10px;
+      gap:8px;
       flex-wrap:wrap;
     }
-
     .ticker{
-      font-size:18px;
+      font-size:14px;
       font-weight:900;
-      letter-spacing:.02em;
-      padding:2px 0;
+      letter-spacing:.03em;
     }
-    .company{
-      font-size:13px;
+    .who{
+      font-size:12px;
       color:var(--muted);
       max-width:520px;
       overflow:hidden;
@@ -144,10 +153,9 @@
       flex-wrap:wrap;
       justify-content:flex-end;
     }
-
     .tag{
-      font-size:11px;
-      padding:5px 8px;
+      font-size:10px;
+      padding:4px 7px;
       border-radius:999px;
       border:1px solid var(--border);
       background:rgba(255,255,255,.04);
@@ -156,22 +164,23 @@
     .tagDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
     .tagRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
-    .tagMeta{color:rgba(255,255,255,.85)}
+    .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
+    .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
 
     .metaRow{
-      margin-top:8px;
-      font-size:13px;
+      margin-top:7px;
+      font-size:12px;
       color:var(--muted);
-      line-height:1.35;
       display:flex;
       justify-content:space-between;
       gap:10px;
       flex-wrap:wrap;
+      line-height:1.25;
     }
 
     .counts{
       display:flex;
-      gap:12px;
+      gap:10px;
       flex-wrap:wrap;
       align-items:center;
     }
@@ -179,43 +188,36 @@
       display:flex;
       gap:6px;
       align-items:center;
-      font-size:13px;
+      font-size:12px;
       color:rgba(255,255,255,.88);
     }
-    .dot{
-      width:9px; height:9px; border-radius:999px;
-      display:inline-block;
-    }
+    .dot{width:8px;height:8px;border-radius:999px;display:inline-block}
     .dotDem{background:var(--dem)}
     .dotRep{background:var(--rep)}
 
-    .divider{
-      height:1px;
-      background:rgba(255,255,255,.08);
-      margin:10px 0 8px;
-    }
+    .divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0 7px}
 
-    .linkRow{
+    .miniLinks{
       display:flex;
-      gap:10px;
+      gap:8px;
       flex-wrap:wrap;
-      margin-top:10px;
+      margin-top:8px;
     }
     .miniLink{
       border:1px solid var(--border);
       background:rgba(255,255,255,.03);
-      padding:7px 10px;
+      padding:6px 9px;
       border-radius:999px;
-      font-size:12px;
-      color:rgba(255,255,255,.9);
+      font-size:11px;
+      color:rgba(255,255,255,.92);
     }
 
     .panel{
       border:1px solid var(--border);
       background:rgba(255,255,255,.03);
-      border-radius:16px;
-      padding:12px;
-      margin:12px 0 14px;
+      border-radius:14px;
+      padding:10px;
+      margin:10px 0 10px;
     }
     .panelTitle{
       display:flex;
@@ -225,25 +227,42 @@
     }
     .panelTitle h2{
       margin:0;
-      font-size:16px;
+      font-size:13px;
       font-weight:900;
       letter-spacing:.02em;
     }
     .closeBtn{
       border:1px solid var(--border);
       background:rgba(255,255,255,.04);
-      padding:6px 10px;
+      padding:6px 9px;
       border-radius:999px;
-      font-size:12px;
+      font-size:11px;
       color:rgba(255,255,255,.9);
     }
     iframe{
       width:100%;
-      height:430px;
+      height:380px;
       border:0;
       border-radius:12px;
       background:#000;
-      margin-top:10px;
+      margin-top:8px;
+    }
+
+    .colsHeader{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      margin:2px 0 8px;
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      margin:6px 0 0;
     }
 
     .tabsBottom{
@@ -256,15 +275,15 @@
       backdrop-filter:blur(12px);
     }
     .tabBarBottom{
-      max-width:720px;
+      max-width:860px;
       margin:0 auto;
       display:grid;
       grid-template-columns:repeat(4,1fr);
     }
     .tabBottom{
       text-align:center;
-      padding:12px 10px 18px;
-      font-size:12px;
+      padding:11px 10px 16px;
+      font-size:11px;
       color:var(--muted);
     }
     .tabBottomActive{color:#fff}
@@ -274,7 +293,7 @@
 <body>
   <header class="header">
     <div>
-      <div class="h1">Today</div>
+      <div class="h1">Convergence</div>
       <div class="subtle" id="reportDate"></div>
     </div>
     <button class="pillBtn" id="refreshBtn">Refresh</button>
@@ -287,32 +306,44 @@
     </div>
 
     <div class="tabRow">
-      <button class="tabBtn tabBtnActive" id="tabTodayBtn">Today</button>
-      <button class="tabBtn" id="tabPolBtn">Politicians</button>
-      <button class="tabBtn" id="tabFundBtn">Funds</button>
+      <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
+      <button class="tabBtn" id="tabFundsBtn">Funds</button>
       <button class="tabBtn" id="tabSearchBtn">Search</button>
     </div>
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <section id="viewToday">
-      <div class="sectionTitle">Convergence 🔥 (Overlap)</div>
+    <!-- MAIN VIEW -->
+    <section id="viewMain">
+      <div class="sectionTitle">Convergence 🔥 (D + GOP overlap on BUY)</div>
       <div id="convergenceList"></div>
 
-      <div class="sectionTitle">Politician buys (sorted by ticker)</div>
-      <div id="bipartisanList"></div>
+      <div class="sectionTitle">Politicians (sorted by ticker)</div>
+      <div class="colsHeader">
+        <div>Buys</div>
+        <div>Sells</div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div id="buyList"></div>
+        </div>
+        <div>
+          <div id="sellList"></div>
+        </div>
+      </div>
+
+      <div class="hint">Tip: Tap a ticker to open chart + RSI/MA context.</div>
     </section>
 
-    <section id="viewPol" style="display:none;">
-      <div class="sectionTitle">Politician buys (sorted by ticker)</div>
-      <div id="polList"></div>
-    </section>
-
+    <!-- FUNDS VIEW -->
     <section id="viewFunds" style="display:none;">
       <div class="sectionTitle">Sovereign & international fund signals</div>
       <div id="fundList"></div>
+      <div class="hint">This tab fills when your backend returns fundSignals.</div>
     </section>
 
+    <!-- SEARCH VIEW -->
     <section id="viewSearch" style="display:none;">
       <div class="sectionTitle">Search ticker</div>
       <div class="panel">
@@ -321,18 +352,18 @@
         </div>
         <div style="display:flex; gap:10px; margin-top:10px;">
           <input id="searchInput" placeholder="Ticker" autocapitalize="characters"
-                 style="flex:1; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:14px;" />
+                 style="flex:1; padding:10px 10px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:13px;" />
           <button class="pillBtn" id="searchBtn">Go</button>
         </div>
-        <div class="meta" style="margin-top:10px;">Opens a quick chart and signal view.</div>
+        <div class="hint" style="margin-top:10px;">Opens the chart panel for quick trend context.</div>
       </div>
     </section>
   </main>
 
   <nav class="tabsBottom">
     <div class="tabBarBottom">
-      <div class="tabBottom tabBottomActive" id="navToday">Today</div>
-      <div class="tabBottom" id="navPol">Signals</div>
+      <div class="tabBottom tabBottomActive" id="navMain">Main</div>
+      <div class="tabBottom" id="navFunds">Funds</div>
       <div class="tabBottom" id="navSearch">Search</div>
       <div class="tabBottom" id="navSettings">Settings</div>
     </div>
@@ -353,56 +384,53 @@
 
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
 
-    function byTickerThenParty(a, b){
+    function byTicker(a, b){
       const ta = String(a.ticker || "").toUpperCase();
       const tb = String(b.ticker || "").toUpperCase();
-      if (ta < tb) return -1;
-      if (ta > tb) return 1;
-
-      const pa = (a.demBuyers > 0 && a.repBuyers > 0) ? "B" : (a.demBuyers > 0 ? "D" : (a.repBuyers > 0 ? "R" : "Z"));
-      const pb = (b.demBuyers > 0 && b.repBuyers > 0) ? "B" : (b.demBuyers > 0 ? "D" : (b.repBuyers > 0 ? "R" : "Z"));
-      if (pa < pb) return -1;
-      if (pa > pb) return 1;
-      return 0;
+      return ta.localeCompare(tb, undefined, { sensitivity:"base" });
     }
 
-    function tagsHTML(x){
-      const dem = Number(x.demBuyers || 0);
-      const rep = Number(x.repBuyers || 0);
+    function tagsHTML(x, mode){
+      const demB = Number(x.demBuyers || 0);
+      const repB = Number(x.repBuyers || 0);
+      const demS = Number(x.demSellers || 0);
+      const repS = Number(x.repSellers || 0);
 
-      if (dem > 0 && rep > 0) {
-        return `
-          <div class="tags">
-            <span class="tag tagDem">DEM</span>
-            <span class="tag tagRep">GOP</span>
-            <span class="tag tagBoth">OVERLAP</span>
-          </div>
-        `;
-      }
-      if (dem > 0) return `<div class="tags"><span class="tag tagDem">DEM</span></div>`;
-      if (rep > 0) return `<div class="tags"><span class="tag tagRep">GOP</span></div>`;
-      return `<div class="tags"><span class="tag tagMeta">N/A</span></div>`;
+      const hasDem = mode === "BUY" ? demB > 0 : demS > 0;
+      const hasRep = mode === "BUY" ? repB > 0 : repS > 0;
+
+      const partyTags = [];
+      if (hasDem) partyTags.push(`<span class="tag tagDem">DEM</span>`);
+      if (hasRep) partyTags.push(`<span class="tag tagRep">GOP</span>`);
+      if (hasDem && hasRep) partyTags.push(`<span class="tag tagBoth">BOTH</span>`);
+
+      const txTag = mode === "BUY"
+        ? `<span class="tag tagBuy">BUY</span>`
+        : `<span class="tag tagSell">SELL</span>`;
+
+      return `<div class="tags">${partyTags.join("")}${txTag}</div>`;
     }
 
     function tickerLinksHTML(ticker){
       const t = String(ticker || "").toUpperCase();
-      const tv = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent("NASDAQ:" + t)}`;
       const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
+      const tvChart = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent("NASDAQ:" + t)}`;
       return `
-        <div class="linkRow">
-          <a class="miniLink" href="#stock=${t}">View chart + signal</a>
-          <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Yahoo Finance</a>
-          <a class="miniLink" href="${tv}" target="_blank" rel="noopener">TradingView</a>
+        <div class="miniLinks">
+          <a class="miniLink" href="#stock=${t}">Chart</a>
+          <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Yahoo</a>
+          <a class="miniLink" href="${tvChart}" target="_blank" rel="noopener">TV</a>
         </div>
       `;
     }
 
-    function cardHTML(x){
+    function cardHTML(x, mode){
       const ticker = String(x.ticker || "").toUpperCase();
-      const company = String(x.companyName || "").trim();
-      const dem = Number(x.demBuyers || 0);
-      const rep = Number(x.repBuyers || 0);
+      const who = String(x.companyName || "").trim(); // backend uses politician name here
       const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
+
+      const dem = mode === "BUY" ? Number(x.demBuyers || 0) : Number(x.demSellers || 0);
+      const rep = mode === "BUY" ? Number(x.repBuyers || 0) : Number(x.repSellers || 0);
 
       return `
         <div class="card">
@@ -410,10 +438,48 @@
             <div>
               <div class="tickerLine">
                 <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                ${company ? `<div class="company">${company}</div>` : ""}
+                ${who ? `<div class="who">${who}</div>` : ""}
               </div>
             </div>
-            ${tagsHTML(x)}
+            ${tagsHTML(x, mode)}
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="metaRow">
+            <div class="counts">
+              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
+              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
+            </div>
+            <div>${filed ? `Filed: ${filed}` : ""}</div>
+          </div>
+
+          ${tickerLinksHTML(ticker)}
+        </div>
+      `;
+    }
+
+    function overlapCardHTML(x){
+      const ticker = String(x.ticker || "").toUpperCase();
+      const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
+      const dem = Number(x.demBuyers || 0);
+      const rep = Number(x.repBuyers || 0);
+
+      return `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
+                <div class="who">Overlap BUY</div>
+              </div>
+            </div>
+            <div class="tags">
+              <span class="tag tagDem">DEM</span>
+              <span class="tag tagRep">GOP</span>
+              <span class="tag tagBoth">OVERLAP</span>
+              <span class="tag tagBuy">BUY</span>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -444,11 +510,11 @@
             <div>
               <div class="tickerLine">
                 <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                ${fund ? `<div class="company">${fund}</div>` : ""}
+                ${fund ? `<div class="who">${fund}</div>` : ""}
               </div>
             </div>
             <div class="tags">
-              ${typ ? `<span class="tag tagMeta">${typ}</span>` : ""}
+              ${typ ? `<span class="tag">${typ}</span>` : ""}
             </div>
           </div>
 
@@ -465,15 +531,17 @@
     }
 
     function showTab(tab){
-      const tabs = ["Today","Pol","Funds","Search"];
-      for (const t of tabs){
-        el("view" + t).style.display = (t === tab) ? "" : "none";
-      }
+      el("viewMain").style.display = tab === "Main" ? "" : "none";
+      el("viewFunds").style.display = tab === "Funds" ? "" : "none";
+      el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
-      el("tabTodayBtn").classList.toggle("tabBtnActive", tab === "Today");
-      el("tabPolBtn").classList.toggle("tabBtnActive", tab === "Pol");
-      el("tabFundBtn").classList.toggle("tabBtnActive", tab === "Funds");
+      el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
+      el("tabFundsBtn").classList.toggle("tabBtnActive", tab === "Funds");
       el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
+
+      el("navMain").classList.toggle("tabBottomActive", tab === "Main");
+      el("navFunds").classList.toggle("tabBottomActive", tab === "Funds");
+      el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
     }
 
     function setStockPanel(ticker){
@@ -484,10 +552,7 @@
         return;
       }
 
-      // TradingView embed: advanced chart. No API keys.
-      // Note: symbol exchange may vary; NASDAQ is a reasonable default.
       const symbol = "NASDAQ:" + t;
-
       const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
       const tv = `https://www.tradingview.com/symbols/${encodeURIComponent(symbol)}/`;
 
@@ -495,22 +560,17 @@
       el("stockPanel").innerHTML = `
         <div class="panel">
           <div class="panelTitle">
-            <h2>${t} chart</h2>
+            <h2>${t} chart (MA + RSI)</h2>
             <button class="closeBtn" id="closeStockBtn">Close</button>
           </div>
-          <div class="meta" style="margin-top:8px;">
-            Tap indicators inside the chart for trend. For a simple “signal”: use moving averages or RSI.
-          </div>
-
           <iframe
             title="TradingView Chart"
-            src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_${t}&symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=%23151522&studies=%5B%22MASimple%40tv-basicstudies%22%2C%22RSI%40tv-basicstudies%22%5D&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1&studies_overrides=%7B%7D&overrides=%7B%7D"
+            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=%23151522&studies=%5B%22MASimple%40tv-basicstudies%22%2C%22RSI%40tv-basicstudies%22%5D&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1"
             loading="lazy">
           </iframe>
-
-          <div class="linkRow">
-            <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Open on Yahoo Finance</a>
-            <a class="miniLink" href="${tv}" target="_blank" rel="noopener">Open on TradingView</a>
+          <div class="miniLinks">
+            <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Open Yahoo</a>
+            <a class="miniLink" href="${tv}" target="_blank" rel="noopener">Open TradingView</a>
           </div>
         </div>
       `;
@@ -522,32 +582,45 @@
       });
     }
 
+    function handleHash(){
+      const h = window.location.hash || "";
+      if (h.startsWith("#stock=")){
+        const t = decodeURIComponent(h.replace("#stock=","")).trim();
+        setStockPanel(t);
+        return;
+      }
+      setStockPanel("");
+    }
+
     function render(data){
       el("reportDate").textContent = data.date || "";
 
-      const convergence = normalizeList(data.convergence).sort(byTickerThenParty);
-      const bipartisan = normalizeList(data.bipartisanTickers).sort(byTickerThenParty);
+      const convergence = normalizeList(data.convergence).sort(byTicker);
+      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(byTicker);
+      const sells = normalizeList(data.politicianSells).sort(byTicker);
       const funds = normalizeList(data.fundSignals).sort((a,b) => String(a.ticker||"").localeCompare(String(b.ticker||""), undefined, {sensitivity:"base"}));
 
       el("convergenceList").innerHTML =
-        convergence.length ? convergence.map(cardHTML).join("") : "<div class='subtle'>No overlap tickers today.</div>";
+        convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers today.</div>";
 
-      el("bipartisanList").innerHTML =
-        bipartisan.length ? bipartisan.map(cardHTML).join("") : "<div class='subtle'>No politician buys found.</div>";
+      el("buyList").innerHTML =
+        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No buy trades found.</div>";
 
-      el("polList").innerHTML =
-        bipartisan.length ? bipartisan.map(cardHTML).join("") : "<div class='subtle'>No politician buys found.</div>";
+      el("sellList").innerHTML =
+        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
 
       el("fundList").innerHTML =
         funds.length ? funds.map(fundRowHTML).join("") : "<div class='subtle'>No fund signals yet.</div>";
+
+      handleHash();
     }
 
     async function load(){
       setStatus("", "Loading…", BACKEND_URL);
 
       el("convergenceList").innerHTML = "<div class='subtle'>Loading…</div>";
-      el("bipartisanList").innerHTML = "";
-      el("polList").innerHTML = "";
+      el("buyList").innerHTML = "";
+      el("sellList").innerHTML = "";
       el("fundList").innerHTML = "";
 
       try{
@@ -559,30 +632,21 @@
 
         setStatus("ok", "Live data loaded ✅", "");
         render(data);
-
-        // If URL has #stock=XXX, show panel
-        handleHash();
       }catch(err){
         setStatus("err", "Could not load live data", String(err));
         el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
       }
     }
 
-    function handleHash(){
-      const h = window.location.hash || "";
-      if (h.startsWith("#stock=")){
-        const t = h.replace("#stock=","").trim();
-        setStockPanel(t);
-        return;
-      }
-      setStockPanel("");
-    }
-
-    // Tab button events
-    el("tabTodayBtn").addEventListener("click", () => showTab("Today"));
-    el("tabPolBtn").addEventListener("click", () => showTab("Pol"));
-    el("tabFundBtn").addEventListener("click", () => showTab("Funds"));
+    // Top tabs
+    el("tabMainBtn").addEventListener("click", () => showTab("Main"));
+    el("tabFundsBtn").addEventListener("click", () => showTab("Funds"));
     el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
+
+    // Bottom tabs
+    el("navMain").addEventListener("click", () => showTab("Main"));
+    el("navFunds").addEventListener("click", () => showTab("Funds"));
+    el("navSearch").addEventListener("click", () => showTab("Search"));
 
     // Search
     el("searchBtn").addEventListener("click", () => {
@@ -596,7 +660,7 @@
     el("refreshBtn").addEventListener("click", load);
     window.addEventListener("hashchange", handleHash);
 
-    showTab("Today");
+    showTab("Main");
     load();
   </script>
 </body>
