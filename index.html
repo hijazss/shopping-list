@@ -241,7 +241,7 @@
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
-    .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
+    .tagCrypto{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .metaRow{
       margin-top:7px;
@@ -365,35 +365,23 @@
     }
     .tabBottomActive{color:#fff}
 
-    .eventList{
-      margin-top:8px;
+    .segRow{
       display:flex;
-      flex-direction:column;
       gap:8px;
-    }
-    .eventRow{
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.02);
-      border-radius:12px;
-      padding:8px;
-    }
-    .eventTop{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:flex-start;
       flex-wrap:wrap;
+      margin:6px 0 8px;
     }
-    .eventTitle{
-      font-weight:900;
+    .segBtn{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      padding:6px 9px;
+      border-radius:999px;
       font-size:12px;
-      letter-spacing:.02em;
-    }
-    .eventMeta{
-      margin-top:6px;
       color:var(--muted);
-      font-size:12px;
-      line-height:1.25;
+    }
+    .segBtnActive{
+      color:#fff;
+      background:rgba(255,255,255,.08);
     }
   </style>
 </head>
@@ -413,37 +401,21 @@
       <span class="mono" id="statusDetail"></span>
     </div>
 
-    <!-- Top tabs (4 options) -->
+    <!-- Top tabs -->
     <div class="tabRow">
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
-      <button class="tabBtn" id="tabPerfBtn">Performance (2Y)</button>
-      <button class="tabBtn" id="tabLeadersBtn">Leaders</button>
+      <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
       <button class="tabBtn" id="tabSearchBtn">Search</button>
     </div>
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <!-- KPI STRIP -->
-    <section id="kpiStrip">
-      <div class="sectionTitle" id="dashTitle">Signal dashboard (top 4, rolling 30 days)</div>
-      <div class="tabRow" style="margin-top:0;">
-        <button class="tabBtn tabBtnActive" id="win30Btn">30D</button>
-        <button class="tabBtn" id="win180Btn">180D</button>
-      </div>
-      <div class="grid4">
-        <div class="kpi" id="kpiAccum"></div>
-        <div class="kpi" id="kpiSell"></div>
-        <div class="kpi" id="kpiWeekly"></div>
-        <div class="kpi" id="kpiHighlights"></div>
-      </div>
-    </section>
-
     <!-- MAIN VIEW -->
     <section id="viewMain">
-      <div class="sectionTitle" id="mainConvTitle">Convergence 🔥 (bipartisan overlap on BUY, rolling 30 days)</div>
+      <div class="sectionTitle">Convergence 🔥 (bipartisan overlap on BUY, rolling 30 days)</div>
       <div id="convergenceList"></div>
 
-      <div class="sectionTitle" id="mainRankTitle">Politicians ranked by participation (rolling 30 days)</div>
+      <div class="sectionTitle">Politicians ranked by participation (rolling 30 days)</div>
       <div class="colsHeader">
         <div>Buys (left)</div>
         <div>Sells (right)</div>
@@ -454,21 +426,34 @@
         <div><div id="sellList"></div></div>
       </div>
 
-      <div class="hint" id="mainHint">Sort is by total congressional participation (both parties) within the rolling 30-day window. Tap ticker for chart.</div>
+      <div class="hint">Sort is by total congressional participation (both parties) within the rolling 30-day window. Tap ticker for chart.</div>
     </section>
 
-    <!-- PERFORMANCE VIEW -->
-    <section id="viewPerf" style="display:none;">
-      <div class="sectionTitle">Best performers (rolling 2 years, scored vs SPY)</div>
-      <div id="perfList"></div>
-      <div class="hint">Scoring: BUY uses forward 30-day return. SELL is scored as negative forward 30-day return. Both compared to SPY on same dates.</div>
-    </section>
+    <!-- CRYPTO VIEW -->
+    <section id="viewCrypto" style="display:none;">
+      <div class="sectionTitle">Crypto buys and sells by U.S. politicians</div>
 
-    <!-- LEADERS VIEW (SEC filings) -->
-    <section id="viewLeaders" style="display:none;">
-      <div class="sectionTitle">Public filings leaders (SEC EDGAR, rolling 365 days)</div>
-      <div id="leadersList"></div>
-      <div class="hint">Form 4 can show BUY/SELL. 13F is quarterly and shown as filing events unless backend computes holdings deltas.</div>
+      <div class="segRow">
+        <button class="segBtn segBtnActive" id="crypto30">30D</button>
+        <button class="segBtn" id="crypto180">180D</button>
+        <button class="segBtn" id="crypto365">365D</button>
+      </div>
+
+      <div class="sectionTitle">Crypto Convergence 🔥 (bipartisan overlap on BUY, rolling window)</div>
+      <div id="cryptoConvergenceList"></div>
+
+      <div class="sectionTitle">Crypto activity ranked by participation (rolling window)</div>
+      <div class="colsHeader">
+        <div>Buys (left)</div>
+        <div>Sells (right)</div>
+      </div>
+
+      <div class="grid2">
+        <div><div id="cryptoBuyList"></div></div>
+        <div><div id="cryptoSellList"></div></div>
+      </div>
+
+      <div class="hint">This tab expects backend endpoint <span class="mono">/report/crypto?horizon_days=30|180|365</span>.</div>
     </section>
 
     <!-- SEARCH VIEW -->
@@ -488,41 +473,32 @@
     </section>
   </main>
 
-  <!-- Bottom nav (4 options) -->
+  <!-- Bottom nav -->
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
-      <div class="tabBottom" id="navPerf">Performance</div>
-      <div class="tabBottom" id="navLeaders">Leaders</div>
+      <div class="tabBottom" id="navCrypto">Crypto</div>
       <div class="tabBottom" id="navSearch">Search</div>
+      <div class="tabBottom" id="navSettings">Settings</div>
     </div>
   </nav>
 
   <script>
-    const BASE = "https://finance-backend-dzta.onrender.com";
-    const LEADERS_URL = BASE + "/report/public-leaders";
-    const PERF_URL = BASE + "/report/performance-2y?horizon_days=30";
+    // Existing endpoint (unchanged)
+    const BACKEND_MAIN_URL = "https://finance-backend-dzta.onrender.com/report/today";
+    // New endpoint (you will implement in backend next)
+    const BACKEND_CRYPTO_URL = "https://finance-backend-dzta.onrender.com/report/crypto";
 
     const el = (id) => document.getElementById(id);
-
     let ACTIVE_TAB = "Main";
-    let WINDOW_DAYS = 30;
 
+    // crypto window selection
+    let CRYPTO_HORIZON_DAYS = 30;
     let CACHE_MAIN = null;
-    let CACHE_LEADERS = null;
-    let CACHE_PERF = null;
-
-    function todayUrl(){
-      return BASE + "/report/today?days=" + encodeURIComponent(String(WINDOW_DAYS));
-    }
+    let CACHE_CRYPTO = { 30: null, 180: null, 365: null };
 
     function setTitleForTab(tab){
-      const map = {
-        "Main": "Convergence",
-        "Performance": "Performance (2Y)",
-        "Leaders": "Leaders",
-        "Search": "Search"
-      };
+      const map = { "Main":"Convergence", "Crypto":"Crypto", "Search":"Search" };
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
 
@@ -561,12 +537,6 @@
       return String(a.ticker || "").localeCompare(String(b.ticker || ""), undefined, {sensitivity:"base"});
     }
 
-    function netFlow(x){
-      const buys = Number(x.demBuyers || 0) + Number(x.repBuyers || 0);
-      const sells = Number(x.demSellers || 0) + Number(x.repSellers || 0);
-      return buys - sells;
-    }
-
     function confidenceLabel(x){
       const t = congressScore(x);
       if (t >= 6) return "STRONG";
@@ -593,7 +563,7 @@
       `;
     }
 
-    function cardHTML(x, mode){
+    function cardHTML(x, mode, isCrypto=false){
       const ticker = String(x.ticker || "").toUpperCase();
       const who = String(x.companyName || "").trim();
       const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
@@ -613,6 +583,7 @@
               </div>
             </div>
             <div class="tags">
+              ${isCrypto ? `<span class="tag tagCrypto">CRYPTO</span>` : ""}
               ${mode === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
               <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
             </div>
@@ -634,7 +605,7 @@
       `;
     }
 
-    function overlapCardHTML(x){
+    function overlapCardHTML(x, isCrypto=false){
       const ticker = String(x.ticker || "").toUpperCase();
       const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
       const dem = Number(x.demBuyers || 0);
@@ -651,6 +622,7 @@
               </div>
             </div>
             <div class="tags">
+              ${isCrypto ? `<span class="tag tagCrypto">CRYPTO</span>` : ""}
               <span class="tag tagDem">DEM</span>
               <span class="tag tagRep">GOP</span>
               <span class="tag tagBoth">OVERLAP</span>
@@ -723,144 +695,24 @@
       setStockPanel("");
     }
 
-    function topBy(arr, scoreFn, n){
-      const a = normalizeList(arr).slice();
-      a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
-      return a.slice(0, n);
-    }
-
-    function renderKpiBoxes(convergence, buys, sells, windowDays){
-      const merged = new Map();
-      function addCard(x){
-        const t = String(x.ticker || "").toUpperCase();
-        if (!t) return;
-        const cur = merged.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
-        cur.demBuyers += Number(x.demBuyers||0);
-        cur.repBuyers += Number(x.repBuyers||0);
-        cur.demSellers += Number(x.demSellers||0);
-        cur.repSellers += Number(x.repSellers||0);
-        merged.set(t, cur);
-      }
-      buys.forEach(addCard);
-      sells.forEach(addCard);
-
-      const mergedArr = Array.from(merged.values());
-      const topNet = topBy(mergedArr, (x) => netFlow(x), 5);
-      const windowText = String(windowDays || 30) + "D";
-
-      const topNetHtml = topNet.map(x => {
-        const nf = netFlow(x);
-        const badge = nf > 0 ? "badgePos" : nf < 0 ? "badgeNeg" : "badgeNeu";
-        const sign = nf > 0 ? "+" : "";
-        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${badge}">${sign}${nf}</span></div>`;
-      }).join("");
-
-      el("kpiAccum").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Net flow</div>
-            <div class="kpiValue">Buys − Sells</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${windowText}</span>
-        </div>
-        <div class="kpiSub">Highest accumulation (positive) or distribution (negative) in rolling ${windowText}.</div>
-        <div class="kpiList">${topNetHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
-      `;
-
-      const topConf = topBy(mergedArr, (x) => congressScore(x), 5);
-      const topConfHtml = topConf.map(x => {
-        const total = congressScore(x);
-        const lbl = confidenceLabel(x);
-        const cls = confidenceBadgeClass(lbl);
-        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${cls}">${lbl} · ${total}</span></div>`;
-      }).join("");
-
-      el("kpiSell").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Participation</div>
-            <div class="kpiValue">Total activity</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${windowText}</span>
-        </div>
-        <div class="kpiSub">Total participation (both parties) in rolling ${windowText}.</div>
-        <div class="kpiList">${topConfHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
-      `;
-
-      const topTickers = topBy(mergedArr, (x) => congressScore(x), 5);
-      const topTickersHtml = topTickers.map(x => {
-        const total = congressScore(x);
-        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge badgeNeu">${total} items</span></div>`;
-      }).join("");
-
-      el("kpiWeekly").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Top tickers</div>
-            <div class="kpiValue">Intensity</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${windowText}</span>
-        </div>
-        <div class="kpiSub">Most active tickers in rolling ${windowText}.</div>
-        <div class="kpiList">${topTickersHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
-      `;
-
-      const topAcc = topBy(mergedArr, (x) => netFlow(x), 1)[0];
-      const topDist = topBy(mergedArr, (x) => -netFlow(x), 1)[0];
-      const topConv = (convergence && convergence.length) ? convergence[0] : null;
-
-      const accLine = topAcc
-        ? `<div class="kpiRow"><span class="muted">🔥 Accumulation</span><a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a></div>`
-        : `<div class="kpiRow"><span class="muted">🔥 Accumulation</span><span class="muted">None</span></div>`;
-
-      const distLine = topDist
-        ? `<div class="kpiRow"><span class="muted">⚠️ Selling</span><a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a></div>`
-        : `<div class="kpiRow"><span class="muted">⚠️ Selling</span><span class="muted">None</span></div>`;
-
-      const convLine = topConv
-        ? `<div class="kpiRow"><span class="muted">🤝 Convergence</span><a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a></div>`
-        : `<div class="kpiRow"><span class="muted">🤝 Convergence</span><span class="muted">None</span></div>`;
-
-      el("kpiHighlights").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Top signals</div>
-            <div class="kpiValue">Fast read</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${windowText}</span>
-        </div>
-        <div class="kpiSub">Strongest accumulation, selling, and overlap in rolling ${windowText}.</div>
-        <div class="kpiList">
-          ${accLine}
-          ${distLine}
-          ${convLine}
-        </div>
-      `;
-    }
-
     function showTab(tab){
       ACTIVE_TAB = tab;
       setTitleForTab(tab);
 
       el("viewMain").style.display = tab === "Main" ? "" : "none";
-      el("viewPerf").style.display = tab === "Performance" ? "" : "none";
-      el("viewLeaders").style.display = tab === "Leaders" ? "" : "none";
+      el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
-      el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
-
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
-      el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
-      el("tabLeadersBtn").classList.toggle("tabBtnActive", tab === "Leaders");
+      el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
       el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
 
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
-      el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
-      el("navLeaders").classList.toggle("tabBottomActive", tab === "Leaders");
+      el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
-      if (tab === "Performance") loadPerf();
-      if (tab === "Leaders") loadLeaders();
+      if (tab === "Main" && CACHE_MAIN) renderMain(CACHE_MAIN);
+      if (tab === "Crypto") loadCrypto(false);
     }
 
     function renderMain(data){
@@ -870,300 +722,117 @@
       const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
       const sells = normalizeList(data.politicianSells).sort(sortByCongressStrength);
 
-      const wd = data.windowDays || WINDOW_DAYS;
-
-      el("dashTitle").textContent = `Signal dashboard (top 4, rolling ${wd} days)`;
-      el("mainConvTitle").textContent = `Convergence 🔥 (bipartisan overlap on BUY, rolling ${wd} days)`;
-      el("mainRankTitle").textContent = `Politicians ranked by participation (rolling ${wd} days)`;
-      el("mainHint").textContent = `Sort is by total participation (both parties) within the rolling ${wd}-day window. Tap ticker for chart.`;
-
-      renderKpiBoxes(convergence, buys, sells, wd);
-
       el("convergenceList").innerHTML =
-        convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers in this window.</div>";
+        convergence.length ? convergence.map(x => overlapCardHTML(x,false)).join("") : "<div class='subtle'>No overlap tickers in the last 30 days.</div>";
 
       el("buyList").innerHTML =
-        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No buy trades found.</div>";
+        buys.length ? buys.map(x => cardHTML(x, "BUY", false)).join("") : "<div class='subtle'>No buy trades found.</div>";
 
       el("sellList").innerHTML =
-        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
+        sells.length ? sells.map(x => cardHTML(x, "SELL", false)).join("") : "<div class='subtle'>No sell trades found.</div>";
 
       handleHash();
     }
 
-    function renderPerf(payload){
-      el("reportDate").textContent = payload.date || "";
-      const leaders = payload && Array.isArray(payload.leaders) ? payload.leaders : [];
-      const horizon = payload && payload.horizonDays ? payload.horizonDays : 30;
+    function setCryptoSegActive(days){
+      CRYPTO_HORIZON_DAYS = days;
+      el("crypto30").classList.toggle("segBtnActive", days === 30);
+      el("crypto180").classList.toggle("segBtnActive", days === 180);
+      el("crypto365").classList.toggle("segBtnActive", days === 365);
+    }
 
-      if (!leaders.length){
-        el("perfList").innerHTML = "<div class='subtle'>No performance data yet.</div>";
-        return;
-      }
+    function renderCrypto(data){
+      // expected shape:
+      // { date, windowDays, windowStart, windowEnd, convergence, politicianBuys, politicianSells }
+      el("reportDate").textContent = data.date || "";
 
-      const html = leaders.slice(0, 15).map((p, idx) => {
-        const name = String(p.name || "");
-        const party = String(p.party || "");
-        const trades = Number(p.tradesScored || 0);
-        const win = Number(p.winRate || 0);
-        const avg = Number(p.avgExcessReturnPct || 0);
+      const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
+      const buys = normalizeList(data.politicianBuys || []).sort(sortByCongressStrength);
+      const sells = normalizeList(data.politicianSells || []).sort(sortByCongressStrength);
 
-        const badge = avg > 0 ? "badgePos" : avg < 0 ? "badgeNeg" : "badgeNeu";
-        const sign = avg > 0 ? "+" : "";
+      el("cryptoConvergenceList").innerHTML =
+        convergence.length ? convergence.map(x => overlapCardHTML(x,true)).join("") : "<div class='subtle'>No crypto overlap tickers in this window.</div>";
 
-        const partyTag = party === "D"
-          ? `<span class="tag tagDem">DEM</span>`
-          : party === "R"
-            ? `<span class="tag tagRep">GOP</span>`
-            : `<span class="tag badgeNeu">?</span>`;
+      el("cryptoBuyList").innerHTML =
+        buys.length ? buys.map(x => cardHTML(x, "BUY", true)).join("") : "<div class='subtle'>No crypto buys found.</div>";
 
-        const sample = Array.isArray(p.sample) ? p.sample : [];
-        const sampleHtml = sample.length ? sample.map(s => {
-          const t = String(s.ticker || "");
-          const kind = String(s.kind || "");
-          const ex = Number(s.excessReturn || 0);
-          const exBadge = ex > 0 ? "badgePos" : ex < 0 ? "badgeNeg" : "badgeNeu";
-          const exSign = ex > 0 ? "+" : "";
-          return `
-            <div class="kpiRow">
-              <a href="#stock=${t}"><strong>${t}</strong></a>
-              <span class="kpiBadge ${kind === "BUY" ? "badgePos" : "badgeNeg"}">${kind}</span>
-              <span class="kpiBadge ${exBadge}">${exSign}${ex}%</span>
-            </div>
-          `;
-        }).join("") : `<div class="kpiRow"><span class="muted">No sample trades</span></div>`;
+      el("cryptoSellList").innerHTML =
+        sells.length ? sells.map(x => cardHTML(x, "SELL", true)).join("") : "<div class='subtle'>No crypto sells found.</div>";
 
-        return `
-          <div class="card">
-            <div class="cardTop">
-              <div>
-                <div class="tickerLine">
-                  <div class="ticker">#${idx + 1} ${name}</div>
-                  <div class="who">Scored vs SPY · forward ${horizon}D</div>
-                </div>
-              </div>
-              <div class="tags">
-                ${partyTag}
-                <span class="tag ${badge}">${sign}${avg}% avg</span>
-                <span class="tag badgeNeu">${win}% win</span>
-                <span class="tag badgeNeu">${trades} trades</span>
-              </div>
-            </div>
-            <div class="divider"></div>
-            <div class="kpiSub">Recent scored trades (excess vs SPY):</div>
-            <div class="kpiList">${sampleHtml}</div>
-          </div>
-        `;
-      }).join("");
-
-      el("perfList").innerHTML = html;
       handleHash();
     }
 
-    function labelBadge(label){
-      const s = String(label || "").toUpperCase();
-      if (s === "BUY") return `<span class="tag tagBuy">BUY</span>`;
-      if (s === "SELL") return `<span class="tag tagSell">SELL</span>`;
-      if (s === "MIXED") return `<span class="tag tagBoth">MIXED</span>`;
-      if (s.includes("13F")) return `<span class="tag tagSEC">13F</span>`;
-      if (s.includes("FORM4") || s === "FORM 4") return `<span class="tag tagSEC">FORM 4</span>`;
-      return `<span class="tag tagSEC">${s || "FILED"}</span>`;
-    }
-
-    function renderLeaders(payload){
-      const leaders = payload && Array.isArray(payload.leaders) ? payload.leaders : [];
-      const windowDays = payload && payload.windowDays ? payload.windowDays : 365;
-      el("reportDate").textContent = payload.date || "";
-
-      if (!leaders.length){
-        el("leadersList").innerHTML = "<div class='subtle'>No leaders data returned yet.</div>";
-        return;
-      }
-
-      const html = leaders.map(l => {
-        const name = String(l.name || "");
-        const cik = String(l.cik || "");
-        const events = Array.isArray(l.events) ? l.events : [];
-
-        const evHtml = events.length ? events.map(ev => {
-          const form = String(ev.form || "");
-          const label = String(ev.label || "");
-          const filingDate = String(ev.filingDate || "");
-          const indexUrl = String(ev.indexUrl || "");
-          const primaryUrl = String(ev.primaryUrl || "");
-          const buyTx = Number(ev.buyTxCount || 0);
-          const sellTx = Number(ev.sellTxCount || 0);
-
-          const counts = (buyTx || sellTx)
-            ? `Tx: <span class="mono">P=${buyTx}</span> <span class="mono">S=${sellTx}</span>`
-            : "";
-
-          return `
-            <div class="eventRow">
-              <div class="eventTop">
-                <div>
-                  <div class="eventTitle">${form} · ${label || "FILED"}</div>
-                  <div class="eventMeta">Filed: ${filingDate || "—"} ${counts ? " · " + counts : ""}</div>
-                </div>
-                <div class="tags">
-                  ${labelBadge(label)}
-                  ${form ? `<span class="tag badgeSEC">${form}</span>` : ""}
-                </div>
-              </div>
-
-              <div class="miniLinks">
-                ${indexUrl ? `<a class="miniLink" href="${indexUrl}" target="_blank" rel="noopener">SEC Index</a>` : ""}
-                ${primaryUrl ? `<a class="miniLink" href="${primaryUrl}" target="_blank" rel="noopener">Primary doc</a>` : ""}
-              </div>
-            </div>
-          `;
-        }).join("") : `<div class="subtle'>No recent filings found.</div>`;
-
-        return `
-          <div class="card">
-            <div class="cardTop">
-              <div>
-                <div class="tickerLine">
-                  <div class="ticker">${name}</div>
-                  <div class="who">CIK: <span class="mono">${cik}</span> · Rolling ${windowDays}D</div>
-                </div>
-              </div>
-              <div class="tags">
-                <span class="tag tagSEC">SEC</span>
-              </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="eventList">
-              ${evHtml}
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      el("leadersList").innerHTML = html;
-    }
-
-    async function loadMain(force=false){
-      const url = todayUrl();
-      setStatus("", `Loading congress (rolling ${WINDOW_DAYS}D)…`, url);
-
+    async function loadMain(){
+      setStatus("", "Loading congress (rolling 30D)…", BACKEND_MAIN_URL);
       try{
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(BACKEND_MAIN_URL, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
-
         if (!res.ok) throw new Error("HTTP " + res.status);
         if (data.error) throw new Error(data.error);
 
         CACHE_MAIN = data;
-
-        if (ACTIVE_TAB === "Main") {
-          setStatus("ok", "Live congress data loaded ✅", "");
-          renderMain(data);
-        } else {
-          setStatus("ok", "Congress data updated ✅", "");
-        }
+        setStatus("ok", "Live congress data loaded ✅", "");
+        if (ACTIVE_TAB === "Main") renderMain(data);
       }catch(err){
         setStatus("err", "Could not load congress data", String(err));
-        if (ACTIVE_TAB === "Main") {
+        if (ACTIVE_TAB === "Main"){
           el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
+          el("buyList").innerHTML = "";
+          el("sellList").innerHTML = "";
         }
       }
     }
 
-    async function loadPerf(force=false){
-      if (ACTIVE_TAB !== "Performance" && !force) return;
+    async function loadCrypto(force){
+      if (ACTIVE_TAB !== "Crypto" && !force) return;
 
-      if (CACHE_PERF && !force){
-        renderPerf(CACHE_PERF);
+      const cached = CACHE_CRYPTO[CRYPTO_HORIZON_DAYS];
+      if (cached && !force){
+        renderCrypto(cached);
         return;
       }
 
-      setStatus("", "Loading performance (rolling 2Y)…", PERF_URL);
-      el("perfList").innerHTML = "<div class='subtle'>Loading performance…</div>";
+      const url = `${BACKEND_CRYPTO_URL}?horizon_days=${encodeURIComponent(CRYPTO_HORIZON_DAYS)}`;
+      setStatus("", `Loading crypto (rolling ${CRYPTO_HORIZON_DAYS}D)…`, url);
+
+      el("cryptoConvergenceList").innerHTML = "<div class='subtle'>Loading crypto…</div>";
+      el("cryptoBuyList").innerHTML = "";
+      el("cryptoSellList").innerHTML = "";
 
       try{
-        const res = await fetch(PERF_URL, { cache: "no-store" });
+        const res = await fetch(url, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
-
         if (!res.ok) throw new Error("HTTP " + res.status);
         if (data.error) throw new Error(data.error);
 
-        CACHE_PERF = data;
-        setStatus("ok", "Performance loaded ✅", "");
-        renderPerf(data);
+        CACHE_CRYPTO[CRYPTO_HORIZON_DAYS] = data;
+        setStatus("ok", `Crypto loaded ✅ (${CRYPTO_HORIZON_DAYS}D)`, "");
+        renderCrypto(data);
       }catch(err){
-        setStatus("err", "Could not load performance", String(err));
-        el("perfList").innerHTML = "<div class='subtle'>No performance data displayed.</div>";
-      }
-    }
-
-    async function loadLeaders(force=false){
-      if (ACTIVE_TAB !== "Leaders" && !force) return;
-
-      if (CACHE_LEADERS && !force){
-        renderLeaders(CACHE_LEADERS);
-        return;
-      }
-
-      setStatus("", "Loading SEC leaders (rolling 365D)…", LEADERS_URL);
-      el("leadersList").innerHTML = "<div class='subtle'>Loading SEC filings…</div>";
-
-      try{
-        const res = await fetch(LEADERS_URL, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-
-        CACHE_LEADERS = data;
-        setStatus("ok", "SEC leaders loaded ✅", "");
-        renderLeaders(data);
-      }catch(err){
-        setStatus("err", "Could not load SEC leaders", String(err));
-        el("leadersList").innerHTML = "<div class='subtle'>No SEC leaders data displayed.</div>";
+        setStatus("err", `Could not load crypto (${CRYPTO_HORIZON_DAYS}D)`, String(err));
+        el("cryptoConvergenceList").innerHTML =
+          "<div class='subtle'>No crypto data displayed.</div>" +
+          "<div class='subtle'>Backend endpoint needed: <span class='mono'>/report/crypto?horizon_days=" + CRYPTO_HORIZON_DAYS + "</span></div>";
       }
     }
 
     function handleRefresh(){
-      if (ACTIVE_TAB === "Leaders"){
-        CACHE_LEADERS = null;
-        loadLeaders(true);
+      if (ACTIVE_TAB === "Crypto"){
+        CACHE_CRYPTO[CRYPTO_HORIZON_DAYS] = null;
+        loadCrypto(true);
         return;
       }
-      if (ACTIVE_TAB === "Performance"){
-        CACHE_PERF = null;
-        loadPerf(true);
-        return;
-      }
-      loadMain(true);
+      loadMain();
     }
 
-    function setWindow(days){
-      WINDOW_DAYS = days;
-      CACHE_MAIN = null;
-
-      el("win30Btn").classList.toggle("tabBtnActive", days === 30);
-      el("win180Btn").classList.toggle("tabBtnActive", days === 180);
-
-      if (ACTIVE_TAB === "Main") loadMain(true);
-    }
-
-    // Main window toggles
-    el("win30Btn").addEventListener("click", () => setWindow(30));
-    el("win180Btn").addEventListener("click", () => setWindow(180));
-
-    // Tabs top
+    // Top tabs
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
-    el("tabPerfBtn").addEventListener("click", () => showTab("Performance"));
-    el("tabLeadersBtn").addEventListener("click", () => showTab("Leaders"));
+    el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
     el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
 
-    // Tabs bottom
+    // Bottom nav
     el("navMain").addEventListener("click", () => showTab("Main"));
-    el("navPerf").addEventListener("click", () => showTab("Performance"));
-    el("navLeaders").addEventListener("click", () => showTab("Leaders"));
+    el("navCrypto").addEventListener("click", () => showTab("Crypto"));
     el("navSearch").addEventListener("click", () => showTab("Search"));
 
     // Search
@@ -1175,13 +844,19 @@
       handleHash();
     });
 
+    // Crypto window buttons
+    el("crypto30").addEventListener("click", () => { setCryptoSegActive(30); loadCrypto(true); });
+    el("crypto180").addEventListener("click", () => { setCryptoSegActive(180); loadCrypto(true); });
+    el("crypto365").addEventListener("click", () => { setCryptoSegActive(365); loadCrypto(true); });
+
     // Refresh + chart
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
 
     // Start
+    setCryptoSegActive(30);
     showTab("Main");
-    setWindow(30);
+    loadMain();
   </script>
 </body>
 </html>
