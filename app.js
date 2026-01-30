@@ -1,3 +1,4 @@
+document.body.insertAdjacentHTML("afterbegin","<div style='padding:8px;color:#6ee7ff'>JS running ✅</div>");
 // Change this later to your real API URL (example: https://yourdomain.com/report/today)
 const API_TODAY = null; // null = use mock data
 
