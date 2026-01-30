@@ -587,6 +587,27 @@
       "BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"
     ]);
 
+    // Map common crypto ETFs (and a couple obvious proxies) to the underlying coin.
+    // This lets the "Direct crypto disclosures" section capture more BUY/SELL rows even when backend tags rows as CRYPTO-LINKED.
+    const TICKER_TO_COIN = {
+      // Bitcoin ETFs / products
+      "IBIT":"BTC",
+      "FBTC":"BTC",
+      "GBTC":"BTC",
+      "BITO":"BTC",
+      "ARKB":"BTC",
+      "BTCO":"BTC",
+      "HODL":"BTC",
+      "BITB":"BTC",
+
+      // Ethereum ETFs / products
+      "ETHE":"ETH",
+      "ETHA":"ETH",
+      "ETHW":"ETH",
+
+      // If you later add more, just extend this dictionary
+    };
+
     function setStatus(kind, text, detail){
       const st = el("statusText");
       const sd = el("statusDetail");
@@ -966,6 +987,23 @@
       return `<span class="tag badgeNeu">?</span>`;
     }
 
+    function inferCoinFromTicker(ticker){
+      const t = String(ticker || "").toUpperCase();
+      return TICKER_TO_COIN[t] || "";
+    }
+
+    function normalizedCoinsForRow(r){
+      const coins = Array.isArray(r.coins) ? r.coins.map(x => String(x||"").toUpperCase()).filter(Boolean) : [];
+      const hasRealCoin = coins.some(c => DIRECT_COIN_SET.has(c));
+      const inferred = inferCoinFromTicker(r.ticker);
+
+      if (inferred && !hasRealCoin){
+        // Add inferred coin while keeping any existing tags (like CRYPTO-LINKED)
+        if (!coins.includes(inferred)) coins.unshift(inferred);
+      }
+      return coins;
+    }
+
     function coinsToLabel(coins){
       const arr = Array.isArray(coins) ? coins.map(x => String(x||"").toUpperCase()).filter(Boolean) : [];
       const cleaned = arr.filter(c => c !== "CRYPTO-LINKED");
@@ -974,7 +1012,10 @@
     }
 
     function isDirectCryptoRow(r){
-      const coins = Array.isArray(r.coins) ? r.coins : [];
+      // Treat as "direct" if:
+      // - coin mentioned (BTC/ETH/...) OR
+      // - it's a mapped crypto ETF ticker (IBIT/FBTC/etc), even if backend only tags CRYPTO-LINKED
+      const coins = normalizedCoinsForRow(r);
       return coins.some(c => DIRECT_COIN_SET.has(String(c||"").toUpperCase()));
     }
 
@@ -986,7 +1027,9 @@
       const traded = String(r.traded || "");
       const filed = String(r.filed || "");
       const desc = String(r.description || "").trim();
-      const sym = coinsToLabel(r.coins);
+
+      const coinsNorm = normalizedCoinsForRow(r);
+      const sym = coinsToLabel(coinsNorm);
 
       return `
         <div class="card">
@@ -1018,6 +1061,7 @@
               ${amt ? `<div class="countItem">Amount: <strong>${amt}</strong></div>` : ""}
               ${traded ? `<div class="countItem">Traded: <strong>${traded}</strong></div>` : ""}
               ${filed ? `<div class="countItem">Filed: <strong>${filed}</strong></div>` : ""}
+              ${r.ticker ? `<div class="countItem">Ticker: <strong>${String(r.ticker).toUpperCase()}</strong></div>` : ""}
             </div>
           </div>
         </div>
@@ -1032,7 +1076,7 @@
       const crypto = (data && data.crypto && typeof data.crypto === "object") ? data.crypto : {};
       const raw = normalizeList(crypto.raw);
 
-      // Direct crypto: only rows that mention actual coins, not just CRYPTO-LINKED
+      // Direct crypto: coin mentioned OR inferred from crypto ETF ticker mapping
       const direct = raw.filter(isDirectCryptoRow);
       const directBuys = direct.filter(x => String(x.kind||"").toUpperCase() === "BUY");
       const directSells = direct.filter(x => String(x.kind||"").toUpperCase() === "SELL");
@@ -1064,14 +1108,10 @@
       const topBuy = sumBuys.slice(0,5).map(x => `${String(x.symbol||"").toUpperCase()} (${Number(x.count||0)})`).join(", ");
       const topSell = sumSells.slice(0,5).map(x => `${String(x.symbol||"").toUpperCase()} (${Number(x.count||0)})`).join(", ");
       const hintBits = [];
-      if (topBuy) hintBits.push(`Top direct/linked BUY tags: ${topBuy}`);
-      if (topSell) hintBits.push(`Top direct/linked SELL tags: ${topSell}`);
-      if (hintBits.length){
-        el("cryptoHint").textContent = hintBits.join(" · ");
-      } else {
-        el("cryptoHint").textContent =
-          "Direct crypto items come from disclosure descriptions (BTC, ETH, SOL, LINK, etc). Crypto-linked tickers are ETFs, miners, and exchanges pulled from the same congress feed.";
-      }
+      if (topBuy) hintBits.push(`Top BUY tags: ${topBuy}`);
+      if (topSell) hintBits.push(`Top SELL tags: ${topSell}`);
+      hintBits.push("Note: Bitcoin and Ethereum ETFs are now counted as direct crypto here (mapped from ticker).");
+      el("cryptoHint").textContent = hintBits.join(" · ");
     }
 
     function labelBadge(label){
