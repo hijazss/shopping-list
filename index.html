@@ -27,6 +27,9 @@
       --pos:#7cffc0;
       --neg:#ff8a8a;
       --neutral:rgba(255,255,255,.70);
+
+      --sec:#ffd27d;
+      --sec2:#ffb86b;
     }
 
     *{box-sizing:border-box}
@@ -35,7 +38,7 @@
       background:var(--bg);
       color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-      font-size:13px;
+      font-size:12px;
     }
     a{color:inherit;text-decoration:none}
 
@@ -48,7 +51,7 @@
       max-width:980px;
       margin:0 auto;
     }
-    .h1{font-size:18px;font-weight:900;letter-spacing:.01em}
+    .h1{font-size:17px;font-weight:900;letter-spacing:.01em}
     .subtle{font-size:12px;color:var(--muted);margin-top:2px}
     .pillBtn{
       border:1px solid var(--border);
@@ -148,7 +151,7 @@
       text-transform:uppercase;
     }
     .kpiValue{
-      font-size:18px;
+      font-size:17px;
       font-weight:900;
       letter-spacing:.02em;
       margin-top:4px;
@@ -184,6 +187,7 @@
     .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
     .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
     .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
+    .badgeSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .card{
       background:var(--card);
@@ -207,7 +211,7 @@
       flex-wrap:wrap;
     }
     .ticker{
-      font-size:14px;
+      font-size:13px;
       font-weight:900;
       letter-spacing:.03em;
     }
@@ -239,6 +243,7 @@
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
+    .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .metaRow{
       margin-top:7px;
@@ -358,32 +363,40 @@
       padding:11px 10px 16px;
       font-size:11px;
       color:var(--muted);
+      user-select:none;
     }
     .tabBottomActive{color:#fff}
 
-    .leaderRow{
+    /* Leaders event list */
+    .eventList{
+      margin-top:8px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .eventRow{
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:8px;
+    }
+    .eventTop{
       display:flex;
       justify-content:space-between;
       gap:10px;
       align-items:flex-start;
-      margin-top:6px;
-    }
-    .leaderName{
-      font-size:13px;
-      font-weight:900;
-      letter-spacing:.01em;
-    }
-    .leaderMeta{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:2px;
-    }
-    .leaderRight{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      justify-content:flex-end;
       flex-wrap:wrap;
+    }
+    .eventTitle{
+      font-weight:900;
+      font-size:12px;
+      letter-spacing:.02em;
+    }
+    .eventMeta{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.25;
     }
   </style>
 </head>
@@ -391,7 +404,7 @@
 <body>
   <header class="header">
     <div>
-      <div class="h1">Convergence</div>
+      <div class="h1" id="pageTitle">Convergence</div>
       <div class="subtle" id="reportDate"></div>
     </div>
     <button class="pillBtn" id="refreshBtn">Refresh</button>
@@ -403,6 +416,7 @@
       <span class="mono" id="statusDetail"></span>
     </div>
 
+    <!-- Top tabs (4 options) -->
     <div class="tabRow">
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
       <button class="tabBtn" id="tabYearlyBtn">Yearly</button>
@@ -414,37 +428,24 @@
 
     <!-- KPI STRIP -->
     <section id="kpiStrip">
-      <div class="sectionTitle">Signal dashboard (top 4, 30-day window)</div>
-
-      <div class="panel">
-        <div class="metaRow" style="margin-top:0;">
-          <div>
-            <strong>Definitions (30D):</strong>
-            Buy and Sell are counts of members filing buys or sells for a ticker in the last 30 days.
-            Participation is Buy plus Sell across both parties in the last 30 days.
-            Accumulation is Buys minus Sells in the last 30 days.
-            Top signals highlight the strongest Accumulation, strongest Selling, and top Convergence in the last 30 days.
-          </div>
-        </div>
-      </div>
-
+      <div class="sectionTitle">Signal dashboard (top 4, rolling 30 days)</div>
       <div class="grid4">
         <div class="kpi" id="kpiAccum"></div>
         <div class="kpi" id="kpiSell"></div>
-        <div class="kpi" id="kpiRolling30"></div>
+        <div class="kpi" id="kpiWeekly"></div>
         <div class="kpi" id="kpiHighlights"></div>
       </div>
     </section>
 
     <!-- MAIN VIEW -->
     <section id="viewMain">
-      <div class="sectionTitle">Convergence 🔥 (bipartisan overlap on BUY, last 30 days)</div>
+      <div class="sectionTitle">Convergence 🔥 (bipartisan overlap on BUY, rolling 30 days)</div>
       <div id="convergenceList"></div>
 
-      <div class="sectionTitle">Congress activity ranked by participation (last 30 days)</div>
+      <div class="sectionTitle">Politicians ranked by participation (rolling 30 days)</div>
       <div class="colsHeader">
-        <div>Buys (left, 30D)</div>
-        <div>Sells (right, 30D)</div>
+        <div>Buys (left)</div>
+        <div>Sells (right)</div>
       </div>
 
       <div class="grid2">
@@ -452,48 +453,21 @@
         <div><div id="sellList"></div></div>
       </div>
 
-      <div class="hint">Sort is by total participation across both parties over the last 30 days. Tap ticker for chart.</div>
+      <div class="hint">Sort is by total congressional participation (both parties) within the rolling 30-day window. Tap ticker for chart.</div>
     </section>
 
     <!-- YEARLY VIEW -->
     <section id="viewYearly" style="display:none;">
-      <div class="sectionTitle">Yearly congress accumulation & sell-off (1-year window)</div>
-
-      <div class="panel">
-        <div class="panelTitle">
-          <h2>Top yearly movers (restricted to highest activity tickers)</h2>
-        </div>
-        <div class="hint" id="yearlyHint" style="margin-top:6px;">
-          This view requires backend yearly totals. If missing, it shows a proxy.
-        </div>
-      </div>
-
-      <div class="grid2">
-        <div>
-          <div class="sectionTitle" style="margin-top:0;">Yearly accumulation (BUY)</div>
-          <div id="yearBuyList"></div>
-        </div>
-        <div>
-          <div class="sectionTitle" style="margin-top:0;">Yearly sell-off (SELL)</div>
-          <div id="yearSellList"></div>
-        </div>
-      </div>
+      <div class="sectionTitle">Yearly accumulation and sell-off activity (rolling 365 days)</div>
+      <div id="yearlyList"></div>
+      <div class="hint">This tab requires backend to return <span class="mono">yearly.universe</span>. If empty, update backend yearly support.</div>
     </section>
 
-    <!-- LEADERS VIEW -->
+    <!-- LEADERS VIEW (SEC filings) -->
     <section id="viewLeaders" style="display:none;">
-      <div class="sectionTitle">Top 5 congress portfolio performers (30-day performance)</div>
-
-      <div class="panel">
-        <div class="panelTitle">
-          <h2>Best performers</h2>
-        </div>
-        <div class="hint" id="leadersHint" style="margin-top:6px;">
-          This requires backend portfolio performance per member (example field: leaders).
-        </div>
-      </div>
-
+      <div class="sectionTitle">Public filings leaders (SEC EDGAR, rolling 365 days)</div>
       <div id="leadersList"></div>
+      <div class="hint">Form 4 can show BUY/SELL. 13F is quarterly and shown as filing events unless backend computes holdings deltas.</div>
     </section>
 
     <!-- SEARCH VIEW -->
@@ -513,6 +487,7 @@
     </section>
   </main>
 
+  <!-- Bottom nav (4 options) -->
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
@@ -523,9 +498,25 @@
   </nav>
 
   <script>
-    const BACKEND_URL = "https://finance-backend-dzta.onrender.com/report/today";
+    // Endpoints
+    const BACKEND_URL = "https://finance-backend-dzta.onrender.com/report/today";            // rolling 30D congress data
+    const LEADERS_URL = "https://finance-backend-dzta.onrender.com/report/public-leaders";  // rolling 365D SEC leaders
 
     const el = (id) => document.getElementById(id);
+
+    let ACTIVE_TAB = "Main";
+    let CACHE_MAIN = null;
+    let CACHE_LEADERS = null;
+
+    function setTitleForTab(tab){
+      const map = {
+        "Main": "Convergence",
+        "Yearly": "Yearly",
+        "Leaders": "Leaders",
+        "Search": "Search"
+      };
+      el("pageTitle").textContent = map[tab] || "Convergence";
+    }
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -627,7 +618,7 @@
               <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
               <div class="countItem">Total: <strong>${dem + rep}</strong></div>
             </div>
-            <div>${filed ? `Latest filing: ${filed}` : ""}</div>
+            <div>${filed ? `Filed: ${filed}` : ""}</div>
           </div>
 
           ${tickerLinksHTML(ticker)}
@@ -648,7 +639,7 @@
             <div>
               <div class="tickerLine">
                 <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                <div class="who">Bipartisan overlap on BUY (30D)</div>
+                <div class="who">Bipartisan overlap (BUY)</div>
               </div>
             </div>
             <div class="tags">
@@ -668,7 +659,7 @@
               <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
               <div class="countItem">Total: <strong>${dem + rep}</strong></div>
             </div>
-            <div>${filed ? `Latest filing: ${filed}` : ""}</div>
+            <div>${filed ? `Filed: ${filed}` : ""}</div>
           </div>
 
           ${tickerLinksHTML(ticker)}
@@ -724,14 +715,14 @@
       setStockPanel("");
     }
 
+    // --- KPI BUILDERS (Top 4) ---
     function topBy(arr, scoreFn, n){
       const a = normalizeList(arr).slice();
       a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
       return a.slice(0, n);
     }
 
-    function renderKpiBoxes(convergence, buys, sells, roll30){
-      // Merge buy+sell by ticker for net flow
+    function renderKpiBoxes(convergence, buys, sells, meta){
       const merged = new Map();
       function addCard(x){
         const t = String(x.ticker || "").toUpperCase();
@@ -747,9 +738,8 @@
       sells.forEach(addCard);
 
       const mergedArr = Array.from(merged.values());
-
-      // KPI 1: Accumulation 30D
       const topNet = topBy(mergedArr, (x) => netFlow(x), 5);
+
       const topNetHtml = topNet.map(x => {
         const nf = netFlow(x);
         const badge = nf > 0 ? "badgePos" : nf < 0 ? "badgeNeg" : "badgeNeu";
@@ -757,19 +747,20 @@
         return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${badge}">${sign}${nf}</span></div>`;
       }).join("");
 
+      const windowText = meta && meta.windowDays ? `${meta.windowDays}D` : "30D";
+
       el("kpiAccum").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Accumulation (30D)</div>
+            <div class="kpiTitle">Net flow</div>
             <div class="kpiValue">Buys − Sells</div>
           </div>
-          <span class="kpiBadge badgeNeu">30D</span>
+          <span class="kpiBadge badgeNeu">${windowText}</span>
         </div>
-        <div class="kpiSub">Net member flow per ticker in the last 30 days.</div>
+        <div class="kpiSub">Highest accumulation (positive) or distribution (negative) in rolling ${windowText}.</div>
         <div class="kpiList">${topNetHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
       `;
 
-      // KPI 2: Participation 30D
       const topConf = topBy(mergedArr, (x) => congressScore(x), 5);
       const topConfHtml = topConf.map(x => {
         const total = congressScore(x);
@@ -781,57 +772,33 @@
       el("kpiSell").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Participation (30D)</div>
-            <div class="kpiValue">Buy + Sell</div>
+            <div class="kpiTitle">Participation</div>
+            <div class="kpiValue">Total activity</div>
           </div>
-          <span class="kpiBadge badgeNeu">30D</span>
+          <span class="kpiBadge badgeNeu">${windowText}</span>
         </div>
-        <div class="kpiSub">Total filings by members across both parties in the last 30 days.</div>
+        <div class="kpiSub">Total congress participation (both parties) in rolling ${windowText}.</div>
         <div class="kpiList">${topConfHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
       `;
 
-      // KPI 3: Rolling 30D (uses backend roll30 if provided, else uses mergedArr proxy)
-      let roll30Items = [];
-      let roll30Label = "Proxy";
-
-      if (Array.isArray(roll30) && roll30.length){
-        roll30Items = roll30.slice();
-        roll30Label = "30D";
-      } else {
-        roll30Items = mergedArr.map(x => ({
-          ticker: x.ticker,
-          net: netFlow(x)
-        }));
-      }
-
-      roll30Items.sort((a,b)=>{
-        const aNet = Number(a.net ?? a.value ?? 0);
-        const bNet = Number(b.net ?? b.value ?? 0);
-        if (bNet !== aNet) return bNet - aNet;
-        return String(a.ticker||"").localeCompare(String(b.ticker||""), undefined, {sensitivity:"base"});
-      });
-
-      const top30 = roll30Items.slice(0,5);
-      const roll30Html = top30.map(x=>{
-        const n = Number(x.net ?? x.value ?? 0);
-        const badge = n > 0 ? "badgePos" : n < 0 ? "badgeNeg" : "badgeNeu";
-        const sign = n > 0 ? "+" : "";
-        return `<div class="kpiRow"><a href="#stock=${String(x.ticker||"").toUpperCase()}"><strong>${String(x.ticker||"").toUpperCase()}</strong></a><span class="kpiBadge ${badge}">${sign}${n}</span></div>`;
+      const topWeekly = topBy(mergedArr, (x) => congressScore(x), 5);
+      const topWeeklyHtml = topWeekly.map(x => {
+        const total = congressScore(x);
+        return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge badgeNeu">${total} items</span></div>`;
       }).join("");
 
-      el("kpiRolling30").innerHTML = `
+      el("kpiWeekly").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Top flow (30D)</div>
-            <div class="kpiValue">Ranking</div>
+            <div class="kpiTitle">Top tickers</div>
+            <div class="kpiValue">Intensity</div>
           </div>
-          <span class="kpiBadge badgeNeu">${roll30Label}</span>
+          <span class="kpiBadge badgeNeu">${windowText}</span>
         </div>
-        <div class="kpiSub">Most positive net flow in the last 30 days (or best proxy).</div>
-        <div class="kpiList">${roll30Html || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
+        <div class="kpiSub">Most active tickers in the rolling ${windowText} pull.</div>
+        <div class="kpiList">${topWeeklyHtml || `<div class="kpiRow"><span class="muted">No data</span></div>`}</div>
       `;
 
-      // KPI 4: Top signals (30D)
       const topAcc = topBy(mergedArr, (x) => netFlow(x), 1)[0];
       const topDist = topBy(mergedArr, (x) => -netFlow(x), 1)[0];
       const topConv = (convergence && convergence.length) ? convergence[0] : null;
@@ -841,8 +808,8 @@
         : `<div class="kpiRow"><span class="muted">🔥 Accumulation</span><span class="muted">None</span></div>`;
 
       const distLine = topDist
-        ? `<div class="kpiRow"><span class="muted">⚠️ Sell-off</span><a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a></div>`
-        : `<div class="kpiRow"><span class="muted">⚠️ Sell-off</span><span class="muted">None</span></div>`;
+        ? `<div class="kpiRow"><span class="muted">⚠️ Selling</span><a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a></div>`
+        : `<div class="kpiRow"><span class="muted">⚠️ Selling</span><span class="muted">None</span></div>`;
 
       const convLine = topConv
         ? `<div class="kpiRow"><span class="muted">🤝 Convergence</span><a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a></div>`
@@ -851,12 +818,12 @@
       el("kpiHighlights").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Top signals (30D)</div>
+            <div class="kpiTitle">Top signals</div>
             <div class="kpiValue">Fast read</div>
           </div>
-          <span class="kpiBadge badgeNeu">30D</span>
+          <span class="kpiBadge badgeNeu">${windowText}</span>
         </div>
-        <div class="kpiSub">Strongest accumulation, sell-off, and convergence in the last 30 days.</div>
+        <div class="kpiSub">Strongest accumulation, selling, and overlap in rolling ${windowText}.</div>
         <div class="kpiList">
           ${accLine}
           ${distLine}
@@ -865,124 +832,16 @@
       `;
     }
 
-    function renderYearlyCongress(yearly, fallbackMerged){
-      let universe = [];
-      let usedBackend = false;
-
-      if (yearly && Array.isArray(yearly.universe) && yearly.universe.length){
-        universe = yearly.universe.slice();
-        usedBackend = true;
-        el("yearlyHint").textContent = "Using backend 1-year window (restricted to highest activity tickers).";
-      } else {
-        universe = fallbackMerged.slice();
-        el("yearlyHint").textContent = "Backend yearly window not provided yet, showing a proxy using the current pull.";
-      }
-
-      universe.sort(sortByCongressStrength);
-
-      const topUniverse = universe.slice(0, 25);
-
-      const buyRank = topUniverse.slice().sort((a,b)=>{
-        const aBuy = Number(a.demBuyers||0)+Number(a.repBuyers||0);
-        const bBuy = Number(b.demBuyers||0)+Number(b.repBuyers||0);
-        if (bBuy !== aBuy) return bBuy - aBuy;
-        return String(a.ticker||"").localeCompare(String(b.ticker||""));
-      });
-
-      const sellRank = topUniverse.slice().sort((a,b)=>{
-        const aSell = Number(a.demSellers||0)+Number(a.repSellers||0);
-        const bSell = Number(b.demSellers||0)+Number(b.repSellers||0);
-        if (bSell !== aSell) return bSell - aSell;
-        return String(a.ticker||"").localeCompare(String(b.ticker||""));
-      });
-
-      const topBuy = buyRank.slice(0, 15);
-      const topSell = sellRank.slice(0, 15);
-
-      el("yearBuyList").innerHTML = topBuy.length
-        ? topBuy.map(x => cardHTML(x, "BUY")).join("")
-        : "<div class='subtle'>No yearly buy accumulation found.</div>";
-
-      el("yearSellList").innerHTML = topSell.length
-        ? topSell.map(x => cardHTML(x, "SELL")).join("")
-        : "<div class='subtle'>No yearly sell-off found.</div>";
-    }
-
-    function leaderCardHTML(p){
-      // Expected shape from backend (example):
-      // { name, party, chamber, state, return30d, return1y, trades30d, url }
-      const name = String(p.name || p.congressman || p.member || "Unknown");
-      const party = String(p.party || "").toUpperCase();
-      const chamber = String(p.chamber || "");
-      const state = String(p.state || "");
-      const r30 = (p.return30d ?? p.performance30d ?? p.pnl30d);
-      const r1y = (p.return1y ?? p.performance1y ?? p.pnl1y);
-      const trades = (p.trades30d ?? p.tradeCount30d ?? p.activity30d);
-
-      const r30Num = Number(r30);
-      const badge30 = Number.isFinite(r30Num)
-        ? (r30Num > 0 ? "badgePos" : r30Num < 0 ? "badgeNeg" : "badgeNeu")
-        : "badgeNeu";
-
-      const partyTag = party === "DEM"
-        ? `<span class="tag tagDem">DEM</span>`
-        : party === "REP" || party === "GOP"
-          ? `<span class="tag tagRep">GOP</span>`
-          : `<span class="tag">UNK</span>`;
-
-      const link = p.url ? String(p.url) : "";
-
-      const r30Text = Number.isFinite(r30Num) ? `${(r30Num*100).toFixed(1)}%` : "n/a";
-      const r1yNum = Number(r1y);
-      const r1yText = Number.isFinite(r1yNum) ? `${(r1yNum*100).toFixed(1)}%` : "n/a";
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="leaderName">${link ? `<a href="${link}" target="_blank" rel="noopener">${name}</a>` : name}</div>
-              <div class="leaderMeta">${chamber ? chamber : ""}${(chamber && state) ? " · " : ""}${state ? state : ""}</div>
-            </div>
-            <div class="leaderRight">
-              ${partyTag}
-              <span class="kpiBadge ${badge30}">30D ${r30Text}</span>
-              <span class="kpiBadge badgeNeu">1Y ${r1yText}</span>
-              ${trades !== undefined ? `<span class="kpiBadge badgeNeu">${Number(trades)||0} trades</span>` : ""}
-            </div>
-          </div>
-          <div class="hint" style="margin-top:8px;">
-            Ranking is 30-day portfolio performance.
-          </div>
-        </div>
-      `;
-    }
-
-    function renderLeaders(leaders){
-      const list = normalizeList(leaders);
-
-      if (!list.length){
-        el("leadersHint").textContent = "No leader performance data yet. Backend needs to provide a leaders array with 30-day returns.";
-        el("leadersList").innerHTML = "<div class='subtle'>No leader performance data displayed.</div>";
-        return;
-      }
-
-      el("leadersHint").textContent = "Showing top 5 by 30-day portfolio performance.";
-      list.sort((a,b) => {
-        const ar = Number(a.return30d ?? a.performance30d ?? a.pnl30d ?? -999999);
-        const br = Number(b.return30d ?? b.performance30d ?? b.pnl30d ?? -999999);
-        if (br !== ar) return br - ar;
-        return String(a.name||"").localeCompare(String(b.name||""));
-      });
-
-      const top5 = list.slice(0,5);
-      el("leadersList").innerHTML = top5.map(leaderCardHTML).join("");
-    }
-
     function showTab(tab){
+      ACTIVE_TAB = tab;
+      setTitleForTab(tab);
+
       el("viewMain").style.display = tab === "Main" ? "" : "none";
       el("viewYearly").style.display = tab === "Yearly" ? "" : "none";
       el("viewLeaders").style.display = tab === "Leaders" ? "" : "none";
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
+
+      el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
       el("tabYearlyBtn").classList.toggle("tabBtnActive", tab === "Yearly");
@@ -993,71 +852,174 @@
       el("navYearly").classList.toggle("tabBottomActive", tab === "Yearly");
       el("navLeaders").classList.toggle("tabBottomActive", tab === "Leaders");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
+
+      // Load content for newly opened tabs if needed
+      if (tab === "Yearly" && CACHE_MAIN) renderYearly(CACHE_MAIN);
+      if (tab === "Leaders") loadLeaders();
     }
 
-    function setStockPanelFromHash(){
-      const h = window.location.hash || "";
-      if (h.startsWith("#stock=")){
-        const t = decodeURIComponent(h.replace("#stock=","")).trim();
-        setStockPanel(t);
-        return;
-      }
-      setStockPanel("");
-    }
-
-    function render(data){
+    function renderMain(data){
       el("reportDate").textContent = data.date || "";
 
-      // These should be 30-day window lists from backend
       const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
       const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
       const sells = normalizeList(data.politicianSells).sort(sortByCongressStrength);
 
-      // merged fallback universe (for yearly proxy if yearly not provided)
-      const merged = new Map();
-      function addCard(x){
-        const t = String(x.ticker || "").toUpperCase();
-        if (!t) return;
-        const cur = merged.get(t) || { ticker:t, companyName:x.companyName||"", demBuyers:0, repBuyers:0, demSellers:0, repSellers:0, lastFiledAt:x.lastFiledAt||"" };
-        cur.demBuyers += Number(x.demBuyers||0);
-        cur.repBuyers += Number(x.repBuyers||0);
-        cur.demSellers += Number(x.demSellers||0);
-        cur.repSellers += Number(x.repSellers||0);
-        if (x.lastFiledAt && String(x.lastFiledAt) > String(cur.lastFiledAt||"")) cur.lastFiledAt = x.lastFiledAt;
-        merged.set(t, cur);
-      }
-      buys.forEach(addCard);
-      sells.forEach(addCard);
-      const fallbackMerged = Array.from(merged.values()).sort(sortByCongressStrength);
-
-      renderKpiBoxes(convergence, buys, sells, data.roll30);
+      renderKpiBoxes(convergence, buys, sells, { windowDays: data.windowDays || 30 });
 
       el("convergenceList").innerHTML =
-        convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers in the last 30 days.</div>";
+        convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers today.</div>";
 
       el("buyList").innerHTML =
-        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No buy trades in the last 30 days.</div>";
+        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No buy trades found.</div>";
 
       el("sellList").innerHTML =
-        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades in the last 30 days.</div>";
+        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
 
-      renderYearlyCongress(data.yearly, fallbackMerged);
-
-      // New Leaders tab (expects backend to provide leaders)
-      renderLeaders(data.leaders || data.topCongressPerformers || data.performanceLeaders || []);
-
-      setStockPanelFromHash();
+      handleHash();
     }
 
-    async function load(){
-      setStatus("", "Loading…", BACKEND_URL);
+    function renderYearly(data){
+      const yearly = data && data.yearly ? data.yearly : null;
+      const universe = yearly && Array.isArray(yearly.universe) ? yearly.universe.slice() : [];
 
-      el("convergenceList").innerHTML = "<div class='subtle'>Loading…</div>";
-      el("buyList").innerHTML = "";
-      el("sellList").innerHTML = "";
-      el("yearBuyList").innerHTML = "";
-      el("yearSellList").innerHTML = "";
-      el("leadersList").innerHTML = "<div class='subtle'>Loading…</div>";
+      if (!universe.length){
+        el("yearlyList").innerHTML = "<div class='subtle'>No yearly data yet (need backend yearly.universe).</div>";
+        return;
+      }
+
+      // Sort by total participation, then ticker
+      universe.sort(sortByCongressStrength);
+
+      const top = universe.slice(0, 80).map(x => {
+        const t = String(x.ticker || "").toUpperCase();
+        const total = congressScore(x);
+        const nf = netFlow(x);
+        const badge = nf > 0 ? "badgePos" : nf < 0 ? "badgeNeg" : "badgeNeu";
+        const sign = nf > 0 ? "+" : "";
+        const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
+
+        return `
+          <div class="card">
+            <div class="cardTop">
+              <div>
+                <div class="tickerLine">
+                  <a class="ticker" href="#stock=${t}">${t}</a>
+                  <div class="who">Rolling 365D participation</div>
+                </div>
+              </div>
+              <div class="tags">
+                <span class="tag ${badge}">${sign}${nf} net</span>
+                <span class="tag badgeNeu">${total} trades</span>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="metaRow">
+              <div class="counts">
+                <div class="countItem"><span class="dot dotDem"></span> Buy: <strong>${Number(x.demBuyers||0)}</strong> | Sell: <strong>${Number(x.demSellers||0)}</strong></div>
+                <div class="countItem"><span class="dot dotRep"></span> Buy: <strong>${Number(x.repBuyers||0)}</strong> | Sell: <strong>${Number(x.repSellers||0)}</strong></div>
+              </div>
+              <div>${filed ? `Last: ${filed}` : ""}</div>
+            </div>
+
+            ${tickerLinksHTML(t)}
+          </div>
+        `;
+      }).join("");
+
+      el("yearlyList").innerHTML = top;
+      handleHash();
+    }
+
+    function labelBadge(label){
+      const s = String(label || "").toUpperCase();
+      if (s === "BUY") return `<span class="tag tagBuy">BUY</span>`;
+      if (s === "SELL") return `<span class="tag tagSell">SELL</span>`;
+      if (s === "MIXED") return `<span class="tag tagBoth">MIXED</span>`;
+      if (s.includes("13F")) return `<span class="tag tagSEC">13F</span>`;
+      if (s.includes("FORM4") || s === "FORM 4") return `<span class="tag tagSEC">FORM 4</span>`;
+      return `<span class="tag tagSEC">${s || "FILED"}</span>`;
+    }
+
+    function renderLeaders(payload){
+      const leaders = payload && Array.isArray(payload.leaders) ? payload.leaders : [];
+      const windowDays = payload && payload.windowDays ? payload.windowDays : 365;
+      el("reportDate").textContent = payload.date || "";
+
+      if (!leaders.length){
+        el("leadersList").innerHTML = "<div class='subtle'>No leaders data returned yet.</div>";
+        return;
+      }
+
+      const html = leaders.map(l => {
+        const name = String(l.name || "");
+        const cik = String(l.cik || "");
+        const events = Array.isArray(l.events) ? l.events : [];
+
+        const evHtml = events.length ? events.map(ev => {
+          const form = String(ev.form || "");
+          const label = String(ev.label || "");
+          const filingDate = String(ev.filingDate || "");
+          const indexUrl = String(ev.indexUrl || "");
+          const primaryUrl = String(ev.primaryUrl || "");
+          const buyTx = Number(ev.buyTxCount || 0);
+          const sellTx = Number(ev.sellTxCount || 0);
+
+          const counts = (buyTx || sellTx)
+            ? `Tx: <span class="mono">P=${buyTx}</span> <span class="mono">S=${sellTx}</span>`
+            : "";
+
+          return `
+            <div class="eventRow">
+              <div class="eventTop">
+                <div>
+                  <div class="eventTitle">${form} · ${label || "FILED"}</div>
+                  <div class="eventMeta">Filed: ${filingDate || "—"} ${counts ? " · " + counts : ""}</div>
+                </div>
+                <div class="tags">
+                  ${labelBadge(label)}
+                  ${form ? `<span class="tag badgeSEC">${form}</span>` : ""}
+                </div>
+              </div>
+
+              <div class="miniLinks">
+                ${indexUrl ? `<a class="miniLink" href="${indexUrl}" target="_blank" rel="noopener">SEC Index</a>` : ""}
+                ${primaryUrl ? `<a class="miniLink" href="${primaryUrl}" target="_blank" rel="noopener">Primary doc</a>` : ""}
+              </div>
+            </div>
+          `;
+        }).join("") : `<div class="subtle">No recent filings found.</div>`;
+
+        return `
+          <div class="card">
+            <div class="cardTop">
+              <div>
+                <div class="tickerLine">
+                  <div class="ticker">${name}</div>
+                  <div class="who">CIK: <span class="mono">${cik}</span> · Rolling ${windowDays}D</div>
+                </div>
+              </div>
+              <div class="tags">
+                <span class="tag tagSEC">SEC</span>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="eventList">
+              ${evHtml}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      el("leadersList").innerHTML = html;
+    }
+
+    async function loadMain(){
+      setStatus("", "Loading congress (rolling 30D)…", BACKEND_URL);
 
       try{
         const res = await fetch(BACKEND_URL, { cache: "no-store" });
@@ -1066,22 +1028,71 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         if (data.error) throw new Error(data.error);
 
-        setStatus("ok", "Live data loaded ✅", "");
-        render(data);
+        CACHE_MAIN = data;
+
+        if (ACTIVE_TAB === "Main") {
+          setStatus("ok", "Live congress data loaded ✅", "");
+          renderMain(data);
+        } else {
+          setStatus("ok", "Congress data updated ✅", "");
+        }
       }catch(err){
-        setStatus("err", "Could not load live data", String(err));
-        el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
-        el("leadersList").innerHTML = "<div class='subtle'>No leader performance data displayed.</div>";
+        setStatus("err", "Could not load congress data", String(err));
+        if (ACTIVE_TAB === "Main") {
+          el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
+        }
       }
     }
 
-    // Top tabs
+    async function loadLeaders(force=false){
+      // Only load if Leaders tab is visible OR forced
+      if (ACTIVE_TAB !== "Leaders" && !force) return;
+
+      // basic caching: if already loaded and not forced, do nothing
+      if (CACHE_LEADERS && !force){
+        renderLeaders(CACHE_LEADERS);
+        return;
+      }
+
+      setStatus("", "Loading SEC leaders (rolling 365D)…", LEADERS_URL);
+
+      el("leadersList").innerHTML = "<div class='subtle'>Loading SEC filings…</div>";
+
+      try{
+        const res = await fetch(LEADERS_URL, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (data.error) throw new Error(data.error);
+
+        CACHE_LEADERS = data;
+        setStatus("ok", "SEC leaders loaded ✅", "");
+        renderLeaders(data);
+      }catch(err){
+        setStatus("err", "Could not load SEC leaders", String(err));
+        el("leadersList").innerHTML = "<div class='subtle'>No SEC leaders data displayed.</div>";
+      }
+    }
+
+    function handleRefresh(){
+      // Refresh whatever tab you're on
+      if (ACTIVE_TAB === "Leaders"){
+        CACHE_LEADERS = null;
+        loadLeaders(true);
+        return;
+      }
+
+      // For Main/Yearly/Search, refresh congress data
+      loadMain();
+    }
+
+    // Tabs top
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
     el("tabYearlyBtn").addEventListener("click", () => showTab("Yearly"));
     el("tabLeadersBtn").addEventListener("click", () => showTab("Leaders"));
     el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
 
-    // Bottom tabs
+    // Tabs bottom
     el("navMain").addEventListener("click", () => showTab("Main"));
     el("navYearly").addEventListener("click", () => showTab("Yearly"));
     el("navLeaders").addEventListener("click", () => showTab("Leaders"));
@@ -1093,15 +1104,16 @@
       if (!t) return;
       window.location.hash = "#stock=" + encodeURIComponent(t);
       showTab("Search");
-      setStockPanelFromHash();
+      handleHash();
     });
 
-    // Chart panel + refresh
-    el("refreshBtn").addEventListener("click", load);
-    window.addEventListener("hashchange", setStockPanelFromHash);
+    // Refresh + chart
+    el("refreshBtn").addEventListener("click", handleRefresh);
+    window.addEventListener("hashchange", handleHash);
 
+    // Start
     showTab("Main");
-    load();
+    loadMain();
   </script>
 </body>
 </html>
