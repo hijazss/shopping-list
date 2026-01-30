@@ -12,191 +12,158 @@
   <style>
     :root{
       --bg:#0b0b0f;
+      --panel:#11111a;
       --card:#151522;
       --text:#ffffff;
       --muted:rgba(255,255,255,.70);
+      --muted2:rgba(255,255,255,.55);
       --border:rgba(255,255,255,.10);
 
-      --dem:#4aa3ff;
-      --rep:#ff5a5a;
-      --both:#b38bff;
+      --blue: rgba(60,130,255,.95);
+      --blueBg: rgba(60,130,255,.12);
 
-      --ok:#7cffc0;
-      --err:#ff8a8a;
+      --red: rgba(255,90,90,.95);
+      --redBg: rgba(255,90,90,.12);
 
-      --pos:#7cffc0;
-      --neg:#ff8a8a;
-      --neutral:rgba(255,255,255,.70);
+      --green: rgba(80,255,170,.85);
+      --greenBg: rgba(80,255,170,.10);
+
+      --orange: rgba(255,190,80,.90);
+      --orangeBg: rgba(255,190,80,.10);
     }
 
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box; }
     body{
       margin:0;
       background:var(--bg);
       color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       font-size:13px;
+      line-height:1.25;
     }
-    a{color:inherit;text-decoration:none}
 
-    .header{
-      padding:14px 14px 8px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
+    a{ color:inherit; text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .wrap{ max-width:980px; margin:0 auto; padding:10px 12px 18px; }
+
+    .topBar{
+      position:sticky; top:0;
+      background:rgba(11,11,15,.90);
+      backdrop-filter: blur(12px);
+      border-bottom:1px solid var(--border);
+      z-index:10;
+    }
+
+    .tabsTop{
       max-width:980px;
       margin:0 auto;
+      padding:10px 12px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
     }
-    .h1{font-size:18px;font-weight:900;letter-spacing:.01em}
-    .subtle{font-size:12px;color:var(--muted);margin-top:2px}
-    .pillBtn{
+
+    .tabBtn{
       border:1px solid var(--border);
-      padding:7px 10px;
-      border-radius:999px;
-      background:rgba(255,255,255,.05);
-      color:#fff;
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      padding:10px 10px;
+      border-radius:12px;
+      text-align:center;
+      font-weight:700;
+      letter-spacing:.01em;
+      user-select:none;
+    }
+    .tabBtn.active{
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      border-color:rgba(255,255,255,.16);
+    }
+
+    .headerRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:12px;
+    }
+    .hTitle{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.01em;
+    }
+    .sub{
+      color:var(--muted);
+      margin-top:3px;
       font-size:12px;
     }
-
-    .container{
-      max-width:980px;
-      margin:0 auto;
-      padding:8px 14px 110px;
+    .pillBtn{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 10px;
+      font-weight:800;
+      font-size:12px;
+      cursor:pointer;
+      white-space:nowrap;
     }
 
     .status{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
       border:1px solid var(--border);
       background:rgba(255,255,255,.03);
-      border-radius:12px;
-      padding:9px 10px;
-      margin:6px 0 10px;
-      font-size:12px;
       color:var(--muted);
-      line-height:1.25;
-    }
-    .status strong{color:#fff}
-    .ok{color:var(--ok)}
-    .err{color:var(--err)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
-
-    .tabRow{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin:8px 0 10px;
-    }
-    .tabBtn{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      padding:7px 9px;
-      border-radius:999px;
       font-size:12px;
-      color:var(--muted);
-    }
-    .tabBtnActive{
-      color:#fff;
-      background:rgba(255,255,255,.08);
     }
 
     .sectionTitle{
       margin:14px 0 8px;
-      font-size:11px;
       color:var(--muted);
-      letter-spacing:.08em;
+      font-size:11px;
       text-transform:uppercase;
+      letter-spacing:.08em;
     }
 
     .grid2{
       display:grid;
-      grid-template-columns:1fr;
+      grid-template-columns:1fr 1fr;
       gap:10px;
     }
-    @media (min-width: 760px){
-      .grid2{grid-template-columns:1fr 1fr;}
+    @media (max-width: 760px){
+      .grid2{ grid-template-columns:1fr; }
     }
 
-    .grid4{
-      display:grid;
-      grid-template-columns:1fr;
+    .colHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
       gap:10px;
-    }
-    @media (min-width: 860px){
-      .grid4{grid-template-columns:repeat(4,1fr);}
-    }
-    @media (min-width: 760px) and (max-width: 859px){
-      .grid4{grid-template-columns:repeat(2,1fr);}
-    }
-
-    .kpi{
-      background:var(--card);
+      padding:10px 12px;
+      background:rgba(255,255,255,.03);
       border:1px solid var(--border);
       border-radius:14px;
-      padding:10px;
     }
-    .kpiTop{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-      margin-bottom:6px;
-    }
-    .kpiTitle{
-      font-size:11px;
-      color:var(--muted);
-      letter-spacing:.08em;
-      text-transform:uppercase;
-    }
-    .kpiValue{
-      font-size:18px;
+    .colHeader .label{
       font-weight:900;
       letter-spacing:.02em;
-      margin-top:4px;
     }
-    .kpiSub{
-      font-size:12px;
-      color:rgba(255,255,255,.82);
-      line-height:1.25;
-    }
-    .kpiList{
-      margin-top:8px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .kpiRow{
-      display:flex;
-      justify-content:space-between;
-      gap:8px;
-      font-size:12px;
-      color:rgba(255,255,255,.90);
-    }
-    .kpiRow .muted{color:var(--muted)}
-    .kpiBadge{
-      font-size:10px;
-      padding:4px 7px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      white-space:nowrap;
-      color:rgba(255,255,255,.90);
-    }
-    .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
-    .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
-    .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
 
     .card{
-      background:var(--card);
       border:1px solid var(--border);
+      background:var(--card);
       border-radius:14px;
-      padding:10px 10px 9px;
+      padding:10px 12px;
       margin-bottom:8px;
     }
 
-    .cardTop{
+    .row{
       display:flex;
+      align-items:center;
       justify-content:space-between;
-      align-items:flex-start;
       gap:10px;
     }
 
@@ -207,935 +174,506 @@
       flex-wrap:wrap;
     }
     .ticker{
+      font-weight:950;
       font-size:14px;
-      font-weight:900;
-      letter-spacing:.03em;
+      letter-spacing:.01em;
     }
-    .who{
+    .company{
+      color:var(--muted2);
+      font-weight:700;
       font-size:12px;
-      color:var(--muted);
-      max-width:560px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
     }
 
-    .tags{
+    .badges{
       display:flex;
       gap:6px;
       flex-wrap:wrap;
       justify-content:flex-end;
     }
-    .tag{
-      font-size:10px;
-      padding:4px 7px;
+    .badge{
+      font-size:11px;
+      padding:5px 8px;
       border-radius:999px;
       border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
+      background:rgba(255,255,255,.03);
       white-space:nowrap;
+      font-weight:900;
+      letter-spacing:.01em;
     }
-    .tagDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
-    .tagRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
-    .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
-    .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
-    .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
-    .tagFund{border-color:rgba(179,139,255,.35); color:rgba(255,255,255,.88)}
-    .tagSov{border-color:rgba(124,255,192,.25); color:rgba(255,255,255,.88)}
+    .bBlue{ border-color: rgba(60,130,255,.35); background: var(--blueBg); color: rgba(190,220,255,.95); }
+    .bRed{ border-color: rgba(255,90,90,.35); background: var(--redBg); color: rgba(255,210,210,.95); }
+    .bGreen{ border-color: rgba(80,255,170,.35); background: var(--greenBg); color: rgba(200,255,235,.95); }
+    .bOrange{ border-color: rgba(255,190,80,.35); background: var(--orangeBg); color: rgba(255,235,200,.95); }
 
-    .metaRow{
-      margin-top:7px;
-      font-size:12px;
+    .meta{
+      margin-top:6px;
       color:var(--muted);
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
+      font-size:12px;
       line-height:1.25;
     }
 
-    .counts{
+    .miniLinks{
+      margin-top:8px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      align-items:center;
-    }
-    .countItem{
-      display:flex;
-      gap:6px;
-      align-items:center;
+      color:rgba(255,255,255,.78);
       font-size:12px;
-      color:rgba(255,255,255,.88);
+      font-weight:800;
     }
-    .dot{width:8px;height:8px;border-radius:999px;display:inline-block}
-    .dotDem{background:var(--dem)}
-    .dotRep{background:var(--rep)}
-
-    .divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0 7px}
-
-    .miniLinks{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:8px;
-    }
-    .miniLink{
+    .miniLinks a{
+      padding:6px 8px;
+      border-radius:10px;
       border:1px solid var(--border);
       background:rgba(255,255,255,.03);
-      padding:6px 9px;
-      border-radius:999px;
-      font-size:11px;
-      color:rgba(255,255,255,.92);
+    }
+
+    .empty{
+      color:var(--muted);
+      padding:8px 2px;
+      font-size:12px;
     }
 
     .panel{
       border:1px solid var(--border);
-      background:rgba(255,255,255,.03);
-      border-radius:14px;
-      padding:10px;
-      margin:10px 0 10px;
-    }
-    .panelTitle{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-    .panelTitle h2{
-      margin:0;
-      font-size:13px;
-      font-weight:900;
-      letter-spacing:.02em;
-    }
-    .closeBtn{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      padding:6px 9px;
-      border-radius:999px;
-      font-size:11px;
-      color:rgba(255,255,255,.9);
-    }
-    iframe{
-      width:100%;
-      height:360px;
-      border:0;
-      border-radius:12px;
-      background:#000;
-      margin-top:8px;
+      background:rgba(255,255,255,.02);
+      border-radius:16px;
+      padding:10px 10px 2px;
     }
 
-    .colsHeader{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      margin:2px 0 8px;
-      color:var(--muted);
-      font-size:11px;
-      letter-spacing:.05em;
-      text-transform:uppercase;
-    }
-
-    .hint{
-      color:var(--muted);
-      font-size:12px;
-      margin:6px 0 0;
-    }
-
-    .tabsBottom{
-      position:fixed;
-      bottom:0;
-      left:0;
-      right:0;
-      background:#151522f0;
-      border-top:1px solid var(--border);
-      backdrop-filter:blur(12px);
-    }
-    .tabBarBottom{
-      max-width:980px;
-      margin:0 auto;
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-    }
-    .tabBottom{
-      text-align:center;
-      padding:11px 10px 16px;
-      font-size:11px;
-      color:var(--muted);
-    }
-    .tabBottomActive{color:#fff}
-
-    .rowControls{
+    .searchRow{
       display:flex;
       gap:8px;
-      flex-wrap:wrap;
       align-items:center;
-      margin:8px 0 10px;
+      margin-top:10px;
     }
     .input{
       flex:1;
-      min-width:180px;
-      padding:9px 10px;
-      border-radius:12px;
       border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      color:#fff;
-      font-size:12px;
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 10px;
+      font-size:13px;
       outline:none;
     }
-    .seg{
-      display:flex;
-      gap:0;
-      border:1px solid var(--border);
-      border-radius:999px;
-      overflow:hidden;
-      background:rgba(255,255,255,.03);
-    }
-    .seg button{
-      border:0;
-      background:transparent;
-      color:var(--muted);
-      font-size:12px;
-      padding:7px 10px;
-    }
-    .seg button.active{
-      color:#fff;
-      background:rgba(255,255,255,.08);
-    }
+    .hint{ color:var(--muted); font-size:12px; margin-top:6px; }
   </style>
 </head>
 
 <body>
-  <header class="header">
-    <div>
-      <div class="h1">Convergence</div>
-      <div class="subtle" id="reportDate"></div>
+  <div class="topBar">
+    <div class="tabsTop">
+      <div class="tabBtn active" data-tab="today">Today</div>
+      <div class="tabBtn" data-tab="funds">Sovereign Funds</div>
+      <div class="tabBtn" data-tab="search">Search</div>
+      <div class="tabBtn" data-tab="settings">Settings</div>
     </div>
-    <button class="pillBtn" id="refreshBtn">Refresh</button>
-  </header>
+  </div>
 
-  <main class="container">
-    <div class="status" id="statusBox">
-      <strong>Status:</strong> <span id="statusText">Loading…</span><br/>
-      <span class="mono" id="statusDetail"></span>
-    </div>
-
-    <div class="tabRow">
-      <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
-      <button class="tabBtn" id="tabFundsBtn">Funds</button>
-      <button class="tabBtn" id="tabSearchBtn">Search</button>
-    </div>
-
-    <div id="stockPanel" style="display:none;"></div>
-
-    <!-- KPI STRIP -->
-    <section id="kpiStrip">
-      <div class="sectionTitle">Signal dashboard (top 4)</div>
-      <div class="grid4">
-        <div class="kpi" id="kpiAccum"></div>
-        <div class="kpi" id="kpiConf"></div>
-        <div class="kpi" id="kpiWeekly"></div>
-        <div class="kpi" id="kpiHighlights"></div>
+  <div class="wrap">
+    <div class="headerRow">
+      <div>
+        <div class="hTitle" id="screenTitle">Today</div>
+        <div class="sub" id="reportDate"> </div>
       </div>
-    </section>
+      <button class="pillBtn" id="refreshBtn">Refresh</button>
+    </div>
 
-    <!-- MAIN VIEW -->
-    <section id="viewMain">
-      <div class="sectionTitle">Convergence 🔥 (bipartisan overlap on BUY)</div>
-      <div id="convergenceList"></div>
+    <div class="status" id="statusBox">Status: Ready.</div>
 
-      <div class="sectionTitle">Politicians ranked by participation</div>
-      <div class="colsHeader">
-        <div>Buys (left)</div>
-        <div>Sells (right)</div>
+    <!-- TODAY -->
+    <div id="tab-today">
+      <div class="sectionTitle">Convergence is key</div>
+      <div class="panel" id="convergencePanel">
+        <div id="convergenceList"></div>
       </div>
 
+      <div class="sectionTitle">Buys vs Sells</div>
       <div class="grid2">
-        <div><div id="buyList"></div></div>
-        <div><div id="sellList"></div></div>
-      </div>
-
-      <div class="hint">Sort is by total congressional participation (both parties). Tap ticker for chart.</div>
-    </section>
-
-    <!-- FUNDS VIEW -->
-    <section id="viewFunds" style="display:none;">
-      <div class="sectionTitle">Sovereign & international fund signals</div>
-
-      <div class="rowControls">
-        <input id="fundSearch" class="input" placeholder="Search fund or ticker (example: QIA or NVDA)" />
-        <div class="seg" role="tablist" aria-label="Funds filter">
-          <button id="segAll" class="active" type="button">All</button>
-          <button id="segSov" type="button">Sovereign</button>
+        <div class="panel">
+          <div class="colHeader">
+            <div class="label">Buys</div>
+            <div class="badge bGreen">Action: BUY</div>
+          </div>
+          <div id="buysList"></div>
         </div>
-        <div class="seg" role="tablist" aria-label="Funds view">
-          <button id="segByFund" class="active" type="button">By fund</button>
-          <button id="segByTicker" type="button">By ticker</button>
+        <div class="panel">
+          <div class="colHeader">
+            <div class="label">Sells</div>
+            <div class="badge bOrange">Action: SELL</div>
+          </div>
+          <div id="sellsList"></div>
         </div>
       </div>
-
-      <div id="fundBreadcrumb" class="hint" style="margin-top:0;"></div>
-      <div id="fundList"></div>
-      <div class="hint">If empty, your backend is not returning fundSignals yet.</div>
-    </section>
-
-    <!-- SEARCH VIEW -->
-    <section id="viewSearch" style="display:none;">
-      <div class="sectionTitle">Search ticker</div>
-      <div class="panel">
-        <div class="metaRow" style="margin-top:0;">
-          <div style="color:rgba(255,255,255,.9)">Type a ticker (example: NVDA)</div>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-          <input id="searchInput" class="input" placeholder="Ticker" autocapitalize="characters" />
-          <button class="pillBtn" id="searchBtn">Go</button>
-        </div>
-        <div class="hint" style="margin-top:10px;">Opens the chart panel for quick trend context.</div>
-      </div>
-    </section>
-  </main>
-
-  <nav class="tabsBottom">
-    <div class="tabBarBottom">
-      <div class="tabBottom tabBottomActive" id="navMain">Main</div>
-      <div class="tabBottom" id="navFunds">Funds</div>
-      <div class="tabBottom" id="navSearch">Search</div>
-      <div class="tabBottom" id="navSettings">Settings</div>
     </div>
-  </nav>
+
+    <!-- FUNDS -->
+    <div id="tab-funds" style="display:none;">
+      <div class="sectionTitle">Sovereign wealth funds</div>
+      <div class="panel">
+        <div id="fundsList"></div>
+      </div>
+      <div class="hint">
+        This tab loads from <b>/report/sovereign/today</b>. If your backend does not have it yet, you will see an error here.
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div id="tab-search" style="display:none;">
+      <div class="sectionTitle">Search tickers (quick links)</div>
+      <div class="panel" style="padding:12px;">
+        <div class="searchRow">
+          <input class="input" id="searchInput" placeholder="Type ticker, e.g. NVDA" />
+          <button class="pillBtn" id="searchBtn">Open</button>
+        </div>
+        <div class="hint">Opens Yahoo Finance and TradingView for the ticker.</div>
+        <div class="miniLinks" id="searchLinks" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" style="display:none;">
+      <div class="sectionTitle">Backend</div>
+      <div class="panel" style="padding:12px;">
+        <div class="meta">
+          Current backend URL:
+          <div style="margin-top:8px; font-weight:900; color:rgba(255,255,255,.92);" id="backendUrlText"></div>
+        </div>
+        <div class="hint" style="margin-top:10px;">
+          If you ever change the backend, update <b>BACKEND_URL</b> inside this file and push to GitHub again.
+        </div>
+      </div>
+
+      <div class="sectionTitle">Notes</div>
+      <div class="panel" style="padding:12px;">
+        <div class="meta">
+          Front end changes do <b>not</b> require redeploying Render. Only backend changes do.
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
+    // =========================
+    // CONFIG
+    // =========================
     const BACKEND_URL = "https://finance-backend-dzta.onrender.com/report/today";
+    const FUNDS_URL   = "https://finance-backend-dzta.onrender.com/report/sovereign/today";
+
+    // =========================
+    // HELPERS
+    // =========================
     const el = (id) => document.getElementById(id);
 
-    // Sovereign wealth fund keyword matchers (simple + practical)
-    const SOV_KEYWORDS = [
-      "qatar investment authority","qia",
-      "norges bank","norway",
-      "gic","government of singapore investment",
-      "temasek",
-      "abu dhabi investment authority","adia",
-      "mubadala",
-      "kuwait investment authority","kia",
-      "public investment fund","pif","saudi",
-      "china investment corporation","cic",
-      "korea investment corporation",
-      "hong kong monetary authority",
-      "future fund","australia future fund",
-      "qic","qatar",
-      "national investment and infrastructure fund","niif"
-    ].map(s => s.toLowerCase());
-
-    let APP_DATA = null;
-
-    // Funds tab state
-    let fundsMode = "all";      // "all" or "sov"
-    let fundsView = "fund";     // "fund" or "ticker"
-    let selectedFund = "";      // drilldown
-    let fundSearch = "";
-
-    function setStatus(kind, text, detail){
-      const st = el("statusText");
-      const sd = el("statusDetail");
-      st.textContent = text || "";
-      st.className = kind === "ok" ? "ok" : kind === "err" ? "err" : "";
-      sd.textContent = detail || "";
+    function setStatus(msg){
+      el("statusBox").textContent = msg;
     }
 
-    function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
-
-    function congressScore(x){
-      return (
-        Number(x.demBuyers || 0) +
-        Number(x.repBuyers || 0) +
-        Number(x.demSellers || 0) +
-        Number(x.repSellers || 0)
-      );
+    function safeStr(x){
+      return (x === null || x === undefined) ? "" : String(x);
     }
 
-    function bipartisanScore(x){
-      const dem = Number(x.demBuyers || 0) + Number(x.demSellers || 0);
-      const rep = Number(x.repBuyers || 0) + Number(x.repSellers || 0);
-      return Math.min(dem, rep);
+    function toInt(x){
+      const n = Number(x);
+      return Number.isFinite(n) ? n : 0;
     }
 
-    function sortByCongressStrength(a, b){
-      const totalA = congressScore(a);
-      const totalB = congressScore(b);
-      if (totalA !== totalB) return totalB - totalA;
-      const biA = bipartisanScore(a);
-      const biB = bipartisanScore(b);
-      if (biA !== biB) return biB - biA;
-      return String(a.ticker || "").localeCompare(String(b.ticker || ""), undefined, {sensitivity:"base"});
+    function tickerLinks(ticker){
+      const t = encodeURIComponent(ticker);
+      return {
+        yahoo: `https://finance.yahoo.com/quote/${t}`,
+        tv:    `https://www.tradingview.com/symbols/${t}/`,
+        quiver:`https://www.quiverquant.com/stock/${t}/`
+      };
     }
 
-    function netFlow(x){
-      const buys = Number(x.demBuyers || 0) + Number(x.repBuyers || 0);
-      const sells = Number(x.demSellers || 0) + Number(x.repSellers || 0);
-      return buys - sells;
-    }
-
-    function confidenceLabel(x){
-      const t = congressScore(x);
-      if (t >= 6) return "STRONG";
-      if (t >= 3) return "MOD";
-      return "WEAK";
-    }
-
-    function confidenceBadgeClass(lbl){
-      if (lbl === "STRONG") return "badgePos";
-      if (lbl === "MOD") return "badgeNeu";
-      return "badgeNeu";
-    }
-
-    function tickerLinksHTML(ticker){
-      const t = String(ticker || "").toUpperCase();
-      const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
-      const tvChart = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent("NASDAQ:" + t)}`;
-      return `
-        <div class="miniLinks">
-          <a class="miniLink" href="#stock=${t}">Chart</a>
-          <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Yahoo</a>
-          <a class="miniLink" href="${tvChart}" target="_blank" rel="noopener">TV</a>
-        </div>
-      `;
-    }
-
-    function cardHTML(x, mode){
-      const ticker = String(x.ticker || "").toUpperCase();
-      const who = String(x.companyName || "").trim();
-      const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
-
-      const dem = mode === "BUY" ? Number(x.demBuyers || 0) : Number(x.demSellers || 0);
-      const rep = mode === "BUY" ? Number(x.repBuyers || 0) : Number(x.repSellers || 0);
-      const conf = confidenceLabel(x);
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                ${who ? `<div class="who">${who}</div>` : ""}
-              </div>
-            </div>
-            <div class="tags">
-              ${mode === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
-              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="metaRow">
-            <div class="counts">
-              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
-              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
-              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
-            </div>
-            <div>${filed ? `Filed: ${filed}` : ""}</div>
-          </div>
-
-          ${tickerLinksHTML(ticker)}
-        </div>
-      `;
-    }
-
-    function overlapCardHTML(x){
-      const ticker = String(x.ticker || "").toUpperCase();
-      const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
-      const dem = Number(x.demBuyers || 0);
-      const rep = Number(x.repBuyers || 0);
-      const conf = confidenceLabel(x);
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                <div class="who">Bipartisan overlap (BUY)</div>
-              </div>
-            </div>
-            <div class="tags">
-              <span class="tag tagDem">DEM</span>
-              <span class="tag tagRep">GOP</span>
-              <span class="tag tagBoth">OVERLAP</span>
-              <span class="tag tagBuy">BUY</span>
-              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="metaRow">
-            <div class="counts">
-              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
-              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
-              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
-            </div>
-            <div>${filed ? `Filed: ${filed}` : ""}</div>
-          </div>
-
-          ${tickerLinksHTML(ticker)}
-        </div>
-      `;
-    }
-
-    // ---------- Chart panel ----------
-    function setStockPanel(ticker){
-      const t = String(ticker || "").toUpperCase();
-      if (!t){
-        el("stockPanel").style.display = "none";
-        el("stockPanel").innerHTML = "";
-        return;
-      }
-
-      const symbol = "NASDAQ:" + t;
-      const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
-      const tv = `https://www.tradingview.com/symbols/${encodeURIComponent(symbol)}/`;
-
-      el("stockPanel").style.display = "";
-      el("stockPanel").innerHTML = `
-        <div class="panel">
-          <div class="panelTitle">
-            <h2>${t} chart (MA + RSI)</h2>
-            <button class="closeBtn" id="closeStockBtn">Close</button>
-          </div>
-          <iframe
-            title="TradingView Chart"
-            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=%23151522&studies=%5B%22MASimple%40tv-basicstudies%22%2C%22RSI%40tv-basicstudies%22%5D&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1"
-            loading="lazy">
-          </iframe>
-          <div class="miniLinks">
-            <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Open Yahoo</a>
-            <a class="miniLink" href="${tv}" target="_blank" rel="noopener">Open TradingView</a>
-          </div>
-        </div>
-      `;
-
-      const btn = document.getElementById("closeStockBtn");
-      if (btn) btn.addEventListener("click", () => {
-        history.pushState("", document.title, window.location.pathname + window.location.search);
-        setStockPanel("");
+    function sortByPeopleThenTicker(arr){
+      return (arr || []).slice().sort((a,b)=>{
+        const aTot = toInt(a.demBuyers) + toInt(a.repBuyers) + toInt(a.demSellers) + toInt(a.repSellers);
+        const bTot = toInt(b.demBuyers) + toInt(b.repBuyers) + toInt(b.demSellers) + toInt(b.repSellers);
+        if (bTot !== aTot) return bTot - aTot;
+        return safeStr(a.ticker).localeCompare(safeStr(b.ticker));
       });
     }
 
-    function handleHash(){
-      const h = window.location.hash || "";
-      if (h.startsWith("#stock=")){
-        const t = decodeURIComponent(h.replace("#stock=","")).trim();
-        setStockPanel(t);
-        return;
-      }
-      setStockPanel("");
+    function sortByCountThenTicker(arr, side){
+      // side: "buy" uses demBuyers+repBuyers, "sell" uses demSellers+repSellers
+      return (arr || []).slice().sort((a,b)=>{
+        const aTot = side === "sell"
+          ? (toInt(a.demSellers) + toInt(a.repSellers))
+          : (toInt(a.demBuyers) + toInt(a.repBuyers));
+        const bTot = side === "sell"
+          ? (toInt(b.demSellers) + toInt(b.repSellers))
+          : (toInt(b.demBuyers) + toInt(b.repBuyers));
+        if (bTot !== aTot) return bTot - aTot;
+        return safeStr(a.ticker).localeCompare(safeStr(b.ticker));
+      });
     }
 
-    // ---------- KPI section ----------
-    function topBy(arr, scoreFn, n){
-      const a = normalizeList(arr).slice();
-      a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
-      return a.slice(0, n);
+    function badgeHTML(label, cls){
+      return `<span class="badge ${cls}">${label}</span>`;
     }
 
-    function renderKpis(convergence, buys, sells){
-      // Merge by ticker for net flow/participation
-      const merged = new Map();
-      function addCard(x){
-        const t = String(x.ticker || "").toUpperCase();
-        if (!t) return;
-        const cur = merged.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
-        cur.demBuyers += Number(x.demBuyers||0);
-        cur.repBuyers += Number(x.repBuyers||0);
-        cur.demSellers += Number(x.demSellers||0);
-        cur.repSellers += Number(x.repSellers||0);
-        merged.set(t, cur);
-      }
-      buys.forEach(addCard);
-      sells.forEach(addCard);
-      const mergedArr = Array.from(merged.values());
+    function stockCardHTML(x, mode){
+      // mode: "convergence" | "buy" | "sell"
+      const ticker = safeStr(x.ticker).toUpperCase();
+      const companyName = safeStr(x.companyName);
+      const links = tickerLinks(ticker);
 
-      const topNet = topBy(mergedArr, (x) => netFlow(x), 5);
-      el("kpiAccum").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Net flow</div>
-            <div class="kpiValue">Buys − Sells</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Today</span>
-        </div>
-        <div class="kpiSub">Accumulation vs distribution by ticker.</div>
-        <div class="kpiList">${
-          topNet.map(x => {
-            const nf = netFlow(x);
-            const badge = nf > 0 ? "badgePos" : nf < 0 ? "badgeNeg" : "badgeNeu";
-            const sign = nf > 0 ? "+" : "";
-            return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${badge}">${sign}${nf}</span></div>`;
-          }).join("") || `<div class="kpiRow"><span class="muted">No data</span></div>`
-        }</div>
-      `;
+      const demBuy = toInt(x.demBuyers);
+      const repBuy = toInt(x.repBuyers);
+      const demSell = toInt(x.demSellers);
+      const repSell = toInt(x.repSellers);
 
-      const topConf = topBy(mergedArr, (x) => congressScore(x), 5);
-      el("kpiConf").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Confidence</div>
-            <div class="kpiValue">Participation</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Count</span>
-        </div>
-        <div class="kpiSub">Total congressional participation (both parties).</div>
-        <div class="kpiList">${
-          topConf.map(x => {
-            const total = congressScore(x);
-            const lbl = confidenceLabel(x);
-            const cls = confidenceBadgeClass(lbl);
-            return `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge ${cls}">${lbl} · ${total}</span></div>`;
-          }).join("") || `<div class="kpiRow"><span class="muted">No data</span></div>`
-        }</div>
-      `;
+      const lastFiledAt = safeStr(x.lastFiledAt);
+      const strength = safeStr(x.strength);
 
-      const topWeekly = topBy(mergedArr, (x) => congressScore(x), 5);
-      el("kpiWeekly").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Weekly</div>
-            <div class="kpiValue">Rolling view</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Proxy</span>
-        </div>
-        <div class="kpiSub">Proxy using most recent filings returned.</div>
-        <div class="kpiList">${
-          topWeekly.map(x => `<div class="kpiRow"><a href="#stock=${x.ticker}"><strong>${x.ticker}</strong></a><span class="kpiBadge badgeNeu">${congressScore(x)} items</span></div>`).join("")
-          || `<div class="kpiRow"><span class="muted">No data</span></div>`
-        }</div>
-      `;
-
-      const topAcc = topBy(mergedArr, (x) => netFlow(x), 1)[0];
-      const topDist = topBy(mergedArr, (x) => -netFlow(x), 1)[0];
-      const topConv = (convergence && convergence.length) ? convergence[0] : null;
-
-      el("kpiHighlights").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Highlights</div>
-            <div class="kpiValue">Top signals</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Auto</span>
-        </div>
-        <div class="kpiSub">Fast read: strongest accumulation, selling, and overlap.</div>
-        <div class="kpiList">
-          <div class="kpiRow"><span class="muted">🔥 Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">⚠️ Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">🤝 Convergence</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
-        </div>
-      `;
-    }
-
-    // ---------- Funds tab helpers ----------
-    function isSovereignFundName(name){
-      const s = String(name || "").toLowerCase();
-      if (!s) return false;
-      return SOV_KEYWORDS.some(k => s.includes(k));
-    }
-
-    function matchFundSearch(item){
-      if (!fundSearch) return true;
-      const q = fundSearch.toLowerCase();
-      const t = String(item.ticker || "").toLowerCase();
-      const fn = String((item.signal && item.signal.fundName) || "").toLowerCase();
-      const st = String((item.signal && item.signal.signalType) || "").toLowerCase();
-      return t.includes(q) || fn.includes(q) || st.includes(q);
-    }
-
-    function renderFunds(){
-      const all = normalizeList((APP_DATA && APP_DATA.fundSignals) || []);
-      let filtered = all;
-
-      // filter sovereign-only if selected
-      if (fundsMode === "sov") {
-        filtered = filtered.filter(x => isSovereignFundName(x.signal && x.signal.fundName));
-      }
-
-      // text search
-      filtered = filtered.filter(matchFundSearch);
-
-      // Breadcrumb
-      if (selectedFund) {
-        el("fundBreadcrumb").innerHTML = `
-          Viewing: <strong>${selectedFund}</strong>
-          <span class="miniLinks" style="margin-top:6px;">
-            <a class="miniLink" href="#" id="backToFunds">Back</a>
-          </span>
-        `;
-        setTimeout(() => {
-          const b = document.getElementById("backToFunds");
-          if (b) b.onclick = (e) => { e.preventDefault(); selectedFund=""; renderFunds(); };
-        }, 0);
+      let badges = "";
+      if (mode === "buy"){
+        badges += badgeHTML(`D ${demBuy}`, "bBlue");
+        badges += badgeHTML(`R ${repBuy}`, "bRed");
+        badges += badgeHTML(`Total ${demBuy + repBuy}`, "bGreen");
+      } else if (mode === "sell"){
+        badges += badgeHTML(`D ${demSell}`, "bBlue");
+        badges += badgeHTML(`R ${repSell}`, "bRed");
+        badges += badgeHTML(`Total ${demSell + repSell}`, "bOrange");
       } else {
-        el("fundBreadcrumb").textContent = "";
+        // convergence
+        const buyTot = demBuy + repBuy;
+        const sellTot = demSell + repSell;
+        badges += badgeHTML(`Buy D ${demBuy}`, "bBlue");
+        badges += badgeHTML(`Buy R ${repBuy}`, "bRed");
+        badges += badgeHTML(`Sell D ${demSell}`, "bBlue");
+        badges += badgeHTML(`Sell R ${repSell}`, "bRed");
+        badges += badgeHTML(`People ${buyTot + sellTot}`, "bGreen");
+        if (strength) badges += badgeHTML(strength, "bOrange");
       }
 
-      // Drilldown
-      if (selectedFund) {
-        const byThis = filtered.filter(x => String((x.signal && x.signal.fundName) || "") === selectedFund);
-
-        // Group by ticker and count
-        const map = new Map();
-        for (const it of byThis) {
-          const t = String(it.ticker || "").toUpperCase();
-          if (!t) continue;
-          const cur = map.get(t) || { ticker:t, count:0, latest:"", types:new Set(), isSov:true };
-          cur.count += 1;
-          cur.latest = cur.latest || String((it.signal && it.signal.filedAt) || "");
-          cur.types.add(String((it.signal && it.signal.signalType) || "").toUpperCase());
-          map.set(t, cur);
-        }
-
-        const rows = Array.from(map.values()).sort((a,b) => (b.count - a.count) || a.ticker.localeCompare(b.ticker));
-
-        el("fundList").innerHTML = rows.length ? rows.map(r => `
-          <div class="card">
-            <div class="cardTop">
-              <div>
-                <div class="tickerLine">
-                  <a class="ticker" href="#stock=${r.ticker}">${r.ticker}</a>
-                  <div class="who">${selectedFund}</div>
-                </div>
-              </div>
-              <div class="tags">
-                <span class="tag tagFund">${r.count} signals</span>
-                ${fundsMode === "sov" ? `<span class="tag tagSov">SOV</span>` : (isSovereignFundName(selectedFund) ? `<span class="tag tagSov">SOV</span>` : ``)}
-              </div>
-            </div>
-            <div class="divider"></div>
-            <div class="metaRow">
-              <div>${r.types.size ? `Types: ${Array.from(r.types).slice(0,3).join(", ")}${r.types.size>3 ? " +" + (r.types.size-3) : ""}` : ""}</div>
-              <div>${r.latest ? `Filed: ${r.latest}` : ""}</div>
-            </div>
-            ${tickerLinksHTML(r.ticker)}
-          </div>
-        `).join("") : `<div class="subtle">No fund signals found for this fund.</div>`;
-
-        return;
+      const subtitleBits = [];
+      if (mode === "convergence"){
+        subtitleBits.push(`Buys: D ${demBuy} | R ${repBuy}`);
+        subtitleBits.push(`Sells: D ${demSell} | R ${repSell}`);
+      } else if (mode === "buy"){
+        subtitleBits.push(`Buyers: D ${demBuy} | R ${repBuy}`);
+      } else {
+        subtitleBits.push(`Sellers: D ${demSell} | R ${repSell}`);
       }
+      if (lastFiledAt) subtitleBits.push(`Last filed: ${lastFiledAt}`);
 
-      // View mode: by fund or by ticker
-      if (fundsView === "fund") {
-        const map = new Map();
-        for (const it of filtered) {
-          const fn = String((it.signal && it.signal.fundName) || "").trim();
-          if (!fn) continue;
-          const cur = map.get(fn) || { fundName: fn, count:0, sov: isSovereignFundName(fn), tickers:new Set(), latest:"" };
-          cur.count += 1;
-          cur.latest = cur.latest || String((it.signal && it.signal.filedAt) || "");
-          cur.tickers.add(String(it.ticker || "").toUpperCase());
-          map.set(fn, cur);
-        }
-
-        const rows = Array.from(map.values()).sort((a,b) => (b.count - a.count) || a.fundName.localeCompare(b.fundName));
-
-        el("fundList").innerHTML = rows.length ? rows.map(r => `
-          <div class="card">
-            <div class="cardTop">
-              <div>
-                <div class="tickerLine">
-                  <a class="ticker" href="#" data-fund="${encodeURIComponent(r.fundName)}">${r.fundName}</a>
-                  <div class="who">${r.tickers.size} tickers</div>
-                </div>
-              </div>
-              <div class="tags">
-                <span class="tag tagFund">${r.count} signals</span>
-                ${r.sov ? `<span class="tag tagSov">SOV</span>` : ``}
-              </div>
-            </div>
-            <div class="divider"></div>
-            <div class="metaRow">
-              <div>${r.tickers.size ? `Top tickers: ${Array.from(r.tickers).slice(0,5).join(", ")}${r.tickers.size>5 ? " +" + (r.tickers.size-5) : ""}` : ""}</div>
-              <div>${r.latest ? `Filed: ${r.latest}` : ""}</div>
-            </div>
-          </div>
-        `).join("") : `<div class="subtle">No fund signals yet.</div>`;
-
-        // Click handler to drill down into a fund
-        setTimeout(() => {
-          document.querySelectorAll("[data-fund]").forEach(a => {
-            a.addEventListener("click", (e) => {
-              e.preventDefault();
-              selectedFund = decodeURIComponent(a.getAttribute("data-fund") || "");
-              renderFunds();
-            });
-          });
-        }, 0);
-
-        return;
-      }
-
-      // By ticker view
-      const map = new Map();
-      for (const it of filtered) {
-        const t = String(it.ticker || "").toUpperCase();
-        if (!t) continue;
-        const fn = String((it.signal && it.signal.fundName) || "").trim();
-        const cur = map.get(t) || { ticker:t, count:0, funds:new Set(), sovCount:0, latest:"" };
-        cur.count += 1;
-        cur.latest = cur.latest || String((it.signal && it.signal.filedAt) || "");
-        if (fn) cur.funds.add(fn);
-        if (isSovereignFundName(fn)) cur.sovCount += 1;
-        map.set(t, cur);
-      }
-
-      const rows = Array.from(map.values()).sort((a,b) => (b.count - a.count) || a.ticker.localeCompare(b.ticker));
-
-      el("fundList").innerHTML = rows.length ? rows.map(r => `
+      return `
         <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${r.ticker}">${r.ticker}</a>
-                <div class="who">${r.funds.size} funds</div>
-              </div>
+          <div class="row">
+            <div class="tickerLine">
+              <a class="ticker" href="${links.yahoo}" target="_blank" rel="noopener">${ticker}</a>
+              ${companyName ? `<span class="company">${companyName}</span>` : ""}
             </div>
-            <div class="tags">
-              <span class="tag tagFund">${r.count} signals</span>
-              ${r.sovCount > 0 ? `<span class="tag tagSov">${r.sovCount} sov</span>` : ``}
-            </div>
+            <div class="badges">${badges}</div>
           </div>
-          <div class="divider"></div>
-          <div class="metaRow">
-            <div>${r.funds.size ? `Funds: ${Array.from(r.funds).slice(0,3).join(", ")}${r.funds.size>3 ? " +" + (r.funds.size-3) : ""}` : ""}</div>
-            <div>${r.latest ? `Filed: ${r.latest}` : ""}</div>
+          <div class="meta">${subtitleBits.join(" • ")}</div>
+          <div class="miniLinks">
+            <a href="${links.yahoo}" target="_blank" rel="noopener">Price</a>
+            <a href="${links.tv}" target="_blank" rel="noopener">Chart</a>
+            <a href="${links.quiver}" target="_blank" rel="noopener">Signals</a>
           </div>
-          ${tickerLinksHTML(r.ticker)}
         </div>
-      `).join("") : `<div class="subtle">No fund signals yet.</div>`;
+      `;
     }
 
-    // ---------- Tab routing ----------
-    function showTab(tab){
-      el("viewMain").style.display = tab === "Main" ? "" : "none";
-      el("viewFunds").style.display = tab === "Funds" ? "" : "none";
-      el("viewSearch").style.display = tab === "Search" ? "" : "none";
+    function fundSignalCardHTML(s){
+      // expected fields:
+      // { ticker, companyName, fundName, action, filedAt, details }
+      const ticker = safeStr(s.ticker).toUpperCase();
+      const companyName = safeStr(s.companyName);
+      const fundName = safeStr(s.fundName);
+      const action = safeStr(s.action).toUpperCase();
+      const filedAt = safeStr(s.filedAt);
+      const details = safeStr(s.details);
+      const links = tickerLinks(ticker);
 
-      el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
-      el("tabFundsBtn").classList.toggle("tabBtnActive", tab === "Funds");
-      el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
+      const actionBadge = action === "SELL"
+        ? badgeHTML("SELL", "bOrange")
+        : badgeHTML("BUY", "bGreen");
 
-      el("navMain").classList.toggle("tabBottomActive", tab === "Main");
-      el("navFunds").classList.toggle("tabBottomActive", tab === "Funds");
-      el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
-
-      // Render funds whenever switching to that tab
-      if (tab === "Funds") renderFunds();
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="tickerLine">
+              <a class="ticker" href="${links.yahoo}" target="_blank" rel="noopener">${ticker}</a>
+              ${companyName ? `<span class="company">${companyName}</span>` : ""}
+            </div>
+            <div class="badges">
+              ${actionBadge}
+              ${fundName ? badgeHTML(fundName, "badge") : ""}
+            </div>
+          </div>
+          <div class="meta">
+            ${fundName ? `<b>${fundName}</b> • ` : ""}${filedAt ? `Filed: ${filedAt}` : "Filed: n/a"}
+            ${details ? ` • ${details}` : ""}
+          </div>
+          <div class="miniLinks">
+            <a href="${links.yahoo}" target="_blank" rel="noopener">Price</a>
+            <a href="${links.tv}" target="_blank" rel="noopener">Chart</a>
+            <a href="${links.quiver}" target="_blank" rel="noopener">Signals</a>
+          </div>
+        </div>
+      `;
     }
 
-    // ---------- Main render ----------
-    function render(data){
-      APP_DATA = data;
-      el("reportDate").textContent = data.date || "";
-
-      const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
-      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
-      const sells = normalizeList(data.politicianSells).sort(sortByCongressStrength);
-
-      renderKpis(convergence, buys, sells);
-
-      el("convergenceList").innerHTML =
-        convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers today.</div>";
-
-      el("buyList").innerHTML =
-        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No buy trades found.</div>";
-
-      el("sellList").innerHTML =
-        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
-
-      // Funds tab can be rendered on demand
-      if (el("viewFunds").style.display !== "none") renderFunds();
-
-      handleHash();
+    function showEmpty(targetId, msg){
+      el(targetId).innerHTML = `<div class="empty">${msg}</div>`;
     }
 
-    async function load(){
-      setStatus("", "Loading…", BACKEND_URL);
+    // =========================
+    // RENDER
+    // =========================
+    function renderToday(data){
+      const date = safeStr(data.date);
+      el("reportDate").textContent = date ? date : "";
 
-      el("convergenceList").innerHTML = "<div class='subtle'>Loading…</div>";
-      el("buyList").innerHTML = "";
-      el("sellList").innerHTML = "";
-      el("fundList").innerHTML = "";
+      // Expecting arrays:
+      // data.convergence: items with demBuyers, repBuyers, demSellers, repSellers
+      // data.buys: items with demBuyers, repBuyers
+      // data.sells: items with demSellers, repSellers
+      const convergence = sortByPeopleThenTicker(data.convergence || []);
+      const buys = sortByCountThenTicker(data.buys || [], "buy");
+      const sells = sortByCountThenTicker(data.sells || [], "sell");
+
+      if (!convergence.length) showEmpty("convergenceList", "No convergence items today.");
+      else el("convergenceList").innerHTML = convergence.map(x => stockCardHTML(x, "convergence")).join("");
+
+      if (!buys.length) showEmpty("buysList", "No buys found.");
+      else el("buysList").innerHTML = buys.map(x => stockCardHTML(x, "buy")).join("");
+
+      if (!sells.length) showEmpty("sellsList", "No sells found.");
+      else el("sellsList").innerHTML = sells.map(x => stockCardHTML(x, "sell")).join("");
+    }
+
+    function renderFunds(data){
+      const date = safeStr(data.date);
+      el("reportDate").textContent = date ? date : "";
+
+      const signals = (data.signals || []).slice().sort((a,b)=>{
+        // sort by action then ticker
+        const aa = safeStr(a.action).toUpperCase();
+        const bb = safeStr(b.action).toUpperCase();
+        if (aa !== bb) return aa.localeCompare(bb);
+        return safeStr(a.ticker).localeCompare(safeStr(b.ticker));
+      });
+
+      if (!signals.length) showEmpty("fundsList", "No sovereign fund signals yet.");
+      else el("fundsList").innerHTML = signals.map(fundSignalCardHTML).join("");
+    }
+
+    // =========================
+    // LOADERS
+    // =========================
+    async function fetchJSON(url){
+      const res = await fetch(url, { cache:"no-store" });
+      let data = null;
+      try { data = await res.json(); } catch(e) {}
+      if (!res.ok){
+        const msg = data && data.error ? data.error : (`HTTP ${res.status}`);
+        throw new Error(msg);
+      }
+      if (data && data.error) throw new Error(data.error);
+      return data;
+    }
+
+    async function loadToday(){
+      setStatus("Status: Loading live data…");
+      showEmpty("convergenceList", "Loading…");
+      el("buysList").innerHTML = "";
+      el("sellsList").innerHTML = "";
 
       try{
-        const res = await fetch(BACKEND_URL, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-
-        setStatus("ok", "Live data loaded ✅", "");
-        render(data);
-      }catch(err){
-        setStatus("err", "Could not load live data", String(err));
-        el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
+        const data = await fetchJSON(BACKEND_URL);
+        renderToday(data);
+        setStatus("Status: Live data loaded ✅");
+      } catch(err){
+        setStatus("Status: Could not load live data ❌");
+        showEmpty("convergenceList", "Could not load live data. Error: " + safeStr(err));
+        showEmpty("buysList", "");
+        showEmpty("sellsList", "");
       }
     }
 
-    // ---------- Wire up UI ----------
-    el("tabMainBtn").addEventListener("click", () => showTab("Main"));
-    el("tabFundsBtn").addEventListener("click", () => showTab("Funds"));
-    el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
+    async function loadFunds(){
+      setStatus("Status: Loading sovereign funds…");
+      showEmpty("fundsList", "Loading…");
 
-    el("navMain").addEventListener("click", () => showTab("Main"));
-    el("navFunds").addEventListener("click", () => showTab("Funds"));
-    el("navSearch").addEventListener("click", () => showTab("Search"));
+      try{
+        const data = await fetchJSON(FUNDS_URL);
+        renderFunds(data);
+        setStatus("Status: Sovereign fund signals loaded ✅");
+      } catch(err){
+        setStatus("Status: Could not load sovereign funds ❌");
+        showEmpty("fundsList", "Could not load sovereign funds. Error: " + safeStr(err));
+      }
+    }
 
-    el("searchBtn").addEventListener("click", () => {
-      const t = String(el("searchInput").value || "").trim().toUpperCase();
+    // =========================
+    // TABS
+    // =========================
+    function setActiveTab(name){
+      document.querySelectorAll(".tabBtn").forEach(b=>{
+        b.classList.toggle("active", b.getAttribute("data-tab") === name);
+      });
+
+      el("tab-today").style.display = (name === "today") ? "" : "none";
+      el("tab-funds").style.display = (name === "funds") ? "" : "none";
+      el("tab-search").style.display = (name === "search") ? "" : "none";
+      el("tab-settings").style.display = (name === "settings") ? "" : "none";
+
+      if (name === "today") el("screenTitle").textContent = "Today";
+      if (name === "funds") el("screenTitle").textContent = "Sovereign Funds";
+      if (name === "search") el("screenTitle").textContent = "Search";
+      if (name === "settings") el("screenTitle").textContent = "Settings";
+
+      // Load on tab switch
+      if (name === "today") loadToday();
+      if (name === "funds") loadFunds();
+      if (name === "settings"){
+        el("backendUrlText").textContent = BACKEND_URL.replace("/report/today","").replace("/report/today/","");
+      }
+    }
+
+    document.querySelectorAll(".tabBtn").forEach(b=>{
+      b.addEventListener("click", ()=> setActiveTab(b.getAttribute("data-tab")));
+    });
+
+    // =========================
+    // SEARCH
+    // =========================
+    function renderSearchLinks(ticker){
+      const t = safeStr(ticker).trim().toUpperCase();
+      if (!t) { el("searchLinks").innerHTML = ""; return; }
+      const links = tickerLinks(t);
+      el("searchLinks").innerHTML = `
+        <a href="${links.yahoo}" target="_blank" rel="noopener">Yahoo: ${t}</a>
+        <a href="${links.tv}" target="_blank" rel="noopener">TradingView: ${t}</a>
+        <a href="${links.quiver}" target="_blank" rel="noopener">Quiver: ${t}</a>
+      `;
+    }
+
+    el("searchInput").addEventListener("input", (e)=> renderSearchLinks(e.target.value));
+    el("searchBtn").addEventListener("click", ()=>{
+      const t = el("searchInput").value.trim().toUpperCase();
       if (!t) return;
-      window.location.hash = "#stock=" + encodeURIComponent(t);
-      showTab("Search");
-      handleHash();
+      window.open(tickerLinks(t).yahoo, "_blank", "noopener");
     });
 
-    // Funds controls
-    el("fundSearch").addEventListener("input", (e) => {
-      fundSearch = String(e.target.value || "").trim();
-      renderFunds();
+    // =========================
+    // REFRESH BUTTON
+    // =========================
+    el("refreshBtn").addEventListener("click", ()=>{
+      const active = document.querySelector(".tabBtn.active")?.getAttribute("data-tab") || "today";
+      if (active === "today") loadToday();
+      else if (active === "funds") loadFunds();
     });
 
-    el("segAll").addEventListener("click", () => {
-      fundsMode = "all";
-      el("segAll").classList.add("active");
-      el("segSov").classList.remove("active");
-      selectedFund = "";
-      renderFunds();
-    });
-
-    el("segSov").addEventListener("click", () => {
-      fundsMode = "sov";
-      el("segSov").classList.add("active");
-      el("segAll").classList.remove("active");
-      selectedFund = "";
-      renderFunds();
-    });
-
-    el("segByFund").addEventListener("click", () => {
-      fundsView = "fund";
-      el("segByFund").classList.add("active");
-      el("segByTicker").classList.remove("active");
-      selectedFund = "";
-      renderFunds();
-    });
-
-    el("segByTicker").addEventListener("click", () => {
-      fundsView = "ticker";
-      el("segByTicker").classList.add("active");
-      el("segByFund").classList.remove("active");
-      selectedFund = "";
-      renderFunds();
-    });
-
-    el("refreshBtn").addEventListener("click", load);
-    window.addEventListener("hashchange", handleHash);
-
-    showTab("Main");
-    load();
+    // Boot
+    setActiveTab("today");
   </script>
 </body>
 </html>
