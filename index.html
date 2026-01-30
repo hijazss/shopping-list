@@ -2,22 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <title>Convergence Signals</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.webmanifest" />
     <meta name="theme-color" content="#0b0b0f" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <title>Convergence</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="./styles.css" />
   </head>
+
   <body>
+    <!-- HEADER -->
     <header class="header">
       <div>
         <div class="h1">Today</div>
         <div class="subtle" id="reportDate"></div>
       </div>
-      <a class="pill" href="#" id="refreshBtn">Refresh</a>
+      <button class="pill" id="refreshBtn">Refresh</button>
     </header>
 
+    <!-- MAIN CONTENT -->
     <main class="container">
       <div class="sectionTitle">Convergence 🔥</div>
       <div id="convergenceList"></div>
@@ -29,16 +37,22 @@
       <div id="fundList"></div>
     </main>
 
+    <!-- BOTTOM NAV -->
     <nav class="tabs">
-      <a class="tab tabActive" href="/">Today</a>
-      <a class="tab" href="#" onclick="alert('Next: Signals screen')">Signals</a>
-      <a class="tab" href="#" onclick="alert('Next: Search screen')">Search</a>
-      <a class="tab" href="#" onclick="alert('Next: Settings screen')">Settings</a>
+      <div class="tab tabActive">Today</div>
+      <div class="tab">Signals</div>
+      <div class="tab">Search</div>
+      <div class="tab">Settings</div>
     </nav>
 
-    <script src="/app.js"></script>
+    <!-- APP SCRIPT -->
+    <script src="./app.js"></script>
+
+    <!-- SERVICE WORKER -->
     <script>
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
-</script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js");
+      }
+    </script>
   </body>
 </html>
