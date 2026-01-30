@@ -22,14 +22,15 @@
   }
 
   function fundRowHTML(r){
+    const sig = r.signal || {};
     return `
       <div class="card">
         <div class="row">
           <div class="title">${r.ticker} · ${r.companyName || ""}</div>
-          <div class="badge">${(r.signal && r.signal.signalType) || ""}</div>
+          <div class="badge">${sig.signalType || ""}</div>
         </div>
-        <div class="meta">${(r.signal && r.signal.fundName) || ""} · Filed ${(r.signal && r.signal.filedAt) || ""}</div>
-        ${(r.signal && r.signal.ownershipChange) ? `<div class="meta">${r.signal.ownershipChange}</div>` : ""}
+        <div class="meta">${sig.fundName || ""} · Filed ${sig.filedAt || ""}</div>
+        ${sig.ownershipChange ? `<div class="meta">${sig.ownershipChange}</div>` : ""}
       </div>
     `;
   }
@@ -60,8 +61,7 @@
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        const msg = data.error ? data.error : ("HTTP " + res.status);
-        throw new Error(msg);
+        throw new Error(data.error || ("HTTP " + res.status));
       }
 
       render(data);
@@ -72,6 +72,8 @@
     }
   }
 
-  el("refreshBtn").addEventListener("click", load);
+  const btn = el("refreshBtn");
+  if (btn) btn.addEventListener("click", load);
+
   load();
 </script>
