@@ -391,38 +391,6 @@
       user-select:none;
     }
     .tabBottomActive{color:#fff}
-
-    /* Leaders list */
-    .eventList{
-      margin-top:8px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .eventRow{
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.02);
-      border-radius:12px;
-      padding:8px;
-    }
-    .eventTop{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:flex-start;
-      flex-wrap:wrap;
-    }
-    .eventTitle{
-      font-weight:900;
-      font-size:12px;
-      letter-spacing:.02em;
-    }
-    .eventMeta{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.25;
-    }
   </style>
 </head>
 
@@ -441,7 +409,6 @@
       <span class="mono" id="statusDetail"></span>
     </div>
 
-    <!-- Top tabs -->
     <div class="tabRow">
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
       <button class="tabBtn" id="tabPerfBtn">Performance (2Y)</button>
@@ -459,7 +426,6 @@
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <!-- KPI STRIP -->
     <section id="kpiStrip">
       <div class="sectionTitle" id="kpiTitle">Signal dashboard (top 4, rolling 30 days)</div>
       <div class="grid4">
@@ -470,7 +436,6 @@
       </div>
     </section>
 
-    <!-- MAIN VIEW -->
     <section id="viewMain">
       <div class="sectionTitle" id="convTitle">Convergence 🔥 (bipartisan overlap on BUY, rolling 30 days)</div>
       <div id="convergenceList"></div>
@@ -491,43 +456,23 @@
       </div>
     </section>
 
-    <!-- PERFORMANCE VIEW -->
     <section id="viewPerf" style="display:none;">
       <div class="sectionTitle">Best performers (rolling 2 years)</div>
-      <div class="hint">
-        This requires backend endpoint <span class="mono">/report/performance-2y</span>. If it stays stuck, the backend is returning 500.
-      </div>
-      <div id="perfBox" class="panel" style="margin-top:10px;">
-        <div class="subtle" id="perfStatus">Loading…</div>
+      <div class="panel" id="perfBox" style="margin-top:10px;">
+        <div class="subtle">This tab is wired, but we are focusing on fixing Main 180D first.</div>
       </div>
     </section>
 
-    <!-- LEADERS VIEW -->
     <section id="viewLeaders" style="display:none;">
       <div class="sectionTitle">Public filings leaders (SEC EDGAR, rolling 365 days)</div>
-      <div id="leadersList"></div>
-      <div class="hint">Today this shows filing events. To show tickers bought/sold from 13F you need backend holdings-delta logic.</div>
+      <div class="panel"><div class="subtle">This tab is wired, but we are focusing on fixing Main 180D first.</div></div>
     </section>
 
-    <!-- CRYPTO VIEW -->
     <section id="viewCrypto" style="display:none;">
       <div class="sectionTitle" id="cryptoTitle">Crypto-related congress trades (rolling 30 days)</div>
-      <div class="grid2">
-        <div>
-          <div class="sectionTitle">Buys</div>
-          <div id="cryptoBuys"></div>
-        </div>
-        <div>
-          <div class="sectionTitle">Sells</div>
-          <div id="cryptoSells"></div>
-        </div>
-      </div>
-      <div class="hint">
-        This is based on stock tickers that are crypto-adjacent (exchanges, miners, BTC ETFs). Direct BTC/ETH wallet trades usually are not available in disclosure feeds.
-      </div>
+      <div class="panel"><div class="subtle">This tab is wired, but we are focusing on fixing Main 180D first.</div></div>
     </section>
 
-    <!-- SEARCH VIEW -->
     <section id="viewSearch" style="display:none;">
       <div class="sectionTitle">Search ticker</div>
       <div class="panel">
@@ -544,7 +489,6 @@
     </section>
   </main>
 
-  <!-- Bottom nav -->
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
@@ -556,24 +500,13 @@
   </nav>
 
   <script>
-    // Backend endpoints
     const BACKEND_BASE = "https://finance-backend-dzta.onrender.com";
-    const LEADERS_URL = BACKEND_BASE + "/report/public-leaders";
-    const PERF_URL = BACKEND_BASE + "/report/performance-2y";
 
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "Main";
-    let WINDOW_DAYS = 30;         // 30 or 180 for now
-    let CACHE_MAIN = new Map();   // key: windowDays
-    let CACHE_LEADERS = null;
-
-    // Crypto-related tickers (stock proxies). You can add more anytime.
-    const CRYPTO_TICKERS = new Set([
-      "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
-      "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
-      "ETHE","ETHA"
-    ]);
+    let WINDOW_DAYS = 30;
+    let CACHE_MAIN = new Map(); // key "30" or "180"
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -605,27 +538,24 @@
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
       el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
-      el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
+      el("mainWindowTools").style.display = (tab === "Main") ? "" : "none";
 
-      // top tab styles
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
       el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
       el("tabLeadersBtn").classList.toggle("tabBtnActive", tab === "Leaders");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
       el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
 
-      // bottom nav styles
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
       el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
       el("navLeaders").classList.toggle("tabBottomActive", tab === "Leaders");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
-      // load tab data if needed
       if (tab === "Main") loadMain(false);
-      if (tab === "Crypto") loadMain(false);
-      if (tab === "Leaders") loadLeaders(false);
-      if (tab === "Performance") loadPerf();
+      if (tab === "Performance") setStatus("ok","Performance tab not part of this step","Fixing Main 180D first");
+      if (tab === "Leaders") setStatus("ok","Leaders tab not part of this step","Fixing Main 180D first");
+      if (tab === "Crypto") setStatus("ok","Crypto tab not part of this step","Fixing Main 180D first");
     }
 
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
@@ -769,54 +699,6 @@
       `;
     }
 
-    function setStockPanel(ticker){
-      const t = String(ticker || "").toUpperCase();
-      if (!t){
-        el("stockPanel").style.display = "none";
-        el("stockPanel").innerHTML = "";
-        return;
-      }
-
-      const symbol = "NASDAQ:" + t;
-      const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
-      const tv = `https://www.tradingview.com/symbols/${encodeURIComponent(symbol)}/`;
-
-      el("stockPanel").style.display = "";
-      el("stockPanel").innerHTML = `
-        <div class="panel">
-          <div class="panelTitle">
-            <h2>${t} chart (MA + RSI)</h2>
-            <button class="closeBtn" id="closeStockBtn">Close</button>
-          </div>
-          <iframe
-            title="TradingView Chart"
-            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=%23151522&studies=%5B%22MASimple%40tv-basicstudies%22%2C%22RSI%40tv-basicstudies%22%5D&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1"
-            loading="lazy">
-          </iframe>
-          <div class="miniLinks">
-            <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Open Yahoo</a>
-            <a class="miniLink" href="${tv}" target="_blank" rel="noopener">Open TradingView</a>
-          </div>
-        </div>
-      `;
-
-      const btn = document.getElementById("closeStockBtn");
-      if (btn) btn.addEventListener("click", () => {
-        history.pushState("", document.title, window.location.pathname + window.location.search);
-        setStockPanel("");
-      });
-    }
-
-    function handleHash(){
-      const h = window.location.hash || "";
-      if (h.startsWith("#stock=")){
-        const t = decodeURIComponent(h.replace("#stock=","")).trim();
-        setStockPanel(t);
-        return;
-      }
-      setStockPanel("");
-    }
-
     function topBy(arr, scoreFn, n){
       const a = normalizeList(arr).slice();
       a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
@@ -944,126 +826,22 @@
 
       el("sellList").innerHTML =
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
-
-      // crypto view uses same payload
-      renderCryptoFromMain(data);
-
-      handleHash();
-    }
-
-    function renderCryptoFromMain(data){
-      const win = Number(data.windowDays || WINDOW_DAYS || 30);
-      el("cryptoTitle").textContent = `Crypto-related congress trades (rolling ${win} days)`;
-
-      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers)
-        .filter(x => CRYPTO_TICKERS.has(String(x.ticker||"").toUpperCase()))
-        .sort(sortByCongressStrength);
-
-      const sells = normalizeList(data.politicianSells)
-        .filter(x => CRYPTO_TICKERS.has(String(x.ticker||"").toUpperCase()))
-        .sort(sortByCongressStrength);
-
-      el("cryptoBuys").innerHTML =
-        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No crypto-related buys in this window.</div>";
-
-      el("cryptoSells").innerHTML =
-        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No crypto-related sells in this window.</div>";
-    }
-
-    function labelBadge(label){
-      const s = String(label || "").toUpperCase();
-      if (s === "BUY") return `<span class="tag tagBuy">BUY</span>`;
-      if (s === "SELL") return `<span class="tag tagSell">SELL</span>`;
-      if (s === "MIXED") return `<span class="tag tagBoth">MIXED</span>`;
-      if (s.includes("13F")) return `<span class="tag tagSEC">13F</span>`;
-      return `<span class="tag tagSEC">${s || "FILED"}</span>`;
-    }
-
-    function renderLeaders(payload){
-      const leaders = payload && Array.isArray(payload.leaders) ? payload.leaders : [];
-      const windowDays = payload && payload.windowDays ? payload.windowDays : 365;
-      el("reportDate").textContent = payload.date ? `${payload.date} · leaders ${windowDays}D` : `leaders ${windowDays}D`;
-
-      if (!leaders.length){
-        el("leadersList").innerHTML = "<div class='subtle'>No leaders data returned yet.</div>";
-        return;
-      }
-
-      const html = leaders.map(l => {
-        const name = String(l.name || "");
-        const cik = String(l.cik || "");
-        const events = Array.isArray(l.events) ? l.events : [];
-
-        const evHtml = events.length ? events.map(ev => {
-          const form = String(ev.form || "");
-          const label = String(ev.label || "");
-          const filingDate = String(ev.filingDate || "");
-          const indexUrl = String(ev.indexUrl || "");
-          const primaryUrl = String(ev.primaryUrl || "");
-          const buyTx = Number(ev.buyTxCount || 0);
-          const sellTx = Number(ev.sellTxCount || 0);
-
-          const counts = (buyTx || sellTx)
-            ? `Tx: <span class="mono">P=${buyTx}</span> <span class="mono">S=${sellTx}</span>`
-            : "";
-
-          return `
-            <div class="eventRow">
-              <div class="eventTop">
-                <div>
-                  <div class="eventTitle">${form} · ${label || "FILED"}</div>
-                  <div class="eventMeta">Filed: ${filingDate || "—"} ${counts ? " · " + counts : ""}</div>
-                </div>
-                <div class="tags">
-                  ${labelBadge(label)}
-                  ${form ? `<span class="tag badgeSEC">${form}</span>` : ""}
-                </div>
-              </div>
-
-              <div class="miniLinks">
-                ${indexUrl ? `<a class="miniLink" href="${indexUrl}" target="_blank" rel="noopener">SEC Index</a>` : ""}
-                ${primaryUrl ? `<a class="miniLink" href="${primaryUrl}" target="_blank" rel="noopener">Primary doc</a>` : ""}
-              </div>
-            </div>
-          `;
-        }).join("") : `<div class="subtle'>No recent filings found.</div>`;
-
-        return `
-          <div class="card">
-            <div class="cardTop">
-              <div>
-                <div class="tickerLine">
-                  <div class="ticker">${name}</div>
-                  <div class="who">CIK: <span class="mono">${cik}</span> · Rolling ${windowDays}D</div>
-                </div>
-              </div>
-              <div class="tags"><span class="tag tagSEC">SEC</span></div>
-            </div>
-            <div class="divider"></div>
-            <div class="eventList">${evHtml}</div>
-          </div>
-        `;
-      }).join("");
-
-      el("leadersList").innerHTML = html;
     }
 
     async function loadMain(force){
       const key = String(WINDOW_DAYS);
       const cached = CACHE_MAIN.get(key);
 
-      // Try cached if available and not forced
       if (cached && !force){
-        if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
+        if (ACTIVE_TAB === "Main"){
           setStatus("ok", "Using cached congress data ✅", "");
           renderMain(cached);
         }
         return;
       }
 
-      // NOTE: Your backend must accept horizon_days for real 180D.
-      // If it ignores it, you'll still get 30D and the UI will show 30D.
-      const url = `${BACKEND_BASE}/report/today?horizon_days=${encodeURIComponent(String(WINDOW_DAYS))}`;
+      // Send BOTH params for compatibility
+      const url = `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(WINDOW_DAYS))}&horizon_days=${encodeURIComponent(String(WINDOW_DAYS))}`;
 
       setStatus("", `Loading congress (rolling ${WINDOW_DAYS}D)…`, url);
 
@@ -1074,124 +852,45 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         if (data.error) throw new Error(data.error);
 
+        // If backend ignored the window request, surface it immediately
+        const got = Number(data.windowDays || 0);
+        if (got && got !== Number(WINDOW_DAYS)){
+          setStatus("err", "Backend ignored requested window", `Requested ${WINDOW_DAYS}, got ${got}. Backend must support window_days.`);
+        } else {
+          setStatus("ok", "Live congress data loaded ✅", "");
+        }
+
         CACHE_MAIN.set(key, data);
 
-        setStatus("ok", "Live congress data loaded ✅", "");
-        if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
+        if (ACTIVE_TAB === "Main"){
           renderMain(data);
         }
       }catch(err){
         setStatus("err", "Could not load congress data", String(err));
         if (ACTIVE_TAB === "Main"){
           el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
+          el("buyList").innerHTML = "";
+          el("sellList").innerHTML = "";
         }
-      }
-    }
-
-    async function loadLeaders(force){
-      if (ACTIVE_TAB !== "Leaders") return;
-      if (CACHE_LEADERS && !force){
-        setStatus("ok", "Using cached SEC leaders ✅", "");
-        renderLeaders(CACHE_LEADERS);
-        return;
-      }
-
-      setStatus("", "Loading SEC leaders (rolling 365D)…", LEADERS_URL);
-      el("leadersList").innerHTML = "<div class='subtle'>Loading SEC filings…</div>";
-
-      try{
-        const res = await fetch(LEADERS_URL, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-
-        CACHE_LEADERS = data;
-        setStatus("ok", "SEC leaders loaded ✅", "");
-        renderLeaders(data);
-      }catch(err){
-        setStatus("err", "Could not load SEC leaders", String(err));
-        el("leadersList").innerHTML = "<div class='subtle'>No SEC leaders data displayed.</div>";
-      }
-    }
-
-    async function loadPerf(){
-      if (ACTIVE_TAB !== "Performance") return;
-
-      const url = PERF_URL + "?horizon_days=30";
-      setStatus("", "Loading performance (2Y)…", url);
-      el("perfStatus").textContent = "Loading…";
-
-      try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-
-        // Flexible render: just show JSON summary if backend schema changes.
-        const top = Array.isArray(data.top) ? data.top : [];
-        if (!top.length){
-          el("perfBox").innerHTML = `<div class="subtle">No performance rows returned yet.</div>`;
-        } else {
-          el("perfBox").innerHTML = `
-            <div class="sectionTitle" style="margin-top:0;">Top 5 (scored)</div>
-            ${top.slice(0,5).map(r => {
-              const name = String(r.name || r.politician || "Unknown");
-              const score = (r.score != null) ? Number(r.score).toFixed(3) : "—";
-              const note = r.note ? String(r.note) : "";
-              return `<div class="kpiRow"><span><strong>${name}</strong></span><span class="kpiBadge badgeNeu">${score}</span></div>${note ? `<div class="subtle" style="margin-top:4px;">${note}</div>` : ""}`;
-            }).join("")}
-            <div class="hint" style="margin-top:10px;">If this tab shows HTTP 500, fix the backend endpoint /report/performance-2y.</div>
-          `;
-        }
-
-        setStatus("ok", "Performance loaded ✅", "");
-      }catch(err){
-        setStatus("err", "Performance endpoint error", String(err));
-        el("perfBox").innerHTML = `
-          <div class="subtle">
-            Could not load performance.<br/>
-            Error: <span class="mono">${String(err)}</span><br/><br/>
-            Your backend endpoint <span class="mono">/report/performance-2y</span> is failing right now.
-          </div>
-        `;
       }
     }
 
     function setWindow(days){
       WINDOW_DAYS = days;
 
-      // update segmented control
+      // Update toggle UI
       el("btn30").classList.toggle("on", WINDOW_DAYS === 30);
       el("btn180").classList.toggle("on", WINDOW_DAYS === 180);
 
-      // refresh data for active tab
-      if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
-        loadMain(false);
-      }
-    }
-
-    function handleRefresh(){
-      if (ACTIVE_TAB === "Leaders"){
-        CACHE_LEADERS = null;
-        loadLeaders(true);
-        return;
-      }
-      if (ACTIVE_TAB === "Performance"){
-        loadPerf();
-        return;
-      }
+      // Force fetch so 180D can never reuse 30D cache
       CACHE_MAIN.delete(String(WINDOW_DAYS));
       loadMain(true);
     }
 
-    // Search
-    el("searchBtn").addEventListener("click", () => {
-      const t = String(el("searchInput").value || "").trim().toUpperCase();
-      if (!t) return;
-      window.location.hash = "#stock=" + encodeURIComponent(t);
-      showTab("Search");
-      handleHash();
-    });
+    function handleRefresh(){
+      CACHE_MAIN.delete(String(WINDOW_DAYS));
+      loadMain(true);
+    }
 
     // Window toggles
     el("btn30").addEventListener("click", () => setWindow(30));
@@ -1211,13 +910,12 @@
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
     el("navSearch").addEventListener("click", () => showTab("Search"));
 
-    // Refresh + chart
+    // Refresh
     el("refreshBtn").addEventListener("click", handleRefresh);
-    window.addEventListener("hashchange", handleHash);
 
     // Start
     showTab("Main");
-    loadMain(false);
+    loadMain(true);
   </script>
 </body>
 </html>
