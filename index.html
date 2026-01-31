@@ -385,15 +385,6 @@
       padding:9px;
     }
 
-    .newsGrid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
-    @media (min-width: 980px){
-      .newsGrid{grid-template-columns:1fr 1fr;}
-    }
-
     .input{
       width:100%;
       border:1px solid var(--border);
@@ -403,6 +394,75 @@
       padding:10px;
       font-size:12px;
       outline:none;
+    }
+
+    /* News briefing details */
+    details.briefingDetails{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:9px;
+      margin-top:10px;
+    }
+    details.briefingDetails > summary{
+      cursor:pointer;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      user-select:none;
+    }
+    details.briefingDetails > summary::-webkit-details-marker{display:none}
+    .summaryLeft{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:0;
+    }
+    .summaryTitle{
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .summaryMeta{
+      font-size:12px;
+      color:var(--muted);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width:740px;
+    }
+    .bulletList{
+      margin:8px 0 0;
+      padding-left:16px;
+      color:rgba(255,255,255,.86);
+      line-height:1.3;
+    }
+    .headlineList{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .headlineItem{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:9px;
+    }
+    .headlineTitle{
+      font-size:12px;
+      color:rgba(255,255,255,.92);
+      line-height:1.25;
+    }
+    .headlineMeta{
+      margin-top:6px;
+      font-size:11px;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
     }
   </style>
 </head>
@@ -464,31 +524,31 @@
 
     <!-- NEWS TAB -->
     <section id="viewNews" style="display:none;">
-      <div class="sectionTitle">Market sentiment</div>
+      <div class="sectionTitle">Daily briefing</div>
       <div class="grid3">
-        <div class="kpi" id="newsKpiSentiment"></div>
-        <div class="kpi" id="newsKpiTop"></div>
-        <div class="kpi" id="newsKpiWatch"></div>
+        <div class="kpi" id="briefKpiSentiment"></div>
+        <div class="kpi" id="briefKpiScope"></div>
+        <div class="kpi" id="briefKpiNotes"></div>
       </div>
 
       <div class="sectionTitle">Your watchlist</div>
       <div class="panel">
-        <div class="kpiSub">Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL</div>
+        <div class="kpiSub">
+          Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL
+          This watchlist influences the briefing and pulls ticker RSS into the same sector view.
+        </div>
         <div style="margin-top:10px;">
           <input class="input" id="watchInput" value="SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B" />
         </div>
         <div class="miniLinks" style="margin-top:10px;">
-          <button class="pillBtn" id="watchApplyBtn">Load watchlist news</button>
+          <button class="pillBtn" id="watchApplyBtn">Refresh briefing</button>
         </div>
       </div>
 
-      <div class="sectionTitle">Top headlines</div>
-      <div class="newsGrid" id="newsTopList"></div>
+      <div class="sectionTitle">Sectors</div>
+      <div id="briefingSectors"></div>
 
-      <div class="sectionTitle">Watchlist headlines</div>
-      <div class="newsGrid" id="newsWatchList"></div>
-
-      <div class="subtle" id="newsHint" style="margin-top:12px;"></div>
+      <div class="subtle" id="briefHint" style="margin-top:12px;"></div>
     </section>
 
     <!-- CONGRESS TAB -->
@@ -630,11 +690,9 @@
     const ENTRY_URL = (windowDays) =>
       `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
 
-    const NEWS_TOP_URL = (maxItems) =>
-      `${BACKEND_BASE}/news/top?max_items=${encodeURIComponent(String(maxItems || 30))}`;
-
-    const NEWS_WATCH_URL = (tickers) =>
-      `${BACKEND_BASE}/news/watchlist?tickers=${encodeURIComponent(String(tickers||""))}&max_items_per_ticker=8`;
+    // New briefing endpoint
+    const NEWS_BRIEF_URL = (tickers) =>
+      `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(String(tickers||""))}&max_general=55&max_per_ticker=6`;
 
     const el = (id) => document.getElementById(id);
 
@@ -645,8 +703,9 @@
     let CACHE_ENTRY = new Map();
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
-    let CACHE_NEWS_TOP = null;
-    let CACHE_NEWS_WATCH = new Map();
+
+    // News briefing cache keyed by ticker string
+    let CACHE_BRIEFING = new Map();
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -1433,7 +1492,7 @@
       }
     }
 
-    // ----------- News ----------
+    // ----------- News briefing ----------
     function sentimentBadge(s){
       const score = Number(s?.score ?? 50);
       const label = String(s?.label ?? "NEUTRAL");
@@ -1442,166 +1501,165 @@
       return { cls: "badgeNeu", label: label, score };
     }
 
-    function newsItemCardHTML(x){
-      const title = String(x.title||"").trim();
-      const link = String(x.link||"").trim();
-      const pub = String(x.published||"").trim();
-      const src = String(x.sourceFeed||"").trim();
+    function headlineHTML(h){
+      const title = String(h?.title || "").trim();
+      const link = String(h?.link || "").trim();
+      const pub = String(h?.published || "").trim();
+      const bucket = String(h?.bucket || "").trim();
+      const sectors = Array.isArray(h?.sectors) ? h.sectors.join(", ") : "";
 
       return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <div class="ticker">NEWS</div>
-                <div class="who">${title}</div>
-              </div>
+        <div class="headlineItem">
+          <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
+          <div class="headlineMeta">
+            ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
+            ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
+            ${sectors ? `<span>Sectors: <strong>${sectors}</strong></span>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function sectorPanelHTML(s){
+      const sector = String(s?.sector || "General");
+      const count = Number(s?.count || 0);
+      const sent = sentimentBadge(s?.sentiment);
+      const summary = String(s?.summary || "").trim();
+      const impl = Array.isArray(s?.implications_2_12_weeks) ? s.implications_2_12_weeks : [];
+      const headlines = Array.isArray(s?.headlines) ? s.headlines : [];
+
+      const meta = [];
+      meta.push(`${count} headlines`);
+      meta.push(`Sentiment ${sent.score}/100`);
+      const metaLine = meta.join(" · ");
+
+      return `
+        <details class="briefingDetails">
+          <summary>
+            <div class="summaryLeft">
+              <div class="summaryTitle">${sector}</div>
+              <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
             </div>
             <div class="tags">
-              <span class="tag tagSEC">HEADLINE</span>
+              <span class="kpiBadge badgeNeu">${count}</span>
+              <span class="kpiBadge ${sent.cls}">${sent.label} · ${sent.score}</span>
             </div>
-          </div>
+          </summary>
+
           <div class="divider"></div>
-          <div class="metaRow">
-            <div class="counts">
-              ${pub ? `<div class="countItem">Published: <strong>${pub}</strong></div>` : ""}
-            </div>
+
+          <div class="kpiSub">
+            <strong>Today’s read:</strong> ${summary || "No summary available."}
           </div>
-          <div class="miniLinks">
-            ${link ? `<a class="miniLink" href="${link}" target="_blank" rel="noopener">Open</a>` : ""}
-            ${src ? `<span class="miniLink">${src}</span>` : ""}
+
+          <div class="divider"></div>
+
+          <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
+          <ul class="bulletList">
+            ${impl.length ? impl.map(x => `<li>${String(x||"")}</li>`).join("") : "<li>No implications generated.</li>"}
+          </ul>
+
+          <div class="divider"></div>
+
+          <div class="kpiSub"><strong>Headlines:</strong></div>
+          <div class="headlineList">
+            ${headlines.length ? headlines.map(headlineHTML).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
           </div>
-        </div>
+        </details>
       `;
     }
 
-    async function loadNewsTop(force){
-      if (CACHE_NEWS_TOP && !force){
-        renderNewsTop(CACHE_NEWS_TOP);
-        return;
-      }
+    function renderBriefing(data, tickers){
+      const overall = sentimentBadge(data?.overallSentiment);
+      const sectors = Array.isArray(data?.sectors) ? data.sectors : [];
+      const date = String(data?.date || "");
+      const total = sectors.reduce((a, s) => a + Number(s?.count || 0), 0);
+      const srcGeneral = String(data?.sources?.general || "");
+      const srcWatch = String(data?.sources?.watchlist || "");
 
-      const url = NEWS_TOP_URL(30);
-      el("newsTopList").innerHTML = "<div class='subtle'>Loading top headlines…</div>";
-      el("newsHint").textContent = `Loading from: ${url}`;
-
-      try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        CACHE_NEWS_TOP = data;
-        renderNewsTop(data);
-      }catch(err){
-        el("newsTopList").innerHTML = "<div class='subtle'>Could not load news.</div>";
-        el("newsHint").textContent = "Backend must expose /news/top and allow CORS.";
-      }
-    }
-
-    function renderNewsTop(data){
-      const items = Array.isArray(data?.items) ? data.items : [];
-      const s = sentimentBadge(data?.sentiment);
-
-      el("newsKpiSentiment").innerHTML = `
+      el("briefKpiSentiment").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Headline sentiment</div>
-            <div class="kpiValue">${s.score}/100</div>
+            <div class="kpiTitle">Overall sentiment</div>
+            <div class="kpiValue">${overall.score}/100</div>
           </div>
-          <span class="kpiBadge ${s.cls}">${s.label}</span>
+          <span class="kpiBadge ${overall.cls}">${overall.label}</span>
         </div>
-        <div class="kpiSub">Lightweight gauge from headline wording.</div>
+        <div class="kpiSub">
+          Headline-based gauge. Use for context, not timing.
+        </div>
         <div class="kpiList">
-          <div class="kpiRow"><span>Sample size</span><span class="kpiBadge badgeNeu">${Number(data?.sentiment?.total ?? 0)}</span></div>
-          <div class="kpiRow"><span>Positive</span><span class="kpiBadge badgePos">${Number(data?.sentiment?.pos ?? 0)}</span></div>
-          <div class="kpiRow"><span>Negative</span><span class="kpiBadge badgeNeg">${Number(data?.sentiment?.neg ?? 0)}</span></div>
+          <div class="kpiRow"><span>Date</span><span class="kpiBadge badgeNeu">${date || "—"}</span></div>
         </div>
       `;
 
-      el("newsKpiTop").innerHTML = `
+      el("briefKpiScope").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Top headlines</div>
-            <div class="kpiValue">${items.length}</div>
+            <div class="kpiTitle">Briefing scope</div>
+            <div class="kpiValue">${total} headlines</div>
           </div>
-          <span class="kpiBadge badgeNeu">${data?.date || ""}</span>
+          <span class="kpiBadge badgeNeu">Sectors</span>
         </div>
-        <div class="kpiSub">General market drivers, macro, earnings, rates.</div>
+        <div class="kpiSub">
+          Grouped into AI, Medical, Energy, Robotics, Infrastructure, General.
+        </div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Watchlist</span><span class="kpiBadge badgeNeu">${String(tickers||"").split(",").filter(x => x.trim()).length} tickers</span></div>
+        </div>
       `;
 
-      el("newsKpiWatch").innerHTML = `
+      el("briefKpiNotes").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Watchlist</div>
-            <div class="kpiValue">Load tickers</div>
+            <div class="kpiTitle">Sources</div>
+            <div class="kpiValue">RSS</div>
           </div>
-          <span class="kpiBadge badgeNeu">Yahoo RSS</span>
+          <span class="kpiBadge badgeNeu">Backend</span>
         </div>
-        <div class="kpiSub">Use this to focus on your portfolio names.</div>
+        <div class="kpiSub">
+          ${srcGeneral ? `<div>${srcGeneral}</div>` : ""}
+          ${srcWatch ? `<div style="margin-top:4px;">${srcWatch}</div>` : ""}
+        </div>
       `;
 
-      el("newsTopList").innerHTML = items.length
-        ? items.map(newsItemCardHTML).join("")
-        : "<div class='subtle'>No top headlines returned.</div>";
+      el("briefingSectors").innerHTML = sectors.length
+        ? sectors.map(sectorPanelHTML).join("")
+        : "<div class='subtle'>No sectors returned.</div>";
 
-      const err = Array.isArray(data?.errors) ? data.errors : [];
-      el("newsHint").textContent = err.length ? ("Some feeds failed: " + err.slice(0,2).join(" | ")) : "Top headlines loaded.";
+      const errG = Array.isArray(data?.errors?.general) ? data.errors.general : [];
+      const errW = Array.isArray(data?.errors?.watchlist) ? data.errors.watchlist : [];
+      const errAll = errG.concat(errW).filter(Boolean);
+
+      el("briefHint").textContent = errAll.length
+        ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
+        : "Daily briefing loaded.";
     }
 
-    async function loadNewsWatch(tickers, force){
-      const key = String(tickers||"");
-      if (CACHE_NEWS_WATCH.has(key) && !force){
-        renderNewsWatch(CACHE_NEWS_WATCH.get(key));
+    async function loadBriefing(tickers, force){
+      const key = String(tickers || "").trim();
+      if (CACHE_BRIEFING.has(key) && !force){
+        renderBriefing(CACHE_BRIEFING.get(key), key);
         return;
       }
 
-      const url = NEWS_WATCH_URL(tickers);
-      el("newsWatchList").innerHTML = "<div class='subtle'>Loading watchlist headlines…</div>";
+      const url = NEWS_BRIEF_URL(key);
+      el("briefingSectors").innerHTML = "<div class='subtle'>Loading daily briefing…</div>";
+      el("briefHint").textContent = `Loading from: ${url}`;
 
       try{
         const res = await fetch(url, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error("HTTP " + res.status);
-        CACHE_NEWS_WATCH.set(key, data);
-        renderNewsWatch(data);
+        CACHE_BRIEFING.set(key, data);
+        renderBriefing(data, key);
       }catch(err){
-        el("newsWatchList").innerHTML = "<div class='subtle'>Could not load watchlist news.</div>";
+        el("briefingSectors").innerHTML = "<div class='subtle'>Could not load briefing.</div>";
+        el("briefHint").textContent = "Backend must expose /news/briefing and allow CORS.";
+        el("briefKpiSentiment").innerHTML = "";
+        el("briefKpiScope").innerHTML = "";
+        el("briefKpiNotes").innerHTML = "";
       }
-    }
-
-    function renderNewsWatch(data){
-      const itemsBy = data?.itemsByTicker || {};
-      const tickers = Array.isArray(data?.tickers) ? data.tickers : [];
-      const s = sentimentBadge(data?.sentiment);
-
-      el("newsKpiWatch").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Watchlist sentiment</div>
-            <div class="kpiValue">${s.score}/100</div>
-          </div>
-          <span class="kpiBadge ${s.cls}">${s.label}</span>
-        </div>
-        <div class="kpiSub">Based on headlines for tickers you entered.</div>
-      `;
-
-      const cards = [];
-      for (const t of tickers){
-        const arr = Array.isArray(itemsBy[t]) ? itemsBy[t] : [];
-        if (!arr.length) continue;
-
-        cards.push(`
-          <div class="panel">
-            <div class="panelTitle">
-              <h2>${t}</h2>
-              <span class="kpiBadge badgeNeu">${arr.length} headlines</span>
-            </div>
-            <div class="divider"></div>
-            ${arr.map(newsItemCardHTML).join("")}
-          </div>
-        `);
-      }
-
-      el("newsWatchList").innerHTML = cards.length ? cards.join("") : "<div class='subtle'>No watchlist headlines returned.</div>";
     }
 
     // ----------- Tabs ----------
@@ -1634,8 +1692,7 @@
         loadEntryIndex(365, false);
       }
       if (tab === "News"){
-        loadNewsTop(false);
-        loadNewsWatch(el("watchInput").value, false);
+        loadBriefing(el("watchInput").value, false);
       }
       if (tab === "Congress"){
         loadMain(false);
@@ -1669,7 +1726,7 @@
       CACHE_ENTRY.delete("365");
       CACHE_HOLDINGS.delete("365");
       CACHE_DAILY.delete(String(WINDOW_DAYS));
-      CACHE_NEWS_TOP = null;
+      CACHE_BRIEFING.clear();
 
       if (ACTIVE_TAB === "Main"){
         loadMain(true);
@@ -1677,8 +1734,7 @@
         return;
       }
       if (ACTIVE_TAB === "News"){
-        loadNewsTop(true);
-        loadNewsWatch(el("watchInput").value, true);
+        loadBriefing(el("watchInput").value, true);
         return;
       }
       if (ACTIVE_TAB === "Congress"){
@@ -1711,7 +1767,7 @@
     window.addEventListener("hashchange", handleHash);
 
     el("watchApplyBtn").addEventListener("click", () => {
-      loadNewsWatch(el("watchInput").value, true);
+      loadBriefing(el("watchInput").value, true);
     });
 
     // Start
