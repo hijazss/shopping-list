@@ -369,7 +369,6 @@
     }
     .tabBottomActive{color:#fff}
 
-    /* Simple holdings list */
     .holdingsGrid{
       display:grid;
       grid-template-columns:1fr;
@@ -563,14 +562,15 @@
   </nav>
 
   <script>
-    const BACKEND_BASE = "https://finance-backend-dzta.onrender.com";
+    // Updated to your LIVE Render URL from logs:
+    const BACKEND_BASE = "https://finance-backend-1-bbi9.onrender.com";
 
     const TODAY_URL = (windowDays) =>
       `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(windowDays))}`;
 
-    // IMPORTANT: your backend code defines /report/congress-holdings (not /report/holdings/common)
-    const HOLDINGS_PROXY_URL = (windowDays) =>
-      `${BACKEND_BASE}/report/congress-holdings?window_days=${encodeURIComponent(String(windowDays))}&top_n=30`;
+    // Updated to match your backend endpoint that returns { commonHoldings: [...] }
+    const HOLDINGS_COMMON_URL = (windowDays) =>
+      `${BACKEND_BASE}/report/holdings/common?window_days=${encodeURIComponent(String(windowDays))}&top_n=30`;
 
     const ENTRY_URL = (windowDays) =>
       `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
@@ -584,7 +584,6 @@
     let CACHE_HOLDINGS = new Map();
     let CACHE_ENTRY = new Map();
 
-    // ----------- status ----------
     function setStatus(kind, text, detail){
       const st = el("statusText");
       const sd = el("statusDetail");
@@ -603,7 +602,6 @@
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
 
-    // ----------- chart panel ----------
     function setStockPanel(ticker){
       const t = String(ticker||"").toUpperCase();
       if (!t){
@@ -663,7 +661,6 @@
       `;
     }
 
-    // ----------- Congress scoring helpers ----------
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
 
     function congressScore(x){
@@ -794,7 +791,6 @@
       const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
       const sells = normalizeList(data.politicianSells).sort(sortByCongressStrength);
 
-      // KPIs simplified to 3 boxes
       const merged = new Map();
       function addCard(x){
         const t = String(x.ticker||"").toUpperCase();
@@ -878,7 +874,6 @@
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sells found.</div>";
     }
 
-    // ----------- Market Entry (kept minimal) ----------
     function entryBadge(score){
       const s = Number(score || 0);
       if (s >= 75) return {label:"RISK-ON", cls:"badgePos"};
@@ -1011,11 +1006,9 @@
       }
     }
 
-    // ----------- Holdings (simplified) ----------
     function holdingsRowHTML(item){
       const t = String(item.ticker || "").toUpperCase();
-      const holders = Number(item.holderCount ?? item.holders ?? 0);
-      const last = String(item.lastActivity || item.lastSeen || "");
+      const holders = Number(item.holders ?? item.holderCount ?? 0);
       return `
         <div class="holdingsItem">
           <div class="cardTop">
@@ -1023,7 +1016,6 @@
               <div class="tickerLine">
                 <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
                 <span class="kpiBadge badgeNeu">Holders: <strong>${holders}</strong></span>
-                ${last ? `<span class="kpiBadge badgeNeu">Last: <strong>${last}</strong></span>` : ""}
               </div>
               <div class="who">Popularity list (not a timing signal)</div>
             </div>
@@ -1040,10 +1032,7 @@
       const win = Number(payload?.windowDays || 365);
       el("holdingsWindowBadge").textContent = `${win}D`;
 
-      // Your backend returns: { topHoldings: [...], holdings: [...] }
-      const list = Array.isArray(payload?.topHoldings)
-        ? payload.topHoldings
-        : Array.isArray(payload?.holdings) ? payload.holdings.slice(0,30) : [];
+      const list = Array.isArray(payload?.commonHoldings) ? payload.commonHoldings : [];
 
       if (!list.length){
         el("holdingsKpiSimple").innerHTML = `
@@ -1055,7 +1044,7 @@
             <span class="kpiBadge badgeNeu">${win}D</span>
           </div>
           <div class="kpiSub">
-            This UI expects <span class="mono">/report/congress-holdings</span> to return JSON with <span class="mono">topHoldings</span>.
+            This UI expects <span class="mono">/report/holdings/common</span> to return JSON with <span class="mono">commonHoldings</span>.
           </div>
         `;
         el("holdingsList").innerHTML = "<div class='subtle'>No holdings data returned.</div>";
@@ -1063,11 +1052,12 @@
         return;
       }
 
-      const sorted = list.slice().map(x => ({
-        ticker: x.ticker,
-        holderCount: Number(x.holderCount ?? x.holders ?? 0),
-        lastActivity: x.lastActivity || x.lastSeen || ""
-      })).filter(x => x.ticker)
+      const sorted = list.slice()
+        .map(x => ({
+          ticker: x.ticker,
+          holderCount: Number(x.holders ?? x.holderCount ?? 0),
+        }))
+        .filter(x => x.ticker)
         .sort((a,b) => (b.holderCount - a.holderCount) || String(a.ticker).localeCompare(String(b.ticker)));
 
       const top = sorted[0];
@@ -1093,7 +1083,7 @@
         </div>
       `;
 
-      el("holdingsList").innerHTML = sorted.map(holdingsRowHTML).join("");
+      el("holdingsList").innerHTML = sorted.map(x => holdingsRowHTML({ ticker:x.ticker, holders:x.holderCount })).join("");
       el("holdingsHint").textContent = "Simple view: ticker + holders. That is it.";
     }
 
@@ -1105,7 +1095,7 @@
         return;
       }
 
-      const url = HOLDINGS_PROXY_URL(windowDays || 365);
+      const url = HOLDINGS_COMMON_URL(windowDays || 365);
       el("holdingsList").innerHTML = "<div class='subtle'>Loading holdings…</div>";
       el("holdingsHint").textContent = `Loading from: ${url}`;
 
@@ -1117,12 +1107,11 @@
         CACHE_HOLDINGS.set(key, data);
         renderHoldingsCommon(data);
       }catch(err){
-        renderHoldingsCommon({ windowDays: windowDays || 365, topHoldings: [] });
-        el("holdingsHint").textContent = "Could not load holdings. Confirm backend has /report/congress-holdings and CORS allows this origin.";
+        renderHoldingsCommon({ windowDays: windowDays || 365, commonHoldings: [] });
+        el("holdingsHint").textContent = "Could not load holdings. Confirm backend has /report/holdings/common and CORS allows this origin.";
       }
     }
 
-    // ----------- Crypto rendering (expanded) ----------
     const DIRECT_COIN_SET = new Set(["BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"]);
     const CRYPTO_LINKED_TICKERS = new Set([
       "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
@@ -1198,7 +1187,6 @@
       const crypto = (data && data.crypto && typeof data.crypto === "object") ? data.crypto : {};
       const raw = normalizeList(crypto.raw);
 
-      // Direct = row contains a known coin symbol
       const direct = raw.filter(x => {
         const coins = Array.isArray(x.coins) ? x.coins.map(c => String(c||"").toUpperCase()) : [];
         return coins.some(c => DIRECT_COIN_SET.has(c));
@@ -1213,7 +1201,6 @@
       el("cryptoDirectSells").innerHTML =
         directSells.length ? directSells.slice(0,80).map(cryptoCardHTML).join("") : "<div class='subtle'>No direct crypto sells in this window.</div>";
 
-      // Hint-only = marked by backend as hint_only OR coins list is CRYPTO with no symbol
       const hintOnly = raw.filter(x => {
         const ck = String(x.cryptoKind||"");
         const coins = Array.isArray(x.coins) ? x.coins.map(c => String(c||"").toUpperCase()) : [];
@@ -1225,7 +1212,6 @@
       el("cryptoHintOnly").innerHTML =
         hintOnly.length ? hintOnly.slice(0,120).map(cryptoCardHTML).join("") : "<div class='subtle'>No hint-only crypto disclosures in this window.</div>";
 
-      // Crypto-linked tickers from congress trading cards
       const buys = normalizeList(data.politicianBuys || data.bipartisanTickers);
       const sells = normalizeList(data.politicianSells);
       const all = buys.concat(sells);
@@ -1251,7 +1237,6 @@
         `Showing direct, hint-only, and crypto-linked. If 30D looks empty, switch to 180D or 365D.`;
     }
 
-    // ----------- Main loader ----------
     function renderMain(payload){
       const win = Number(payload.windowDays || WINDOW_DAYS || 30);
       el("reportDate").textContent = payload.date ? `${payload.date} · window ${win}D` : `window ${win}D`;
@@ -1290,7 +1275,6 @@
       }
     }
 
-    // ----------- Tabs ----------
     function showTab(tab){
       ACTIVE_TAB = tab;
       setTitleForTab(tab);
@@ -1310,7 +1294,6 @@
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
 
-      // Window toggle visible for Congress/Crypto
       el("mainWindowTools").style.display = (tab === "Congress" || tab === "Crypto") ? "" : "none";
 
       if (tab === "Main"){
@@ -1328,7 +1311,6 @@
       handleHash();
     }
 
-    // ----------- Window toggle ----------
     function setWindow(days){
       WINDOW_DAYS = days;
       el("btn30").classList.toggle("on", WINDOW_DAYS === 30);
@@ -1358,7 +1340,6 @@
       loadMain(true);
     }
 
-    // ----------- Events ----------
     el("btn30").addEventListener("click", () => setWindow(30));
     el("btn180").addEventListener("click", () => setWindow(180));
     el("btn365").addEventListener("click", () => setWindow(365));
@@ -1376,7 +1357,6 @@
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
 
-    // Start
     showTab("Main");
     loadMain(false);
     loadEntryIndex(365, false);
