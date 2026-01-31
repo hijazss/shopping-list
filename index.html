@@ -283,6 +283,7 @@
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
+    .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .metaRow{
       margin-top:7px;
@@ -398,7 +399,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(5,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -491,6 +492,23 @@
       flex-wrap:wrap;
       justify-content:flex-end;
     }
+
+    /* Holdings list */
+    .holdingsGrid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (min-width: 980px){
+      .holdingsGrid{grid-template-columns:1fr 1fr;}
+    }
+    .holdingsItem{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:9px;
+    }
   </style>
 </head>
 
@@ -511,7 +529,9 @@
 
     <div class="tabRow">
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
+      <button class="tabBtn" id="tabCongressBtn">Congress Trading</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
+      <button class="tabBtn" id="tabScoreBtn">Score</button>
       <button class="tabBtn" id="tabSearchBtn">Search</button>
 
       <div class="rightTools" id="mainWindowTools">
@@ -525,19 +545,19 @@
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <section id="kpiStrip">
-      <div class="sectionTitle" id="kpiTitle">Signal dashboard (top 4, rolling 30 days)</div>
-      <div class="grid4">
-        <div class="kpi" id="kpiNet"></div>
-        <div class="kpi" id="kpiPart"></div>
-        <div class="kpi" id="kpiTop"></div>
-        <div class="kpi" id="kpiHighlights"></div>
+    <!-- MAIN TAB -->
+    <section id="viewMain">
+      <div class="sectionTitle">Market entry</div>
+      <div class="panel">
+        <div class="grid3">
+          <div class="kpi" id="entryKpiScore"></div>
+          <div class="kpi" id="entryKpiRules"></div>
+          <div class="kpi" id="entryKpiBuffett"></div>
+        </div>
+        <div class="hint" id="entryHint" style="margin-top:10px;"></div>
       </div>
-    </section>
 
-    <section id="strategySection">
       <div class="sectionTitle">Strategy</div>
-
       <div class="panel">
         <div class="strategyHeader">
           <div>
@@ -568,7 +588,42 @@
       </div>
     </section>
 
-    <section id="viewMain">
+    <!-- CONGRESS TRADING TAB -->
+    <section id="viewCongress" style="display:none;">
+      <div class="sectionTitle">Congress Trading</div>
+
+      <div class="panel">
+        <div class="panelTitle">
+          <h2>Common holdings (portfolio overlap)</h2>
+          <span class="kpiBadge badgeNeu" id="holdingsWindowBadge">365D</span>
+        </div>
+        <div class="hint" style="margin-top:6px;">
+          This ranks stocks by how many members hold them in the last 365 days. Independent of buy or sell activity.
+        </div>
+        <div class="divider"></div>
+
+        <div class="grid3">
+          <div class="kpi" id="holdingsKpiTop"></div>
+          <div class="kpi" id="holdingsKpiBreadth"></div>
+          <div class="kpi" id="holdingsKpiRules"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="sectionTitle" style="margin-top:0;">Ranked by holder count</div>
+        <div id="holdingsList" class="holdingsGrid"></div>
+
+        <div class="hint" id="holdingsHint" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="sectionTitle" id="kpiTitle">Congressman activity signal dashboard (top 4, rolling 30 days)</div>
+      <div class="grid4">
+        <div class="kpi" id="kpiNet"></div>
+        <div class="kpi" id="kpiPart"></div>
+        <div class="kpi" id="kpiTop"></div>
+        <div class="kpi" id="kpiHighlights"></div>
+      </div>
+
       <div class="sectionTitle" id="convTitle">Convergence 🔥 (bipartisan overlap on BUY, rolling 30 days)</div>
       <div id="convergenceList"></div>
 
@@ -583,41 +638,63 @@
         <div><div id="sellList"></div></div>
       </div>
 
-      <div class="hint" id="mainHint">
-        Sort is by total participation (both parties) within the rolling window. Tap ticker for chart.
-      </div>
+      <div class="hint" id="mainHint"></div>
     </section>
 
+    <!-- CRYPTO TAB -->
     <section id="viewCrypto" style="display:none;">
       <div class="sectionTitle" id="cryptoTitle">Crypto congress disclosures (rolling 30 days)</div>
 
       <div class="grid2">
         <div>
           <div class="sectionTitle">Buys</div>
-
           <div class="sectionTitle" style="margin-top:8px;">Direct crypto disclosures</div>
           <div id="cryptoDirectBuys"></div>
-
           <div class="sectionTitle" style="margin-top:14px;">Crypto-linked tickers (ETFs, miners, exchanges)</div>
           <div id="cryptoLinkedBuys"></div>
         </div>
 
         <div>
           <div class="sectionTitle">Sells</div>
-
           <div class="sectionTitle" style="margin-top:8px;">Direct crypto disclosures</div>
           <div id="cryptoDirectSells"></div>
-
           <div class="sectionTitle" style="margin-top:14px;">Crypto-linked tickers (ETFs, miners, exchanges)</div>
           <div id="cryptoLinkedSells"></div>
         </div>
       </div>
 
-      <div class="hint" id="cryptoHint">
-        Direct crypto items come from disclosure descriptions (BTC, ETH, SOL, LINK, etc). Crypto-linked tickers are ETFs, miners, and exchanges pulled from the same congress feed.
+      <div class="hint" id="cryptoHint"></div>
+    </section>
+
+    <!-- SCORE TAB -->
+    <section id="viewScore" style="display:none;">
+      <div class="sectionTitle">Score a ticker</div>
+
+      <div class="panel">
+        <div class="hint" style="margin-top:0;">
+          Enter any ticker. The same strategy scoring rules are applied. Congress can add points, but it is never required.
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+          <input id="scoreInput" placeholder="Ticker (example: ISRG)" autocapitalize="characters"
+                 style="flex:1; min-width:220px; padding:10px 10px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:13px;" />
+          <select id="scoreSector"
+                  style="padding:10px 10px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:13px;">
+            <option value="auto">Auto sector</option>
+            <option value="ai">AI</option>
+            <option value="chips">Chips</option>
+            <option value="medical">Medical</option>
+            <option value="robotics">Robotics</option>
+            <option value="infrastructure">Infrastructure</option>
+          </select>
+          <button class="pillBtn" id="scoreGoBtn">Score</button>
+        </div>
+
+        <div id="scoreResult" style="margin-top:12px;"></div>
       </div>
     </section>
 
+    <!-- SEARCH TAB -->
     <section id="viewSearch" style="display:none;">
       <div class="sectionTitle">Search ticker</div>
       <div class="panel">
@@ -637,30 +714,45 @@
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
+      <div class="tabBottom" id="navCongress">Congress</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
+      <div class="tabBottom" id="navScore">Score</div>
       <div class="tabBottom" id="navSearch">Search</div>
     </div>
   </nav>
 
   <script>
     const BACKEND_BASE = "https://finance-backend-dzta.onrender.com";
+
+    // Existing trade activity endpoint
+    const TODAY_URL = (windowDays) => `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(windowDays))}`;
+
+    // Holdings overlap endpoint (backend must implement)
+    const HOLDINGS_COMMON_URL = (windowDays) => `${BACKEND_BASE}/report/holdings/common?window_days=${encodeURIComponent(String(windowDays))}`;
+
+    // Market entry endpoint (backend should implement for reliable scoring)
+    const ENTRY_URL = (windowDays) => `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
+
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "Main";
     let WINDOW_DAYS = 30;
 
     let CACHE_MAIN = new Map();
+    let CACHE_HOLDINGS = new Map();
+    let CACHE_ENTRY = new Map();
 
+    // Crypto
     const CRYPTO_TICKERS = new Set([
       "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
       "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
       "ETHE","ETHA","WGMI","BKCH","BLOK","BITQ","DAPP"
     ]);
-
     const DIRECT_COIN_SET = new Set([
       "BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"
     ]);
 
+    // Strategy weights
     const STRATEGY_WEIGHTS = {
       innovationFit: 40,
       congressSignal: 25,
@@ -668,6 +760,7 @@
       riskPenalty: 15
     };
 
+    // Strategy sectors
     const SECTOR_ORDER = [
       { key:"ai", label:"AI" },
       { key:"chips", label:"Chips" },
@@ -676,6 +769,7 @@
       { key:"infrastructure", label:"Infrastructure" },
     ];
 
+    // Sector seeds
     const SECTOR_SEEDS = {
       ai: ["NVDA","MSFT","GOOGL","AMZN","META","AVGO","ORCL","PLTR","SNOW","DDOG","NOW","CRM"],
       chips: ["NVDA","AVGO","AMD","INTC","ASML","TSM","MU","QCOM","ARM","LRCX","AMAT","KLAC","ADI","MRVL"],
@@ -684,6 +778,7 @@
       infrastructure: ["ANET","CSCO","MSFT","AMZN","GOOGL","ORCL","EQIX","DLR","VRT","ETN","PWR","NVT","HUBB","AME","TT","NEE","CEG","CCJ","BEPC","ENPH"]
     };
 
+    // Taxonomy map (tighten your overlaps here)
     const TICKER_SECTOR_MAP = {
       "NVDA":["ai","chips"], "MSFT":["ai","infrastructure"], "GOOGL":["ai","infrastructure"], "AMZN":["ai","infrastructure"],
       "META":["ai"], "PLTR":["ai"], "SNOW":["ai"], "DDOG":["ai"], "NOW":["ai"], "CRM":["ai"], "ORCL":["ai","infrastructure"],
@@ -693,8 +788,8 @@
       "TMO":["medical"], "DHR":["medical"], "IDXX":["medical"], "EW":["medical"], "ZBH":["medical"], "DXCM":["medical"], "PODD":["medical"],
       "RMD":["medical"], "REGN":["medical"], "VRTX":["medical"], "MRNA":["medical"], "BMY":["medical"], "LLY":["medical"], "NVO":["medical"],
       "HCA":["medical"], "UHS":["medical"],
-      "ROK":["robotics","infrastructure"], "TER":["robotics","chips"], "ZBRA":["robotics","infrastructure"], "SYM":["robotics"],
-      "ABB":["robotics","infrastructure"], "FANUY":["robotics"], "YASKY":["robotics"], "KUKAY":["robotics"],
+      "ROK":["robotics"], "TER":["robotics","chips"], "ZBRA":["robotics"], "SYM":["robotics"],
+      "ABB":["robotics"], "FANUY":["robotics"], "YASKY":["robotics"], "KUKAY":["robotics"],
       "HON":["robotics","infrastructure"], "EMR":["robotics","infrastructure"], "IR":["robotics","infrastructure"], "PH":["robotics","infrastructure"],
       "AME":["robotics","infrastructure"], "RRX":["robotics"], "CGNX":["robotics"], "TDY":["robotics"],
       "BOTZ":["robotics"], "ROBO":["robotics"],
@@ -702,18 +797,6 @@
       "VRT":["infrastructure"], "ETN":["infrastructure"], "PWR":["infrastructure"], "NVT":["infrastructure"], "HUBB":["infrastructure"],
       "TT":["infrastructure"], "NEE":["infrastructure"], "CEG":["infrastructure"], "CCJ":["infrastructure"], "BEPC":["infrastructure"], "ENPH":["infrastructure"]
     };
-
-    function classifyFallback(ticker){
-      const t = String(ticker||"").toUpperCase().trim();
-      if (!t) return [];
-      if (t === "ROBO" || t === "BOTZ") return ["robotics"];
-      if (t === "XLV" || t === "IBB" || t === "XBI") return ["medical"];
-      if (t === "SOXX" || t === "SMH") return ["chips"];
-      if (t === "IRBO") return ["ai"];
-      return [];
-    }
-
-    let STRATEGY_ACTIVE_SECTOR = "ai";
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -724,7 +807,13 @@
     }
 
     function setTitleForTab(tab){
-      const map = { "Main":"Convergence", "Crypto":"Crypto", "Search":"Search" };
+      const map = {
+        "Main":"Convergence",
+        "Congress":"Congress Trading",
+        "Crypto":"Crypto",
+        "Score":"Score",
+        "Search":"Search"
+      };
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
 
@@ -733,59 +822,45 @@
       setTitleForTab(tab);
 
       el("viewMain").style.display = tab === "Main" ? "" : "none";
+      el("viewCongress").style.display = tab === "Congress" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
+      el("viewScore").style.display = tab === "Score" ? "" : "none";
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
-      el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
-      el("strategySection").style.display = (tab === "Main") ? "" : "none";
-      el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
-
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
+      el("tabCongressBtn").classList.toggle("tabBtnActive", tab === "Congress");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
+      el("tabScoreBtn").classList.toggle("tabBtnActive", tab === "Score");
       el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
 
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
+      el("navCongress").classList.toggle("tabBottomActive", tab === "Congress");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
+      el("navScore").classList.toggle("tabBottomActive", tab === "Score");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
-      // FIX: ensure tab switch triggers loading and rendering
-      if (tab === "Main" || tab === "Crypto") loadMain(false);
+      el("mainWindowTools").style.display = (tab === "Congress" || tab === "Crypto" || tab === "Score") ? "" : "none";
+
+      if (tab === "Main"){
+        loadMain(false);
+        loadEntryIndex(365, false);
+      }
+      if (tab === "Congress"){
+        loadMain(false);
+        loadHoldingsCommon(365, false);
+      }
+      if (tab === "Crypto"){
+        loadMain(false);
+      }
+      if (tab === "Score"){
+        loadMain(false);
+        maybeAutoScoreFromHash();
+      }
+
       handleHash();
     }
 
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
-
-    function congressScore(x){
-      return Number(x.demBuyers||0)+Number(x.repBuyers||0)+Number(x.demSellers||0)+Number(x.repSellers||0);
-    }
-    function bipartisanScore(x){
-      const dem = Number(x.demBuyers||0)+Number(x.demSellers||0);
-      const rep = Number(x.repBuyers||0)+Number(x.repSellers||0);
-      return Math.min(dem, rep);
-    }
-    function sortByCongressStrength(a,b){
-      const ta = congressScore(a), tb = congressScore(b);
-      if (ta !== tb) return tb - ta;
-      const ba = bipartisanScore(a), bb = bipartisanScore(b);
-      if (ba !== bb) return bb - ba;
-      return String(a.ticker||"").localeCompare(String(b.ticker||""), undefined, {sensitivity:"base"});
-    }
-    function netFlow(x){
-      const buys = Number(x.demBuyers||0) + Number(x.repBuyers||0);
-      const sells = Number(x.demSellers||0) + Number(x.repSellers||0);
-      return buys - sells;
-    }
-    function confidenceLabel(x){
-      const t = congressScore(x);
-      if (t >= 6) return "STRONG";
-      if (t >= 3) return "MOD";
-      return "WEAK";
-    }
-    function confidenceBadgeClass(lbl){
-      if (lbl === "STRONG") return "badgePos";
-      if (lbl === "MOD") return "badgeNeu";
-      return "badgeNeu";
-    }
 
     function tickerLinksHTML(ticker){
       const t = String(ticker||"").toUpperCase();
@@ -800,80 +875,7 @@
       `;
     }
 
-    function cardHTML(x, mode){
-      const ticker = String(x.ticker||"").toUpperCase();
-      const who = String(x.companyName||"").trim();
-      const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
-      const dem = mode === "BUY" ? Number(x.demBuyers||0) : Number(x.demSellers||0);
-      const rep = mode === "BUY" ? Number(x.repBuyers||0) : Number(x.repSellers||0);
-      const conf = confidenceLabel(x);
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                ${who ? `<div class="who">${who}</div>` : ""}
-              </div>
-            </div>
-            <div class="tags">
-              ${mode === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
-              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
-            </div>
-          </div>
-          <div class="divider"></div>
-          <div class="metaRow">
-            <div class="counts">
-              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
-              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
-              <div class="countItem">Total: <strong>${dem+rep}</strong></div>
-            </div>
-            <div>${filed ? `Filed: ${filed}` : ""}</div>
-          </div>
-          ${tickerLinksHTML(ticker)}
-        </div>
-      `;
-    }
-
-    function overlapCardHTML(x){
-      const ticker = String(x.ticker||"").toUpperCase();
-      const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
-      const dem = Number(x.demBuyers||0);
-      const rep = Number(x.repBuyers||0);
-      const conf = confidenceLabel(x);
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
-                <div class="who">Bipartisan overlap (BUY)</div>
-              </div>
-            </div>
-            <div class="tags">
-              <span class="tag tagDem">DEM</span>
-              <span class="tag tagRep">GOP</span>
-              <span class="tag tagBoth">OVERLAP</span>
-              <span class="tag tagBuy">BUY</span>
-              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
-            </div>
-          </div>
-          <div class="divider"></div>
-          <div class="metaRow">
-            <div class="counts">
-              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
-              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
-              <div class="countItem">Total: <strong>${dem+rep}</strong></div>
-            </div>
-            <div>${filed ? `Filed: ${filed}` : ""}</div>
-          </div>
-          ${tickerLinksHTML(ticker)}
-        </div>
-      `;
-    }
-
+    // Stock panel
     function setStockPanel(ticker){
       const t = String(ticker||"").toUpperCase();
       if (!t){
@@ -881,6 +883,7 @@
         el("stockPanel").innerHTML = "";
         return;
       }
+
       const symbol = "NASDAQ:" + t;
       const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
       const tv = `https://www.tradingview.com/symbols/${encodeURIComponent(symbol)}/`;
@@ -921,6 +924,120 @@
       setStockPanel("");
     }
 
+    // Congress scoring helpers
+    function congressScore(x){
+      return Number(x.demBuyers||0)+Number(x.repBuyers||0)+Number(x.demSellers||0)+Number(x.repSellers||0);
+    }
+    function bipartisanScore(x){
+      const dem = Number(x.demBuyers||0)+Number(x.demSellers||0);
+      const rep = Number(x.repBuyers||0)+Number(x.repSellers||0);
+      return Math.min(dem, rep);
+    }
+    function sortByCongressStrength(a,b){
+      const ta = congressScore(a), tb = congressScore(b);
+      if (ta !== tb) return tb - ta;
+      const ba = bipartisanScore(a), bb = bipartisanScore(b);
+      if (ba !== bb) return bb - ba;
+      return String(a.ticker||"").localeCompare(String(b.ticker||""), undefined, {sensitivity:"base"});
+    }
+    function netFlow(x){
+      const buys = Number(x.demBuyers||0) + Number(x.repBuyers||0);
+      const sells = Number(x.demSellers||0) + Number(x.repSellers||0);
+      return buys - sells;
+    }
+    function confidenceLabel(x){
+      const t = congressScore(x);
+      if (t >= 6) return "STRONG";
+      if (t >= 3) return "MOD";
+      return "WEAK";
+    }
+    function confidenceBadgeClass(lbl){
+      if (lbl === "STRONG") return "badgePos";
+      if (lbl === "MOD") return "badgeNeu";
+      return "badgeNeu";
+    }
+
+    function cardHTML(x, mode){
+      const ticker = String(x.ticker||"").toUpperCase();
+      const who = String(x.companyName||"").trim();
+      const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
+
+      const dem = mode === "BUY" ? Number(x.demBuyers||0) : Number(x.demSellers||0);
+      const rep = mode === "BUY" ? Number(x.repBuyers||0) : Number(x.repSellers||0);
+      const conf = confidenceLabel(x);
+
+      return `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
+                ${who ? `<div class="who">${who}</div>` : ""}
+              </div>
+            </div>
+            <div class="tags">
+              ${mode === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
+              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="metaRow">
+            <div class="counts">
+              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
+              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
+              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
+            </div>
+            <div>${filed ? `Filed: ${filed}` : ""}</div>
+          </div>
+
+          ${tickerLinksHTML(ticker)}
+        </div>
+      `;
+    }
+
+    function overlapCardHTML(x){
+      const ticker = String(x.ticker||"").toUpperCase();
+      const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
+      const dem = Number(x.demBuyers||0);
+      const rep = Number(x.repBuyers||0);
+      const conf = confidenceLabel(x);
+
+      return `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${ticker}">${ticker}</a>
+                <div class="who">Bipartisan overlap (BUY)</div>
+              </div>
+            </div>
+            <div class="tags">
+              <span class="tag tagDem">DEM</span>
+              <span class="tag tagRep">GOP</span>
+              <span class="tag tagBoth">OVERLAP</span>
+              <span class="tag tagBuy">BUY</span>
+              <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="metaRow">
+            <div class="counts">
+              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
+              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
+              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
+            </div>
+            <div>${filed ? `Filed: ${filed}` : ""}</div>
+          </div>
+
+          ${tickerLinksHTML(ticker)}
+        </div>
+      `;
+    }
+
     function topBy(arr, scoreFn, n){
       const a = normalizeList(arr).slice();
       a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
@@ -944,7 +1061,7 @@
 
       const mergedArr = Array.from(merged.values());
       const win = Number(windowDays || 30);
-      el("kpiTitle").textContent = `Signal dashboard (top 4, rolling ${win} days)`;
+      el("kpiTitle").textContent = `Congressman activity signal dashboard (top 4, rolling ${win} days)`;
 
       const topNet = topBy(mergedArr, x => netFlow(x), 5);
       el("kpiNet").innerHTML = `
@@ -1025,13 +1142,11 @@
       `;
     }
 
-    function renderMain(data){
+    function renderCongressTradeSections(data){
       const win = Number(data.windowDays || WINDOW_DAYS || 30);
-
-      el("reportDate").textContent = data.date ? `${data.date} · window ${win}D` : `window ${win}D`;
       el("convTitle").textContent = `Convergence 🔥 (bipartisan overlap on BUY, rolling ${win} days)`;
       el("partTitle").textContent = `Congress trades by participation (rolling ${win} days)`;
-      el("mainHint").textContent = `Sort is by total participation (both parties) within the rolling ${win}-day window. Tap ticker for chart.`;
+      el("mainHint").textContent = `Sort is by total participation within rolling ${win} days. Tap ticker for chart.`;
 
       const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
       const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
@@ -1047,13 +1162,9 @@
 
       el("sellList").innerHTML =
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
-
-      renderCryptoFromMain(data);
-      renderStrategy(data);
-
-      handleHash();
     }
 
+    // Crypto rendering
     function partyTag(p){
       const s = String(p||"").toUpperCase();
       if (s === "D") return `<span class="tag tagDem">DEM</span>`;
@@ -1146,22 +1257,42 @@
 
       el("cryptoLinkedSells").innerHTML =
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No crypto-linked sells in this window.</div>";
+
+      el("cryptoHint").textContent =
+        "Direct crypto items are parsed from disclosure text. Crypto-linked tickers are ETFs, miners, and exchanges from the congress feed.";
     }
 
+    // Strategy
     const clamp01 = (x) => Math.max(0, Math.min(1, x));
     function saturating01(x, k=6){
       return 1 - Math.exp(-(Number(x||0) / k));
+    }
+
+    function sectorsForTicker(ticker){
+      const t = String(ticker||"").toUpperCase().trim();
+      if (!t) return [];
+      const mapped = TICKER_SECTOR_MAP[t];
+      return Array.isArray(mapped) ? mapped.slice() : [];
+    }
+
+    function inferSectorForTicker(ticker){
+      const secs = sectorsForTicker(ticker);
+      if (secs.includes("medical")) return "medical";
+      if (secs.includes("robotics")) return "robotics";
+      if (secs.includes("chips")) return "chips";
+      if (secs.includes("ai")) return "ai";
+      if (secs.includes("infrastructure")) return "infrastructure";
+      return "ai";
     }
 
     function buildCongressAggMap(payload){
       const map = new Map();
       const buys = Array.isArray(payload?.politicianBuys) ? payload.politicianBuys : [];
       const sells = Array.isArray(payload?.politicianSells) ? payload.politicianSells : [];
-
       function add(card){
         const t = String(card?.ticker || "").toUpperCase().trim();
         if (!t) return;
-        const cur = map.get(t) || { ticker: t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
+        const cur = map.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
         cur.demBuyers += Number(card.demBuyers || 0);
         cur.repBuyers += Number(card.repBuyers || 0);
         cur.demSellers += Number(card.demSellers || 0);
@@ -1190,31 +1321,15 @@
       return weighted01 * STRATEGY_WEIGHTS.congressSignal;
     }
 
-    function sectorsForTicker(ticker){
-      const t = String(ticker||"").toUpperCase().trim();
-      if (!t) return [];
-      const mapped = TICKER_SECTOR_MAP[t];
-      if (Array.isArray(mapped) && mapped.length) return mapped.slice();
-      return classifyFallback(t);
-    }
-
-    function buildSectorCandidates(sectorKey, discoveredTickers){
-      const seeds = (SECTOR_SEEDS[sectorKey] || []).map(t => t.toUpperCase());
-      const discAll = (Array.isArray(discoveredTickers) ? discoveredTickers : [])
-        .map(t => String(t||"").toUpperCase().trim())
-        .filter(Boolean);
-
-      const discFiltered = discAll.filter(t => sectorsForTicker(t).includes(sectorKey));
-      return Array.from(new Set([...seeds, ...discFiltered]));
-    }
-
-    function scoreInnovationFit(sectorKey, ticker, isInSector){
+    function scoreInnovationFit(sectorKey, ticker){
       const baseBySector = { ai:0.95, chips:0.95, medical:0.92, robotics:0.92, infrastructure:0.85 };
       const base01 = baseBySector[sectorKey] ?? 0.6;
-      const sectorCap = isInSector ? 1.0 : 0.25;
-      const isSeed = (SECTOR_SEEDS[sectorKey] || []).includes(String(ticker).toUpperCase());
-      const boost = isSeed ? 0.05 : 0;
-      return clamp01((base01 + boost) * sectorCap) * STRATEGY_WEIGHTS.innovationFit;
+
+      const secs = sectorsForTicker(ticker);
+      const inSector = secs.includes(sectorKey) || (SECTOR_SEEDS[sectorKey] || []).includes(ticker);
+
+      const sectorCap = inSector ? 1.0 : 0.15;
+      return clamp01(base01 * sectorCap) * STRATEGY_WEIGHTS.innovationFit;
     }
 
     function scoreValueDiscipline(){
@@ -1231,11 +1346,9 @@
       const agg = congressAggMap.get(ticker);
       const cm = congressMetrics(agg);
 
-      const isInSector = (SECTOR_SEEDS[sectorKey] || []).includes(ticker) || sectorsForTicker(ticker).includes(sectorKey);
-
-      const sInnovation = scoreInnovationFit(sectorKey, ticker, isInSector);
+      const sInnovation = scoreInnovationFit(sectorKey, ticker);
       const sCongress   = scoreCongressSignal(cm);
-      const sValue      = scoreValueDiscipline(ticker);
+      const sValue      = scoreValueDiscipline();
       const pRisk       = riskPenalty(ticker);
 
       const total = Math.round(sInnovation + sCongress + sValue - pRisk);
@@ -1257,15 +1370,26 @@
       };
     }
 
+    function buildSectorCandidates(sectorKey, discoveredTickers){
+      const seeds = (SECTOR_SEEDS[sectorKey] || []).map(t => t.toUpperCase());
+      const disc = (Array.isArray(discoveredTickers) ? discoveredTickers : [])
+        .map(t => String(t||"").toUpperCase().trim()).filter(Boolean);
+
+      // Only allow discovered tickers if taxonomy maps them to the sector
+      const filteredDisc = disc.filter(t => sectorsForTicker(t).includes(sectorKey));
+      return Array.from(new Set([...seeds, ...filteredDisc]));
+    }
+
     function rankSector(sectorKey, payload){
       const congressAggMap = buildCongressAggMap(payload);
       const discovered = Array.from(congressAggMap.keys());
       const candidates = buildSectorCandidates(sectorKey, discovered);
-
       const scored = candidates.map(ticker => scoreTicker({ sectorKey, ticker, congressAggMap }));
       scored.sort((a,b) => (b.score - a.score) || a.ticker.localeCompare(b.ticker));
       return scored;
     }
+
+    let STRATEGY_ACTIVE_SECTOR = "ai";
 
     function buildStrategyPills(){
       const host = el("strategySectorPills");
@@ -1280,7 +1404,7 @@
           buildStrategyPills();
           const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
           if (cached) renderStrategy(cached);
-        }, { once:true });
+        });
       });
     }
 
@@ -1336,8 +1460,7 @@
         </div>
         <div class="kpiSub">
           Focus on durable moats in AI, chips, medical, robotics, and infrastructure.
-          Congress is a weighted signal, not a gate.
-          Prefer accumulation and patience over short-term trading.
+          Congress is weighted, not required. Accumulate gradually and hold through volatility.
         </div>
       `;
 
@@ -1355,10 +1478,7 @@
           <div class="kpiRow"><span>Congress signal</span><span class="kpiBadge badgeNeu">${w.congressSignal} pts</span></div>
           <div class="kpiRow"><span>Value discipline</span><span class="kpiBadge badgeNeu">${w.valueDiscipline} pts</span></div>
           <div class="kpiRow"><span>Risk penalty</span><span class="kpiBadge badgeNeg">-${w.riskPenalty} pts</span></div>
-          <div class="scoreExplain">
-            <strong>Total Score</strong> = Innovation + Congress + Value − Risk.<br/>
-            Congress is never required. No Congress activity means it can still rank based on Innovation and Value.
-          </div>
+          <div class="scoreExplain"><strong>Total</strong> = Innovation + Congress + Value − Risk.</div>
         </div>
       `;
 
@@ -1398,7 +1518,384 @@
       `;
 
       el("strategyHint").textContent =
-        "Sector lists are separated. Discovered tickers from Congress only appear in a sector if the taxonomy maps them there.";
+        "Discovered tickers only appear in a sector if the taxonomy maps them there. Seeds keep each sector populated.";
+    }
+
+    // Score tab
+    function scoreCardHTML(row){
+      const t = String(row.ticker || "").toUpperCase();
+      const b = row.breakdown || {};
+      const sc = Number(row.score||0);
+      const sectorLabel = (SECTOR_ORDER.find(s => s.key === row.sectorKey)?.label) || row.sectorKey;
+      const horizon = row.badges?.horizon || "5–10Y";
+      const cBadge = row.badges?.congress || "Research list";
+      const cCls = (cBadge === "Congress-confirmed") ? "badgeBoth" : "badgeNeu";
+
+      return `
+        <div class="card" style="margin-bottom:0;">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
+                <div class="who">Sector: ${sectorLabel}</div>
+              </div>
+            </div>
+            <div class="tags">
+              <span class="tag ${cCls}">${cBadge}</span>
+              <span class="tag badgeNeu">${horizon}</span>
+              <span class="tag badgeNeu">Score: ${sc}/100</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpiList">
+            <div class="kpiRow"><span class="muted">Innovation fit</span><span class="kpiBadge badgeNeu">${Number(b.innovation||0)} pts</span></div>
+            <div class="kpiRow"><span class="muted">Congress signal</span><span class="kpiBadge badgeNeu">${Number(b.congress||0)} pts</span></div>
+            <div class="kpiRow"><span class="muted">Value discipline</span><span class="kpiBadge badgeNeu">${Number(b.value||0)} pts</span></div>
+            <div class="kpiRow"><span class="muted">Risk penalty</span><span class="kpiBadge badgeNeg">-${Number(b.risk||0)} pts</span></div>
+          </div>
+
+          ${tickerLinksHTML(t)}
+        </div>
+      `;
+    }
+
+    function scoreSingleTicker(payload, ticker, sectorChoice){
+      const t = String(ticker||"").toUpperCase().trim();
+      if (!t) return null;
+      const congressAggMap = buildCongressAggMap(payload || {});
+      let sectorKey = sectorChoice && sectorChoice !== "auto" ? sectorChoice : inferSectorForTicker(t);
+      if (!sectorKey) sectorKey = "ai";
+      return scoreTicker({ sectorKey, ticker: t, congressAggMap });
+    }
+
+    function runScoreFromUI(){
+      const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
+      const payload = cached || {};
+      const t = String(el("scoreInput").value || "").trim().toUpperCase();
+      const sectorChoice = String(el("scoreSector").value || "auto");
+      if (!t){
+        el("scoreResult").innerHTML = "<div class='subtle'>Enter a ticker.</div>";
+        return;
+      }
+      const row = scoreSingleTicker(payload, t, sectorChoice);
+      if (!row){
+        el("scoreResult").innerHTML = "<div class='subtle'>Could not score that ticker.</div>";
+        return;
+      }
+      el("scoreResult").innerHTML = scoreCardHTML(row);
+      window.location.hash = "#stock=" + encodeURIComponent(row.ticker);
+    }
+
+    function maybeAutoScoreFromHash(){
+      if (ACTIVE_TAB !== "Score") return;
+      const h = window.location.hash || "";
+      if (h.startsWith("#stock=")){
+        const t = decodeURIComponent(h.replace("#stock=","")).trim().toUpperCase();
+        if (t && !String(el("scoreInput").value||"").trim()){
+          el("scoreInput").value = t;
+        }
+      }
+    }
+
+    // Market Entry Index (backend driven)
+    function entryBadge(score){
+      const s = Number(score || 0);
+      if (s >= 75) return {label:"RISK-ON", cls:"badgePos"};
+      if (s >= 55) return {label:"NEUTRAL", cls:"badgeNeu"};
+      return {label:"RISK-OFF", cls:"badgeNeg"};
+    }
+
+    function renderEntryIndex(payload){
+      if (!payload || typeof payload.score !== "number"){
+        el("entryKpiScore").innerHTML = `
+          <div class="kpiTop">
+            <div>
+              <div class="kpiTitle">Market entry index</div>
+              <div class="kpiValue">Unavailable</div>
+            </div>
+            <span class="kpiBadge badgeNeu">Needs backend</span>
+          </div>
+          <div class="kpiSub">
+            Add <span class="mono">/market/entry</span> to compute a real entry score from SPX trend, volatility, breadth, credit, and a Buffett proxy.
+          </div>
+        `;
+
+        el("entryKpiRules").innerHTML = `
+          <div class="kpiTop">
+            <div>
+              <div class="kpiTitle">How it works</div>
+              <div class="kpiValue">Score 0–100</div>
+            </div>
+            <span class="kpiBadge badgeNeu">Rules</span>
+          </div>
+          <div class="kpiSub">
+            Suggested components:
+            <div class="kpiList">
+              <div class="kpiRow"><span>SPX trend</span><span class="kpiBadge badgeNeu">40%</span></div>
+              <div class="kpiRow"><span>Volatility (VIX)</span><span class="kpiBadge badgeNeu">20%</span></div>
+              <div class="kpiRow"><span>Breadth</span><span class="kpiBadge badgeNeu">15%</span></div>
+              <div class="kpiRow"><span>Credit stress</span><span class="kpiBadge badgeNeu">15%</span></div>
+              <div class="kpiRow"><span>Rates stress</span><span class="kpiBadge badgeNeu">10%</span></div>
+            </div>
+          </div>
+        `;
+
+        el("entryKpiBuffett").innerHTML = `
+          <div class="kpiTop">
+            <div>
+              <div class="kpiTitle">Buffett proxy</div>
+              <div class="kpiValue">Optional</div>
+            </div>
+            <span class="kpiBadge badgeNeu">Proxy</span>
+          </div>
+          <div class="kpiSub">
+            Two simple options to add to backend:
+            <div class="kpiList">
+              <div class="kpiRow"><span>BRK relative strength vs SPY</span><span class="kpiBadge badgeNeu">trend</span></div>
+              <div class="kpiRow"><span>Cash-tilt signal</span><span class="kpiBadge badgeNeu">if available</span></div>
+            </div>
+          </div>
+        `;
+
+        el("entryHint").textContent =
+          "Once the backend exposes /market/entry, this box becomes your go or no-go meter for adding risk. Until then, it stays explicit about being unavailable.";
+        return;
+      }
+
+      const b = entryBadge(payload.score);
+      const regime = payload.regime || b.label;
+      const signal = payload.signal || (payload.score >= 70 ? "ACCUMULATE" : payload.score >= 55 ? "ACCUMULATE SLOWLY" : "WAIT / SMALL DCA");
+      const notes = payload.notes || "";
+
+      el("entryKpiScore").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Market entry index</div>
+            <div class="kpiValue">${Math.round(payload.score)}/100</div>
+          </div>
+          <span class="kpiBadge ${b.cls}">${regime}</span>
+        </div>
+        <div class="kpiSub">
+          Suggested action: <strong>${signal}</strong><br/>
+          ${notes ? `<span class="muted">${notes}</span>` : ""}
+        </div>
+      `;
+
+      const c = payload.components || {};
+      function pct01(x){ return `${Math.round(100 * Number(x || 0))}%`; }
+
+      el("entryKpiRules").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Components</div>
+            <div class="kpiValue">What drove it</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${payload.date || ""}</span>
+        </div>
+        <div class="kpiSub">
+          <div class="kpiList">
+            <div class="kpiRow"><span>SPX trend</span><span class="kpiBadge badgeNeu">${pct01(c.spxTrend)}</span></div>
+            <div class="kpiRow"><span>Volatility</span><span class="kpiBadge badgeNeu">${pct01(c.vix)}</span></div>
+            <div class="kpiRow"><span>Breadth</span><span class="kpiBadge badgeNeu">${pct01(c.breadth)}</span></div>
+            <div class="kpiRow"><span>Credit</span><span class="kpiBadge badgeNeu">${pct01(c.credit)}</span></div>
+            <div class="kpiRow"><span>Rates</span><span class="kpiBadge badgeNeu">${pct01(c.rates)}</span></div>
+          </div>
+        </div>
+      `;
+
+      el("entryKpiBuffett").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Buffett proxy</div>
+            <div class="kpiValue">${typeof c.buffettProxy === "number" ? pct01(c.buffettProxy) : "—"}</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Proxy</span>
+        </div>
+        <div class="kpiSub">
+          Uses a proxy, not private Buffett cash data. Best option: relative strength (BRK.B vs SPY) plus drawdown filters.
+        </div>
+      `;
+
+      el("entryHint").textContent =
+        "Use this as a pacing tool. High score means increase DCA pace and accept risk. Low score means slow down, stay selective, or wait for better conditions.";
+    }
+
+    async function loadEntryIndex(windowDays, force){
+      const key = String(windowDays || 365);
+      if (CACHE_ENTRY.has(key) && !force){
+        renderEntryIndex(CACHE_ENTRY.get(key));
+        return;
+      }
+      try{
+        const url = ENTRY_URL(windowDays || 365);
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (data.error) throw new Error(data.error);
+        CACHE_ENTRY.set(key, data);
+        renderEntryIndex(data);
+      }catch(err){
+        renderEntryIndex(null);
+      }
+    }
+
+    // Holdings overlap
+    function holdingsBadge(holders){
+      const n = Number(holders || 0);
+      if (n >= 40) return { label: "VERY COMMON", cls: "badgePos" };
+      if (n >= 25) return { label: "COMMON", cls: "badgeNeu" };
+      if (n >= 15) return { label: "MODERATE", cls: "badgeNeu" };
+      return { label: "NICHE", cls: "badgeNeu" };
+    }
+
+    function holdingsRowHTML(item){
+      const t = String(item.ticker || "").toUpperCase();
+      const name = String(item.companyName || "").trim();
+      const holders = Number(item.holders || item.holderCount || 0);
+      const b = holdingsBadge(holders);
+
+      return `
+        <div class="holdingsItem">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
+                ${name ? `<div class="who">${name}</div>` : ""}
+              </div>
+              <div class="stockMeta">
+                <span class="kpiBadge ${b.cls}">${b.label}</span>
+                <span class="kpiBadge badgeNeu">Holders: <strong>${holders}</strong></span>
+              </div>
+            </div>
+            <div class="tags">
+              <span class="tag tagSEC">HOLDINGS</span>
+            </div>
+          </div>
+          ${tickerLinksHTML(t)}
+        </div>
+      `;
+    }
+
+    function renderHoldingsKpis(items){
+      const top = items[0];
+      const totalTickers = items.length;
+      const avg = totalTickers ? Math.round(items.reduce((s,x)=>s+Number(x.holders||0),0) / totalTickers) : 0;
+      const top5 = items.slice(0,5);
+
+      el("holdingsKpiTop").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Top holding</div>
+            <div class="kpiValue">${top ? String(top.ticker).toUpperCase() : "—"}</div>
+          </div>
+          <span class="kpiBadge badgeNeu">365D</span>
+        </div>
+        <div class="kpiSub">${top ? `Holders: <strong>${Number(top.holders||0)}</strong>` : "No holdings data."}</div>
+        <div class="kpiList">
+          ${top5.length ? top5.map(x => `
+            <div class="kpiRow">
+              <a href="#stock=${encodeURIComponent(String(x.ticker).toUpperCase())}"><strong>${String(x.ticker).toUpperCase()}</strong></a>
+              <span class="kpiBadge badgeNeu">${Number(x.holders||0)} holders</span>
+            </div>
+          `).join("") : `<div class="kpiRow"><span class="muted">No data</span></div>`}
+        </div>
+      `;
+
+      el("holdingsKpiBreadth").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Breadth</div>
+            <div class="kpiValue">${totalTickers || 0} tickers</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Top 30</span>
+        </div>
+        <div class="kpiSub">Average holder count across this list.</div>
+        <div class="kpiList">
+          <div class="kpiRow"><span class="muted">Average</span><span class="kpiBadge badgeNeu">${avg}</span></div>
+        </div>
+      `;
+
+      el("holdingsKpiRules").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Holdings score</div>
+            <div class="kpiValue">Holder count</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Simple</span>
+        </div>
+        <div class="kpiSub">
+          <div class="kpiRow"><span>Score</span><span class="kpiBadge badgeNeu">= # holders</span></div>
+          <div class="kpiRow"><span>Window</span><span class="kpiBadge badgeNeu">365D</span></div>
+          <div class="scoreExplain">
+            Backend must aggregate disclosures into per-ticker holder counts.
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHoldingsCommon(payload){
+      const list = Array.isArray(payload?.commonHoldings) ? payload.commonHoldings : Array.isArray(payload?.holdings) ? payload.holdings : [];
+      const win = Number(payload?.windowDays || 365);
+      el("holdingsWindowBadge").textContent = `${win}D`;
+
+      if (!list.length){
+        el("holdingsList").innerHTML = "<div class='subtle'>No holdings overlap data returned.</div>";
+        el("holdingsHint").textContent =
+          "If this is empty, implement /report/holdings/common to return {ticker, companyName, holders}.";
+        renderHoldingsKpis([]);
+        return;
+      }
+
+      const sorted = list.slice().map(x => ({
+        ticker: x.ticker,
+        companyName: x.companyName,
+        holders: Number(x.holders ?? x.holderCount ?? x.count ?? 0)
+      })).filter(x => x.ticker && x.holders >= 0)
+        .sort((a,b) => (b.holders - a.holders) || String(a.ticker).localeCompare(String(b.ticker)));
+
+      const trimmed = sorted.slice(0, 30);
+      renderHoldingsKpis(trimmed);
+
+      el("holdingsList").innerHTML = trimmed.map(holdingsRowHTML).join("");
+      el("holdingsHint").textContent =
+        "This is popularity by holdings, not a timing signal. Combine with Market Entry Index for pacing.";
+    }
+
+    async function loadHoldingsCommon(windowDays, force){
+      const key = String(windowDays || 365);
+      const cached = CACHE_HOLDINGS.get(key);
+      if (cached && !force){
+        renderHoldingsCommon(cached);
+        return;
+      }
+
+      const url = HOLDINGS_COMMON_URL(windowDays || 365);
+      el("holdingsList").innerHTML = "<div class='subtle'>Loading holdings overlap…</div>";
+      el("holdingsHint").textContent = `Loading holdings overlap from: ${url}`;
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (data.error) throw new Error(data.error);
+        CACHE_HOLDINGS.set(key, data);
+        renderHoldingsCommon(data);
+      }catch(err){
+        renderHoldingsCommon({ windowDays: windowDays || 365, commonHoldings: [] });
+        el("holdingsHint").textContent =
+          "Holdings overlap could not load. Backend likely does not have /report/holdings/common implemented yet.";
+      }
+    }
+
+    // Main loader
+    function renderMain(payload){
+      const win = Number(payload.windowDays || WINDOW_DAYS || 30);
+      el("reportDate").textContent = payload.date ? `${payload.date} · window ${win}D` : `window ${win}D`;
+      renderStrategy(payload);
+      renderCryptoFromMain(payload);
+      handleHash();
     }
 
     async function loadMain(force){
@@ -1407,46 +1904,64 @@
 
       if (cached && !force){
         setStatus("ok", "Using cached congress data ✅", "");
-        if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto") renderMain(cached);
+        if (ACTIVE_TAB === "Main") renderMain(cached);
+        if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(cached);
+        if (ACTIVE_TAB === "Congress") renderCongressTradeSections(cached);
         return;
       }
 
-      const url = `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(WINDOW_DAYS))}`;
+      const url = TODAY_URL(WINDOW_DAYS);
       setStatus("", `Loading congress (rolling ${WINDOW_DAYS}D)…`, url);
 
       try{
         const res = await fetch(url, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
-
         if (!res.ok) throw new Error("HTTP " + res.status);
         if (data.error) throw new Error(data.error);
 
         CACHE_MAIN.set(key, data);
         setStatus("ok", "Live congress data loaded ✅", "");
 
-        if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
-          renderMain(data);
-        }
+        if (ACTIVE_TAB === "Main") renderMain(data);
+        if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(data);
+        if (ACTIVE_TAB === "Congress") renderCongressTradeSections(data);
       }catch(err){
         setStatus("err", "Could not load congress data", String(err));
-        el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
-        el("strategyList").innerHTML = "<div class='subtle'>No strategy displayed.</div>";
       }
     }
 
+    // Window toggle
     function setWindow(days){
       WINDOW_DAYS = days;
       el("btn30").classList.toggle("on", WINDOW_DAYS === 30);
       el("btn180").classList.toggle("on", WINDOW_DAYS === 180);
       el("btn365").classList.toggle("on", WINDOW_DAYS === 365);
-      if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto") loadMain(false);
+
+      if (ACTIVE_TAB === "Congress" || ACTIVE_TAB === "Crypto" || ACTIVE_TAB === "Score"){
+        loadMain(false);
+      }
     }
 
     function handleRefresh(){
+      if (ACTIVE_TAB === "Congress"){
+        CACHE_MAIN.delete(String(WINDOW_DAYS));
+        CACHE_HOLDINGS.delete("365");
+        loadMain(true);
+        loadHoldingsCommon(365, true);
+        return;
+      }
+      if (ACTIVE_TAB === "Main"){
+        CACHE_MAIN.delete(String(WINDOW_DAYS));
+        CACHE_ENTRY.delete("365");
+        loadMain(true);
+        loadEntryIndex(365, true);
+        return;
+      }
       CACHE_MAIN.delete(String(WINDOW_DAYS));
       loadMain(true);
     }
 
+    // Events
     el("searchBtn").addEventListener("click", () => {
       const t = String(el("searchInput").value || "").trim().toUpperCase();
       if (!t) return;
@@ -1455,23 +1970,31 @@
       handleHash();
     });
 
+    el("scoreGoBtn").addEventListener("click", () => runScoreFromUI());
+
     el("btn30").addEventListener("click", () => setWindow(30));
     el("btn180").addEventListener("click", () => setWindow(180));
     el("btn365").addEventListener("click", () => setWindow(365));
 
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
+    el("tabCongressBtn").addEventListener("click", () => showTab("Congress"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
+    el("tabScoreBtn").addEventListener("click", () => showTab("Score"));
     el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
 
     el("navMain").addEventListener("click", () => showTab("Main"));
+    el("navCongress").addEventListener("click", () => showTab("Congress"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
+    el("navScore").addEventListener("click", () => showTab("Score"));
     el("navSearch").addEventListener("click", () => showTab("Search"));
 
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
 
-    // Init
+    // Start
     showTab("Main");
+    loadMain(false);
+    loadEntryIndex(365, false);
   </script>
 </body>
 </html>
