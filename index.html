@@ -244,7 +244,6 @@
     .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
     .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
     .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
-    .badgeSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
     .badgeDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
     .badgeRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
     .badgeBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
@@ -304,7 +303,6 @@
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
-    .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .metaRow{
       margin-top:7px;
@@ -432,48 +430,39 @@
     }
     .tabBottomActive{color:#fff}
 
-    /* Insight */
+    /* Strategy section */
     .tvTape{
       border:1px solid var(--border);
       background:rgba(255,255,255,.02);
       border-radius:14px;
       overflow:hidden;
     }
-    .smallKpi{
+    .smallCard{
       background:var(--card);
       border:1px solid var(--border);
       border-radius:14px;
       padding:10px;
     }
-    .smallKpiTitle{
+    .smallTitle{
       font-size:11px;
       color:var(--muted);
       letter-spacing:.08em;
       text-transform:uppercase;
+      display:flex;
+      gap:8px;
+      align-items:center;
     }
-    .smallKpiValue{
+    .smallValue{
       font-size:14px;
       font-weight:900;
       margin-top:6px;
       letter-spacing:.02em;
     }
-    .smallKpiSub{
+    .smallSub{
       margin-top:6px;
       color:rgba(255,255,255,.82);
       line-height:1.25;
       font-size:12px;
-    }
-
-    .miniWidget{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.02);
-      border-radius:14px;
-      overflow:hidden;
-    }
-    .miniWidget iframe{
-      height:240px;
-      margin-top:0;
-      border-radius:0;
     }
   </style>
 </head>
@@ -509,9 +498,9 @@
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <!-- Market + Insight ABOVE KPI strip -->
-    <section id="insightStrip">
-      <div class="sectionTitle" id="insightTitle">Market snapshot + accumulation insight</div>
+    <!-- MARKET SNAPSHOT + VALUE STRATEGY -->
+    <section id="strategyStrip">
+      <div class="sectionTitle" id="strategyTitle">Market snapshot + value accumulation strategy</div>
 
       <div class="tvTape" style="margin-bottom:10px;">
         <div class="tradingview-widget-container" style="padding:10px;">
@@ -520,62 +509,36 @@
       </div>
 
       <div class="grid3" style="margin-bottom:10px;">
-        <div class="smallKpi" id="marketRegimeBox">
-          <div class="smallKpiTitle">Market regime</div>
-          <div class="smallKpiValue" id="marketRegimeValue">Loading…</div>
-          <div class="smallKpiSub" id="marketRegimeSub">
-            Uses a widget-based read first, then tries SPY + VIX (best effort).
+        <div class="smallCard">
+          <div class="smallTitle"><span class="kpiIcon">🧭</span> Market context</div>
+          <div class="smallValue" id="marketCtxValue">Loading…</div>
+          <div class="smallSub" id="marketCtxSub">
+            Uses SPY trend + VIX level when available. If blocked, it falls back to tape only.
           </div>
         </div>
 
-        <div class="smallKpi" id="shortListBox">
-          <div class="smallKpiTitle" id="shortListTitle">Short-term accumulation list</div>
-          <div class="smallKpiSub" id="shortListSub">3 to 6 months, value-style accumulation.</div>
-          <div class="kpiList" id="shortList"></div>
+        <div class="smallCard">
+          <div class="smallTitle"><span class="kpiIcon">🧱</span> Value-style plan</div>
+          <div class="smallSub" id="valuePlanText">
+            Loading…
+          </div>
         </div>
 
-        <div class="smallKpi" id="longListBox">
-          <div class="smallKpiTitle" id="longListTitle">Long-term accumulation list</div>
-          <div class="smallKpiSub" id="longListSub">1 to 3 years, persistence across windows.</div>
-          <div class="kpiList" id="longList"></div>
+        <div class="smallCard">
+          <div class="smallTitle"><span class="kpiIcon">🔎</span> 10 stocks to research</div>
+          <div class="smallSub" style="margin-top:6px;">
+            Ranked by congressional accumulation plus persistence across 30D, 180D, 365D.
+          </div>
+          <div class="kpiList" id="valueList"></div>
         </div>
       </div>
 
-      <div class="grid2">
-        <div class="miniWidget">
-          <div style="padding:10px;">
-            <div class="sectionTitle" style="margin:0 0 8px;">Crypto sentiment + major proxies</div>
-            <div class="hint" style="margin-top:0;">
-              Tape + heatmap for BTC, ETH, and crypto proxies. "Major traders" is approximated using public liquid proxies (ETFs, exchanges, miners) since cross-site holder data is usually blocked by CORS.
-            </div>
-          </div>
-          <iframe
-            title="Crypto Heatmap"
-            src="https://s.tradingview.com/widgetembed/?frameElementId=tv_crypto_heatmap&symbol=&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=%23151522&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&hideideas=1&widget_type=crypto_heatmap"
-            loading="lazy">
-          </iframe>
-        </div>
-
-        <div class="miniWidget">
-          <div style="padding:10px;">
-            <div class="sectionTitle" style="margin:0 0 8px;">Precious metals + macro</div>
-            <div class="hint" style="margin-top:0;">
-              Gold, silver, dollar, and yields for context when you are accumulating.
-            </div>
-          </div>
-          <iframe
-            title="Metals Watchlist"
-            src="https://s.tradingview.com/widgetembed/?frameElementId=tv_metals&symbol=&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=%23151522&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&hideideas=1&widget_type=market_quotes&symbols=%5B%7B%22s%22%3A%22TVC%3AGOLD%22%2C%22d%22%3A%22Gold%22%7D%2C%7B%22s%22%3A%22TVC%3ASILVER%22%2C%22d%22%3A%22Silver%22%7D%2C%7B%22s%22%3A%22TVC%3ADXY%22%2C%22d%22%3A%22DXY%22%7D%2C%7B%22s%22%3A%22TVC%3AUS10Y%22%2C%22d%22%3A%2210Y%22%7D%5D"
-            loading="lazy">
-          </iframe>
-        </div>
-      </div>
-
-      <div class="hint" id="insightHint" style="margin-top:10px;">
-        This is not trading advice. It ranks tickers by congressional accumulation, participation, and persistence across 30D, 180D, and 365D.
+      <div class="hint" id="strategyHint">
+        This is informational and for research only, not financial advice. Use it as a starting point for valuation work (free cash flow, balance sheet strength, margin stability, and price vs intrinsic value).
       </div>
     </section>
 
+    <!-- KPI strip -->
     <section id="kpiStrip">
       <div class="sectionTitle" id="kpiTitle">Signal dashboard (top 4, rolling 30 days)</div>
       <div class="grid4">
@@ -707,7 +670,7 @@
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
       el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
-      el("insightStrip").style.display = (tab === "Main") ? "" : "none";
+      el("strategyStrip").style.display = (tab === "Main") ? "" : "none";
       el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
@@ -720,7 +683,7 @@
 
       if (tab === "Main") {
         loadMain(false);
-        refreshInsightForWindow();
+        refreshStrategy();
       }
       if (tab === "Crypto") loadMain(false);
     }
@@ -794,6 +757,8 @@
         <span class="kpiBadge badgeRep">GOP ${r}</span>
       `;
     }
+
+    function iconSpan(txt){ return `<span class="kpiIcon" aria-hidden="true">${txt}</span>`; }
 
     function cardHTML(x, mode){
       const ticker = String(x.ticker || "").toUpperCase();
@@ -930,8 +895,6 @@
       a.sort((x,y) => (scoreFn(y) - scoreFn(x)) || String(x.ticker||"").localeCompare(String(y.ticker||""), undefined, {sensitivity:"base"}));
       return a.slice(0, n);
     }
-
-    function iconSpan(txt){ return `<span class="kpiIcon" aria-hidden="true">${txt}</span>`; }
 
     function renderKpis(convergence, buys, sells, windowDays){
       const merged = new Map();
@@ -1171,7 +1134,21 @@
       }
     }
 
-    // Insight engine
+    // Strategy engine
+    async function fetchWindow(days){
+      const key = String(days);
+      const cached = CACHE_MAIN.get(key);
+      if (cached) return cached;
+
+      const url = `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(days))}`;
+      const res = await fetch(url, { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      if (data.error) throw new Error(data.error);
+      CACHE_MAIN.set(key, data);
+      return data;
+    }
+
     function mergeTickerCards(cards){
       const merged = new Map();
       (Array.isArray(cards) ? cards : []).forEach(x => {
@@ -1192,52 +1169,139 @@
     function scoreAccumulation(row){
       const buys = Number(row.demBuyers||0) + Number(row.repBuyers||0);
       const sells = Number(row.demSellers||0) + Number(row.repSellers||0);
-      const total = buys + sells;
       const nf = buys - sells;
       const overlap = Math.min(Number(row.demBuyers||0), Number(row.repBuyers||0));
-      const intensity = total;
+      const intensity = buys + sells;
 
       let score = 0;
-      if (nf > 0) score += Math.min(6, nf) * 1.4;
-      if (overlap > 0) score += Math.min(4, overlap) * 1.8;
-      score += Math.min(8, intensity) * 0.9;
-      if (sells > 0) score -= Math.min(6, sells) * 0.8;
+      if (nf > 0) score += Math.min(8, nf) * 1.6;
+      if (overlap > 0) score += Math.min(6, overlap) * 2.0;
+      score += Math.min(10, intensity) * 0.8;
+      if (sells > 0) score -= Math.min(8, sells) * 0.9;
 
-      return { score, nf, overlap, intensity, buys, sells };
+      return { score, nf, overlap, buys, sells, intensity };
     }
 
-    function insightRowHTML(r){
+    function valueRowHTML(r){
       const t = r.ticker;
-      const badge = r.score >= 14 ? "badgePos" : r.score >= 9 ? "badgeNeu" : "badgeNeu";
       const persistBadge = r.persist === 3 ? "badgeBoth" : r.persist === 2 ? "badgeNeu" : "badgeNeu";
       const persistLabel = r.persist === 3 ? "PERSIST 30/180/365" : r.persist === 2 ? "PERSIST 2 WINDOWS" : "PERSIST 1 WINDOW";
+      const nfCls = r.nf > 0 ? "badgePos" : r.nf < 0 ? "badgeNeg" : "badgeNeu";
       const sign = r.nf > 0 ? "+" : "";
+      const last = r.lastFiledAt ? ` · ${r.lastFiledAt}` : "";
       return `
         <div class="kpiRow">
           <a href="#stock=${encodeURIComponent(t)}"><strong>${t}</strong></a>
           <span class="kpiBadge ${persistBadge}">${persistLabel}</span>
-          <span class="kpiBadge ${badge}">${sign}${r.nf} net</span>
+          <span class="kpiBadge ${nfCls}">${sign}${r.nf} net</span>
+          <span class="kpiBadge badgeNeu">overlap ${r.overlap}</span>
+          <span class="kpiBadge badgeNeu">score ${r.score.toFixed(1)}${last}</span>
         </div>
       `;
     }
 
-    async function fetchWindow(days){
-      const key = String(days);
-      const cached = CACHE_MAIN.get(key);
-      if (cached) return cached;
-
-      const url = `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(days))}`;
-      const res = await fetch(url, { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      if (data.error) throw new Error(data.error);
-      CACHE_MAIN.set(key, data);
-      return data;
+    async function fetchWithTimeout(url, ms){
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), ms);
+      try{
+        const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
+        return res;
+      } finally {
+        clearTimeout(to);
+      }
     }
 
-    async function updateInsightLists(){
-      el("shortList").innerHTML = `<div class="subtle">Loading…</div>`;
-      el("longList").innerHTML = `<div class="subtle">Loading…</div>`;
+    async function fetchStooqDaily(sym){
+      // daily history csv
+      const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(sym)}&i=d`;
+      const res = await fetchWithTimeout(url, 3500);
+      if (!res || !res.ok) return null;
+      const text = await res.text();
+      const lines = (text || "").trim().split("\n");
+      if (lines.length < 3) return null;
+
+      // columns: Date,Open,High,Low,Close,Volume
+      const closes = [];
+      for (let i = 1; i < lines.length; i++){
+        const parts = lines[i].split(",");
+        if (parts.length < 5) continue;
+        const c = Number(parts[4]);
+        if (isFinite(c)) closes.push(c);
+      }
+      return closes;
+    }
+
+    function sma(arr, n){
+      if (!arr || arr.length < n) return null;
+      let sum = 0;
+      for (let i = arr.length - n; i < arr.length; i++) sum += arr[i];
+      return sum / n;
+    }
+
+    function pct(a, b){
+      if (!isFinite(a) || !isFinite(b) || b === 0) return null;
+      return (a - b) / b;
+    }
+
+    async function updateMarketContext(){
+      el("marketCtxValue").textContent = "Reading SPY trend…";
+
+      try{
+        const spy = await fetchStooqDaily("spy.us");
+        const vix = await fetchStooqDaily("vix");
+
+        if (!spy || spy.length < 220){
+          el("marketCtxValue").textContent = "Tape only";
+          el("marketCtxSub").textContent = "SPY trend fetch blocked or insufficient. Use the tape as context.";
+          return;
+        }
+
+        const last = spy[spy.length - 1];
+        const ma50 = sma(spy, 50);
+        const ma200 = sma(spy, 200);
+        const rel50 = ma50 ? pct(last, ma50) : null;
+        const rel200 = ma200 ? pct(last, ma200) : null;
+
+        let volTxt = "VIX unavailable";
+        let volLvl = null;
+        if (vix && vix.length > 20){
+          volLvl = vix[vix.length - 1];
+          volTxt = `VIX ${volLvl.toFixed(1)}`;
+        }
+
+        const trend = (rel200 != null && rel200 >= 0) ? "Uptrend" : "Below 200D";
+        const risk =
+          volLvl == null ? "Neutral"
+          : volLvl < 18 ? "Lower vol"
+          : volLvl <= 25 ? "Medium vol"
+          : "High vol";
+
+        el("marketCtxValue").textContent = `${trend} · ${risk}`;
+        el("marketCtxSub").textContent =
+          `SPY ${last.toFixed(2)} · 50D ${ma50 ? ma50.toFixed(2) : "—"} · 200D ${ma200 ? ma200.toFixed(2) : "—"} · ${volTxt}.`;
+
+      }catch(e){
+        el("marketCtxValue").textContent = "Tape only";
+        el("marketCtxSub").textContent = "Market context fetch failed. Use the tape as context.";
+      }
+    }
+
+    function setValuePlanText(){
+      // generic, value-style, accumulation. Not dependent on market data so it always shows.
+      const win = Number(WINDOW_DAYS || 30);
+      const text = `
+        <div>
+          <div><strong>Core rule:</strong> accumulate gradually, never chase, size buys based on volatility.</div>
+          <div style="margin-top:6px;"><strong>Signals used:</strong> positive net buying, bipartisan overlap, and persistence across 30D/180D/365D.</div>
+          <div style="margin-top:6px;"><strong>Execution idea:</strong> build a watchlist, pick 3 to 5 names that pass valuation checks, and add in 3 to 6 tranches over time.</div>
+          <div style="margin-top:6px;"><strong>Window:</strong> your dashboard is currently ${win}D for the live signal view.</div>
+        </div>
+      `;
+      el("valuePlanText").innerHTML = text;
+    }
+
+    async function updateValueList(){
+      el("valueList").innerHTML = `<div class="subtle">Loading…</div>`;
 
       try{
         const [d30, d180, d365] = await Promise.all([
@@ -1252,108 +1316,48 @@
 
         const all = new Set([...m30.keys(), ...m180.keys(), ...m365.keys()]);
         const scored = [];
+
         for (const t of all){
-          const activeMap = WINDOW_DAYS === 365 ? m365 : WINDOW_DAYS === 180 ? m180 : m30;
-          const active = activeMap.get(t) || m30.get(t) || m180.get(t) || m365.get(t);
+          const active = (WINDOW_DAYS === 365 ? m365.get(t) : WINDOW_DAYS === 180 ? m180.get(t) : m30.get(t)) || m30.get(t) || m180.get(t) || m365.get(t);
           if (!active) continue;
 
           const s = scoreAccumulation(active);
           const persist = (m30.has(t) ? 1 : 0) + (m180.has(t) ? 1 : 0) + (m365.has(t) ? 1 : 0);
 
+          // value-leaning heuristics from this dataset only:
+          // - prefer net buyers
+          // - prefer persistence
+          // - do not hard exclude anything else (valuation is done by user later)
+          const totalScore = s.score + (persist * 2.2);
+
           scored.push({
             ticker: t,
-            score: s.score + (persist * 2.0),
+            score: totalScore,
             nf: s.nf,
             overlap: s.overlap,
-            intensity: s.intensity,
-            persist
+            persist,
+            lastFiledAt: active.lastFiledAt || ""
           });
         }
 
-        const shortList = scored
+        const top10 = scored
           .filter(x => x.nf > 0)
-          .sort((a,b) => (b.score - a.score) || a.ticker.localeCompare(b.ticker))
-          .slice(0, 8);
-
-        const longList = scored
-          .filter(x => x.nf > 0 && x.persist >= 2)
-          .sort((a,b) => ((b.persist - a.persist) || (b.score - a.score) || a.ticker.localeCompare(b.ticker)))
+          .sort((a,b) => (b.persist - a.persist) || (b.score - a.score) || a.ticker.localeCompare(b.ticker))
           .slice(0, 10);
 
-        el("shortListTitle").textContent = `Short-term accumulation list (window ${WINDOW_DAYS}D)`;
-        el("longListTitle").textContent = `Long-term accumulation list (persistence)`;
+        el("valueList").innerHTML =
+          top10.length ? top10.map(valueRowHTML).join("") : `<div class="subtle">No clear accumulation candidates in this data.</div>`;
 
-        el("shortList").innerHTML = shortList.length ? shortList.map(insightRowHTML).join("") : `<div class="subtle">No clear accumulation candidates in this data.</div>`;
-        el("longList").innerHTML = longList.length ? longList.map(insightRowHTML).join("") : `<div class="subtle">No persistence candidates yet.</div>`;
-
-      } catch (err){
-        el("shortList").innerHTML = `<div class="subtle">Could not load insight lists.</div>`;
-        el("longList").innerHTML = `<div class="subtle">Could not load insight lists.</div>`;
+      }catch(err){
+        el("valueList").innerHTML = `<div class="subtle">Could not load the value list.</div>`;
       }
     }
 
-    // Market regime: make it feel "loaded" immediately, then best-effort refine
-    async function fetchWithTimeout(url, ms){
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), ms);
-      try{
-        const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
-        return res;
-      } finally {
-        clearTimeout(to);
-      }
-    }
-
-    async function fetchStooqLastClose(sym){
-      const url = `https://stooq.com/q/l/?s=${encodeURIComponent(sym)}&f=sd2t2ohlcv&h&e=csv`;
-      const res = await fetchWithTimeout(url, 2500);
-      if (!res || !res.ok) return null;
-      const text = await res.text();
-      const lines = (text || "").trim().split("\n");
-      if (lines.length < 2) return null;
-      const parts = lines[1].split(",");
-      if (parts.length < 7) return null;
-      const close = Number(parts[6]);
-      if (!isFinite(close)) return null;
-      return close;
-    }
-
-    function classifyRegime(spy, vix){
-      if (!spy || !vix) return null;
-      if (vix < 18) return { label:"Accumulation-friendly", sub:`SPY ${spy.toFixed(2)} · VIX ${vix.toFixed(2)}.` };
-      if (vix <= 25) return { label:"Cautious accumulation", sub:`SPY ${spy.toFixed(2)} · VIX ${vix.toFixed(2)}.` };
-      return { label:"Risk-off, slow buys", sub:`SPY ${spy.toFixed(2)} · VIX ${vix.toFixed(2)}.` };
-    }
-
-    async function updateMarketRegime(){
-      // Always show something immediately
-      el("marketRegimeValue").textContent = "Reading tape + volatility";
-      el("marketRegimeSub").textContent = "If SPY/VIX fetch succeeds, this will refine automatically.";
-
-      try{
-        const [spy, vix] = await Promise.all([
-          fetchStooqLastClose("spy.us"),
-          fetchStooqLastClose("vix")
-        ]);
-        const c = classifyRegime(spy, vix);
-        if (!c){
-          el("marketRegimeValue").textContent = "Context via widgets";
-          el("marketRegimeSub").textContent = "SPY/VIX fetch blocked upstream. Use tape, heatmap, and metals panel.";
-          return;
-        }
-        el("marketRegimeValue").textContent = c.label;
-        el("marketRegimeSub").textContent = c.sub;
-      } catch (e){
-        el("marketRegimeValue").textContent = "Context via widgets";
-        el("marketRegimeSub").textContent = "SPY/VIX fetch failed. Use tape, heatmap, and metals panel.";
-      }
-    }
-
-    function refreshInsightForWindow(){
-      const win = Number(WINDOW_DAYS || 30);
-      el("insightTitle").textContent = `Market snapshot + accumulation insight (window ${win}D)`;
-      updateInsightLists();
-      updateMarketRegime();
+    function refreshStrategy(){
+      el("strategyTitle").textContent = `Market snapshot + value accumulation strategy (window ${WINDOW_DAYS}D)`;
+      setValuePlanText();
+      updateMarketContext();
+      updateValueList();
     }
 
     async function loadMain(force){
@@ -1410,7 +1414,7 @@
         loadMain(false);
       }
       if (ACTIVE_TAB === "Main"){
-        refreshInsightForWindow();
+        refreshStrategy();
       }
     }
 
@@ -1418,7 +1422,7 @@
       CACHE_MAIN.delete(String(WINDOW_DAYS));
       loadMain(true);
       if (ACTIVE_TAB === "Main"){
-        refreshInsightForWindow();
+        refreshStrategy();
       }
     }
 
@@ -1445,7 +1449,7 @@
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
 
-    // TradingView tape injection
+    // TradingView tape injection (clean, minimal)
     function initTradingViewTape(){
       const container = document.querySelector(".tradingview-widget-container__widget");
       if (!container) return;
@@ -1457,14 +1461,11 @@
       script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
       script.innerHTML = JSON.stringify({
         symbols: [
-          { proName: "AMEX:SPY", title: "S&P 500 (SPY)" },
-          { proName: "NASDAQ:QQQ", title: "Nasdaq 100 (QQQ)" },
-          { proName: "DJ:DJI", title: "Dow Jones" },
+          { proName: "AMEX:SPY", title: "S&P 500" },
+          { proName: "NASDAQ:QQQ", title: "Nasdaq 100" },
+          { proName: "DJ:DJI", title: "Dow" },
           { proName: "CBOE:VIX", title: "VIX" },
-          { proName: "TVC:US10Y", title: "US 10Y" },
-          { proName: "CRYPTO:BTCUSD", title: "Bitcoin" },
-          { proName: "CRYPTO:ETHUSD", title: "Ethereum" },
-          { proName: "TVC:GOLD", title: "Gold" }
+          { proName: "TVC:US10Y", title: "US 10Y" }
         ],
         showSymbolLogo: true,
         isTransparent: true,
@@ -1479,7 +1480,7 @@
     initTradingViewTape();
     showTab("Main");
     loadMain(false);
-    refreshInsightForWindow();
+    refreshStrategy();
   </script>
 </body>
 </html>
