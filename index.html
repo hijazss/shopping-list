@@ -512,6 +512,20 @@
         <div class="subtle" id="entryHint" style="margin-top:10px;"></div>
       </div>
 
+      <div class="sectionTitle">Signals</div>
+      <div class="panel">
+        <div class="panelTitle">
+          <h2>Scored ideas</h2>
+          <span class="kpiBadge badgeNeu" id="ideasWindowBadge">30D</span>
+        </div>
+        <div class="subtle" style="margin-top:6px;">
+          Score blends congress activity with relevance from your watchlist and sector headlines.
+        </div>
+        <div class="divider"></div>
+        <div id="ideasList"></div>
+        <div class="subtle" id="ideasHint" style="margin-top:10px;"></div>
+      </div>
+
       <div class="sectionTitle">What this app is for</div>
       <div class="panel">
         <div class="kpiSub">
@@ -524,18 +538,18 @@
 
     <!-- NEWS TAB -->
     <section id="viewNews" style="display:none;">
-      <div class="sectionTitle">Daily briefing</div>
+      <div class="sectionTitle">Market snapshot</div>
       <div class="grid3">
+        <div class="kpi" id="snapKpiSp"></div>
+        <div class="kpi" id="snapKpiFearGreed"></div>
         <div class="kpi" id="briefKpiSentiment"></div>
-        <div class="kpi" id="briefKpiScope"></div>
-        <div class="kpi" id="briefKpiNotes"></div>
       </div>
 
       <div class="sectionTitle">Your watchlist</div>
       <div class="panel">
         <div class="kpiSub">
           Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL
-          This watchlist influences the briefing and pulls ticker RSS into the same sector view.
+          This watchlist influences the briefing and scoring.
         </div>
         <div style="margin-top:10px;">
           <input class="input" id="watchInput" value="SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B" />
@@ -546,6 +560,16 @@
       </div>
 
       <div class="sectionTitle">Sectors</div>
+      <div class="panel">
+        <div class="kpiSub">
+          Comma-separated sectors. Example: AI,Medical,Energy,Semiconductors
+        </div>
+        <div style="margin-top:10px;">
+          <input class="input" id="sectorInput" value="AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer" />
+        </div>
+      </div>
+
+      <div class="sectionTitle">Daily briefing</div>
       <div id="briefingSectors"></div>
 
       <div class="subtle" id="briefHint" style="margin-top:12px;"></div>
@@ -690,9 +714,19 @@
     const ENTRY_URL = (windowDays) =>
       `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
 
-    // New briefing endpoint
-    const NEWS_BRIEF_URL = (tickers) =>
-      `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(String(tickers||""))}&max_general=55&max_per_ticker=6`;
+    const SNAPSHOT_URL = () =>
+      `${BACKEND_BASE}/market/snapshot`;
+
+    const IDEAS_URL = (windowDays, watchlist, sectors, limit) =>
+      `${BACKEND_BASE}/signals/ideas?window_days=${encodeURIComponent(String(windowDays||30))}`
+      + `&watchlist=${encodeURIComponent(String(watchlist||""))}`
+      + `&sectors=${encodeURIComponent(String(sectors||""))}`
+      + `&limit=${encodeURIComponent(String(limit||25))}`;
+
+    const NEWS_BRIEF_URL = (watchlist, sectors) =>
+      `${BACKEND_BASE}/news/briefing?watchlist=${encodeURIComponent(String(watchlist||""))}`
+      + `&sectors=${encodeURIComponent(String(sectors||""))}`
+      + `&max_items_per_sector=12`;
 
     const el = (id) => document.getElementById(id);
 
@@ -703,9 +737,9 @@
     let CACHE_ENTRY = new Map();
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
-
-    // News briefing cache keyed by ticker string
     let CACHE_BRIEFING = new Map();
+    let CACHE_SNAPSHOT = null;
+    let CACHE_IDEAS = new Map();
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -909,6 +943,100 @@
         renderEntryIndex(data);
       }catch(err){
         renderEntryIndex(null);
+      }
+    }
+
+    // ----------- Signals ideas (scored list) ----------
+    function scoreBadge(score){
+      const s = Number(score || 0);
+      if (s >= 75) return { cls:"badgePos", label:`${s}` };
+      if (s >= 55) return { cls:"badgeNeu", label:`${s}` };
+      return { cls:"badgeNeg", label:`${s}` };
+    }
+
+    function ideaCardHTML(x){
+      const t = String(x?.ticker || "").toUpperCase();
+      const sc = scoreBadge(x?.score);
+      const c = x?.congress || {};
+      const n = x?.news || {};
+      const drivers = Array.isArray(x?.drivers) ? x.drivers : [];
+
+      const buys = Number(c?.buys || 0);
+      const sells = Number(c?.sells || 0);
+      const net = Number(c?.net || 0);
+      const bi = Number(c?.bipartisan || 0);
+      const last = String(c?.lastFiledAt || "");
+
+      const wMent = Number(n?.watchlistMentions || 0);
+      const sMent = Number(n?.sectorMentions || 0);
+
+      const netCls = net > 0 ? "badgePos" : net < 0 ? "badgeNeg" : "badgeNeu";
+      const netSign = net > 0 ? "+" : "";
+
+      return `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
+                <div class="who">${drivers.length ? drivers.join(" · ") : "Scored idea"}</div>
+              </div>
+            </div>
+            <div class="tags">
+              <span class="kpiBadge ${sc.cls}">Score ${sc.label}</span>
+              ${bi >= 2 ? `<span class="tag tagBoth">BIPARTISAN</span>` : ``}
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="metaRow">
+            <div class="counts">
+              <div class="countItem">Buys: <strong>${buys}</strong></div>
+              <div class="countItem">Sells: <strong>${sells}</strong></div>
+              <div class="countItem">Net: <span class="kpiBadge ${netCls}">${netSign}${net}</span></div>
+              <div class="countItem">Overlap: <strong>${bi}</strong></div>
+              <div class="countItem">News: <strong>${wMent + sMent}</strong></div>
+            </div>
+            <div>${last ? `Last filed: ${last}` : ""}</div>
+          </div>
+
+          ${tickerLinksHTML(t)}
+        </div>
+      `;
+    }
+
+    async function loadIdeas(force){
+      const watch = String(el("watchInput")?.value || "SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B");
+      const sectors = String(el("sectorInput")?.value || "AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer");
+      const key = `${WINDOW_DAYS}|${watch}|${sectors}`;
+
+      el("ideasWindowBadge").textContent = `${WINDOW_DAYS}D`;
+
+      if (CACHE_IDEAS.has(key) && !force){
+        const cached = CACHE_IDEAS.get(key);
+        const ideas = Array.isArray(cached?.ideas) ? cached.ideas : [];
+        el("ideasList").innerHTML = ideas.length ? ideas.map(ideaCardHTML).join("") : "<div class='subtle'>No ideas returned.</div>";
+        el("ideasHint").textContent = "Loaded from cache.";
+        return;
+      }
+
+      const url = IDEAS_URL(WINDOW_DAYS, watch, sectors, 25);
+      el("ideasList").innerHTML = "<div class='subtle'>Loading scored ideas…</div>";
+      el("ideasHint").textContent = `Loading from: ${url}`;
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_IDEAS.set(key, data);
+
+        const ideas = Array.isArray(data?.ideas) ? data.ideas : [];
+        el("ideasList").innerHTML = ideas.length ? ideas.map(ideaCardHTML).join("") : "<div class='subtle'>No ideas returned.</div>";
+        el("ideasHint").textContent = data?.note || "Scored list loaded.";
+      }catch(err){
+        el("ideasList").innerHTML = "<div class='subtle'>Could not load scored ideas.</div>";
+        el("ideasHint").textContent = "Backend must expose /signals/ideas and allow CORS.";
       }
     }
 
@@ -1492,6 +1620,76 @@
       }
     }
 
+    // ----------- Market snapshot (News top) ----------
+    function renderSnapshot(s){
+      const sp = s?.sp500 || {};
+      const vix = s?.vix || {};
+      const fg = s?.fearGreed || {};
+
+      const last = sp?.last != null ? Number(sp.last).toFixed(2) : "—";
+      const r1 = sp?.ret1dPct != null ? Number(sp.ret1dPct).toFixed(2) : null;
+      const r5 = sp?.ret5dPct != null ? Number(sp.ret5dPct).toFixed(2) : null;
+      const rM = sp?.ret1mPct != null ? Number(sp.ret1mPct).toFixed(2) : null;
+
+      const cls1 = r1 == null ? "badgeNeu" : (Number(r1) >= 0 ? "badgePos" : "badgeNeg");
+      const cls5 = r5 == null ? "badgeNeu" : (Number(r5) >= 0 ? "badgePos" : "badgeNeg");
+      const clsM = rM == null ? "badgeNeu" : (Number(rM) >= 0 ? "badgePos" : "badgeNeg");
+
+      const vixLast = vix?.last != null ? Number(vix.last).toFixed(2) : "—";
+      const vixChg = vix?.chg1d != null ? Number(vix.chg1d).toFixed(2) : null;
+      const vixCls = vixChg == null ? "badgeNeu" : (Number(vixChg) <= 0 ? "badgePos" : "badgeNeg"); // lower VIX is "good"
+
+      el("snapKpiSp").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">S&P proxy (SPY)</div>
+            <div class="kpiValue">${last}</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${s?.date || ""}</span>
+        </div>
+        <div class="kpiSub">Quick performance context + volatility.</div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>1D</span><span class="kpiBadge ${cls1}">${r1 == null ? "—" : (r1 >= 0 ? "+" : "") + r1 + "%"}</span></div>
+          <div class="kpiRow"><span>5D</span><span class="kpiBadge ${cls5}">${r5 == null ? "—" : (r5 >= 0 ? "+" : "") + r5 + "%"}</span></div>
+          <div class="kpiRow"><span>1M</span><span class="kpiBadge ${clsM}">${rM == null ? "—" : (rM >= 0 ? "+" : "") + rM + "%"}</span></div>
+          <div class="kpiRow"><span>VIX</span><span class="kpiBadge ${vixCls}">${vixLast}${vixChg == null ? "" : " (" + (vixChg >= 0 ? "+" : "") + vixChg + ")"}</span></div>
+        </div>
+      `;
+
+      const fgScore = fg?.score != null ? Number(fg.score) : null;
+      const fgRating = String(fg?.rating || "—");
+      const fgCls = fgScore == null ? "badgeNeu" : (fgScore >= 60 ? "badgePos" : fgScore <= 40 ? "badgeNeg" : "badgeNeu");
+
+      el("snapKpiFearGreed").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Fear & greed</div>
+            <div class="kpiValue">${fgScore == null ? "—" : fgScore}</div>
+          </div>
+          <span class="kpiBadge ${fgCls}">${fgRating}</span>
+        </div>
+        <div class="kpiSub">
+          External index, best-effort fetch. If blank, CNN endpoint may be blocked.
+        </div>
+      `;
+    }
+
+    async function loadSnapshot(force){
+      if (CACHE_SNAPSHOT && !force){
+        renderSnapshot(CACHE_SNAPSHOT);
+        return;
+      }
+      try{
+        const res = await fetch(SNAPSHOT_URL(), { cache:"no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_SNAPSHOT = data;
+        renderSnapshot(data);
+      }catch(err){
+        renderSnapshot({});
+      }
+    }
+
     // ----------- News briefing ----------
     function sentimentBadge(s){
       const score = Number(s?.score ?? 50);
@@ -1505,16 +1703,13 @@
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
-      const bucket = String(h?.bucket || "").trim();
-      const sectors = Array.isArray(h?.sectors) ? h.sectors.join(", ") : "";
-
+      const sec = String(h?.sector || "").trim();
       return `
         <div class="headlineItem">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
-            ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
-            ${sectors ? `<span>Sectors: <strong>${sectors}</strong></span>` : ""}
+            ${sec ? `<span>Sector: <strong>${sec}</strong></span>` : ""}
           </div>
         </div>
       `;
@@ -1522,15 +1717,19 @@
 
     function sectorPanelHTML(s){
       const sector = String(s?.sector || "General");
-      const count = Number(s?.count || 0);
       const sent = sentimentBadge(s?.sentiment);
       const summary = String(s?.summary || "").trim();
-      const impl = Array.isArray(s?.implications_2_12_weeks) ? s.implications_2_12_weeks : [];
-      const headlines = Array.isArray(s?.headlines) ? s.headlines : [];
+      const impl = String(s?.implications || "").trim();
+      const headlines = Array.isArray(s?.topHeadlines) ? s.topHeadlines : [];
+      const mentions = Array.isArray(s?.watchlistMentions) ? s.watchlistMentions : [];
 
       const meta = [];
-      meta.push(`${count} headlines`);
+      meta.push(`${headlines.length} headlines`);
       meta.push(`Sentiment ${sent.score}/100`);
+      if (mentions.length){
+        const top = mentions.slice(0,4).map(m => `${String(m.ticker||"").toUpperCase()}(${Number(m.count||0)})`).join(" · ");
+        meta.push(`Mentions: ${top}`);
+      }
       const metaLine = meta.join(" · ");
 
       return `
@@ -1541,7 +1740,7 @@
               <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
             </div>
             <div class="tags">
-              <span class="kpiBadge badgeNeu">${count}</span>
+              <span class="kpiBadge badgeNeu">${headlines.length}</span>
               <span class="kpiBadge ${sent.cls}">${sent.label} · ${sent.score}</span>
             </div>
           </summary>
@@ -1556,8 +1755,16 @@
 
           <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
           <ul class="bulletList">
-            ${impl.length ? impl.map(x => `<li>${String(x||"")}</li>`).join("") : "<li>No implications generated.</li>"}
+            ${impl ? `<li>${impl}</li>` : "<li>No implications generated.</li>"}
           </ul>
+
+          ${mentions.length ? `
+            <div class="divider"></div>
+            <div class="kpiSub"><strong>Watchlist mentions:</strong></div>
+            <ul class="bulletList">
+              ${mentions.slice(0,10).map(m => `<li><strong>${String(m.ticker||"").toUpperCase()}</strong>: ${Number(m.count||0)} headline(s)</li>`).join("")}
+            </ul>
+          ` : ""}
 
           <div class="divider"></div>
 
@@ -1569,13 +1776,10 @@
       `;
     }
 
-    function renderBriefing(data, tickers){
+    function renderBriefing(data, watchlist, sectors){
       const overall = sentimentBadge(data?.overallSentiment);
-      const sectors = Array.isArray(data?.sectors) ? data.sectors : [];
+      const sectorTiles = Array.isArray(data?.sectors) ? data.sectors : [];
       const date = String(data?.date || "");
-      const total = sectors.reduce((a, s) => a + Number(s?.count || 0), 0);
-      const srcGeneral = String(data?.sources?.general || "");
-      const srcWatch = String(data?.sources?.watchlist || "");
 
       el("briefKpiSentiment").innerHTML = `
         <div class="kpiTop">
@@ -1590,60 +1794,32 @@
         </div>
         <div class="kpiList">
           <div class="kpiRow"><span>Date</span><span class="kpiBadge badgeNeu">${date || "—"}</span></div>
+          <div class="kpiRow"><span>Watchlist</span><span class="kpiBadge badgeNeu">${String(watchlist||"").split(",").filter(x => x.trim()).length} tickers</span></div>
+          <div class="kpiRow"><span>Sectors</span><span class="kpiBadge badgeNeu">${String(sectors||"").split(",").filter(x => x.trim()).length}</span></div>
         </div>
       `;
 
-      el("briefKpiScope").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Briefing scope</div>
-            <div class="kpiValue">${total} headlines</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Sectors</span>
-        </div>
-        <div class="kpiSub">
-          Grouped into AI, Medical, Energy, Robotics, Infrastructure, General.
-        </div>
-        <div class="kpiList">
-          <div class="kpiRow"><span>Watchlist</span><span class="kpiBadge badgeNeu">${String(tickers||"").split(",").filter(x => x.trim()).length} tickers</span></div>
-        </div>
-      `;
-
-      el("briefKpiNotes").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Sources</div>
-            <div class="kpiValue">RSS</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Backend</span>
-        </div>
-        <div class="kpiSub">
-          ${srcGeneral ? `<div>${srcGeneral}</div>` : ""}
-          ${srcWatch ? `<div style="margin-top:4px;">${srcWatch}</div>` : ""}
-        </div>
-      `;
-
-      el("briefingSectors").innerHTML = sectors.length
-        ? sectors.map(sectorPanelHTML).join("")
+      el("briefingSectors").innerHTML = sectorTiles.length
+        ? sectorTiles.map(sectorPanelHTML).join("")
         : "<div class='subtle'>No sectors returned.</div>";
 
-      const errG = Array.isArray(data?.errors?.general) ? data.errors.general : [];
-      const errW = Array.isArray(data?.errors?.watchlist) ? data.errors.watchlist : [];
-      const errAll = errG.concat(errW).filter(Boolean);
-
+      const errAll = Array.isArray(data?.errors) ? data.errors : [];
       el("briefHint").textContent = errAll.length
         ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
-        : "Daily briefing loaded.";
+        : (data?.note || "Daily briefing loaded.");
     }
 
-    async function loadBriefing(tickers, force){
-      const key = String(tickers || "").trim();
+    async function loadBriefing(watchlist, sectors, force){
+      const w = String(watchlist || "").trim();
+      const s = String(sectors || "").trim();
+      const key = `${w}|${s}`;
+
       if (CACHE_BRIEFING.has(key) && !force){
-        renderBriefing(CACHE_BRIEFING.get(key), key);
+        renderBriefing(CACHE_BRIEFING.get(key), w, s);
         return;
       }
 
-      const url = NEWS_BRIEF_URL(key);
+      const url = NEWS_BRIEF_URL(w, s);
       el("briefingSectors").innerHTML = "<div class='subtle'>Loading daily briefing…</div>";
       el("briefHint").textContent = `Loading from: ${url}`;
 
@@ -1652,13 +1828,11 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error("HTTP " + res.status);
         CACHE_BRIEFING.set(key, data);
-        renderBriefing(data, key);
+        renderBriefing(data, w, s);
       }catch(err){
         el("briefingSectors").innerHTML = "<div class='subtle'>Could not load briefing.</div>";
         el("briefHint").textContent = "Backend must expose /news/briefing and allow CORS.";
         el("briefKpiSentiment").innerHTML = "";
-        el("briefKpiScope").innerHTML = "";
-        el("briefKpiNotes").innerHTML = "";
       }
     }
 
@@ -1690,9 +1864,11 @@
       if (tab === "Main"){
         loadMain(false);
         loadEntryIndex(365, false);
+        loadIdeas(false);
       }
       if (tab === "News"){
-        loadBriefing(el("watchInput").value, false);
+        loadSnapshot(false);
+        loadBriefing(el("watchInput").value, el("sectorInput").value, false);
       }
       if (tab === "Congress"){
         loadMain(false);
@@ -1719,6 +1895,9 @@
       if (ACTIVE_TAB === "Congress"){
         loadDaily(WINDOW_DAYS, false);
       }
+      if (ACTIVE_TAB === "Main"){
+        loadIdeas(false);
+      }
     }
 
     function handleRefresh(){
@@ -1727,14 +1906,18 @@
       CACHE_HOLDINGS.delete("365");
       CACHE_DAILY.delete(String(WINDOW_DAYS));
       CACHE_BRIEFING.clear();
+      CACHE_SNAPSHOT = null;
+      CACHE_IDEAS.clear();
 
       if (ACTIVE_TAB === "Main"){
         loadMain(true);
         loadEntryIndex(365, true);
+        loadIdeas(true);
         return;
       }
       if (ACTIVE_TAB === "News"){
-        loadBriefing(el("watchInput").value, true);
+        loadSnapshot(true);
+        loadBriefing(el("watchInput").value, el("sectorInput").value, true);
         return;
       }
       if (ACTIVE_TAB === "Congress"){
@@ -1767,13 +1950,16 @@
     window.addEventListener("hashchange", handleHash);
 
     el("watchApplyBtn").addEventListener("click", () => {
-      loadBriefing(el("watchInput").value, true);
+      loadSnapshot(true);
+      loadBriefing(el("watchInput").value, el("sectorInput").value, true);
+      if (ACTIVE_TAB === "Main") loadIdeas(true);
     });
 
     // Start
     showTab("Main");
     loadMain(false);
     loadEntryIndex(365, false);
+    loadIdeas(false);
   </script>
 </body>
 </html>
