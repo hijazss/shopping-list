@@ -594,11 +594,11 @@
 
       <div class="panel">
         <div class="panelTitle">
-          <h2>Common holdings (portfolio overlap)</h2>
+          <h2>Common holdings (overlap)</h2>
           <span class="kpiBadge badgeNeu" id="holdingsWindowBadge">365D</span>
         </div>
         <div class="hint" style="margin-top:6px;">
-          This ranks stocks by how many members hold them in the last 365 days. Independent of buy or sell activity.
+          This uses a holdings proxy based on disclosures in the selected window. It ranks tickers by how many unique members disclosed activity.
         </div>
         <div class="divider"></div>
 
@@ -727,8 +727,8 @@
     // Existing trade activity endpoint
     const TODAY_URL = (windowDays) => `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(windowDays))}`;
 
-    // Holdings overlap endpoint (backend must implement)
-    const HOLDINGS_COMMON_URL = (windowDays) => `${BACKEND_BASE}/report/holdings/common?window_days=${encodeURIComponent(String(windowDays))}`;
+    // Holdings overlap endpoint (matches the cleaned backend: /report/congress-holdings)
+    const HOLDINGS_COMMON_URL = (windowDays) => `${BACKEND_BASE}/report/congress-holdings?window_days=${encodeURIComponent(String(windowDays))}&top_n=30`;
 
     // Market entry endpoint (backend should implement for reliable scoring)
     const ENTRY_URL = (windowDays) => `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
@@ -778,7 +778,7 @@
       infrastructure: ["ANET","CSCO","MSFT","AMZN","GOOGL","ORCL","EQIX","DLR","VRT","ETN","PWR","NVT","HUBB","AME","TT","NEE","CEG","CCJ","BEPC","ENPH"]
     };
 
-    // Taxonomy map (tighten your overlaps here)
+    // Taxonomy map
     const TICKER_SECTOR_MAP = {
       "NVDA":["ai","chips"], "MSFT":["ai","infrastructure"], "GOOGL":["ai","infrastructure"], "AMZN":["ai","infrastructure"],
       "META":["ai"], "PLTR":["ai"], "SNOW":["ai"], "DDOG":["ai"], "NOW":["ai"], "CRM":["ai"], "ORCL":["ai","infrastructure"],
@@ -1375,7 +1375,6 @@
       const disc = (Array.isArray(discoveredTickers) ? discoveredTickers : [])
         .map(t => String(t||"").toUpperCase().trim()).filter(Boolean);
 
-      // Only allow discovered tickers if taxonomy maps them to the sector
       const filteredDisc = disc.filter(t => sectorsForTicker(t).includes(sectorKey));
       return Array.from(new Set([...seeds, ...filteredDisc]));
     }
@@ -1741,20 +1740,26 @@
       }
     }
 
-    // Holdings overlap
-    function holdingsBadge(holders){
-      const n = Number(holders || 0);
-      if (n >= 40) return { label: "VERY COMMON", cls: "badgePos" };
-      if (n >= 25) return { label: "COMMON", cls: "badgeNeu" };
-      if (n >= 15) return { label: "MODERATE", cls: "badgeNeu" };
+    // Holdings overlap (supports /report/congress-holdings response)
+    function holdingsBadgeByScore(score){
+      const s = Number(score || 0);
+      if (s >= 80) return { label: "VERY BROAD", cls: "badgePos" };
+      if (s >= 60) return { label: "BROAD", cls: "badgeNeu" };
+      if (s >= 40) return { label: "MODERATE", cls: "badgeNeu" };
       return { label: "NICHE", cls: "badgeNeu" };
     }
 
     function holdingsRowHTML(item){
       const t = String(item.ticker || "").toUpperCase();
-      const name = String(item.companyName || "").trim();
-      const holders = Number(item.holders || item.holderCount || 0);
-      const b = holdingsBadge(holders);
+      const holders = Number(item.holderCount ?? item.holders ?? 0);
+      const dem = Number(item.demHolders ?? 0);
+      const rep = Number(item.repHolders ?? 0);
+      const score = Number(item.holdingsScore ?? 0);
+      const last = String(item.lastActivity || "");
+      const b = holdingsBadgeByScore(score);
+
+      const bip = (dem > 0 && rep > 0);
+      const bipBadge = bip ? `<span class="kpiBadge badgeBoth">Bipartisan</span>` : `<span class="kpiBadge badgeNeu">Single-party</span>`;
 
       return `
         <div class="holdingsItem">
@@ -1762,27 +1767,45 @@
             <div>
               <div class="tickerLine">
                 <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
-                ${name ? `<div class="who">${name}</div>` : ""}
+                <span class="kpiBadge ${b.cls}">${b.label}</span>
               </div>
               <div class="stockMeta">
-                <span class="kpiBadge ${b.cls}">${b.label}</span>
                 <span class="kpiBadge badgeNeu">Holders: <strong>${holders}</strong></span>
+                <span class="kpiBadge badgeNeu">Score: <strong>${score}/100</strong></span>
+                ${bipBadge}
+                ${last ? `<span class="kpiBadge badgeNeu">Last: ${last}</span>` : ""}
               </div>
             </div>
             <div class="tags">
-              <span class="tag tagSEC">HOLDINGS</span>
+              <span class="tag tagSEC">OVERLAP</span>
             </div>
           </div>
+
+          <div class="divider"></div>
+
+          <div class="metaRow">
+            <div class="counts">
+              <div class="countItem"><span class="dot dotDem"></span> Dem holders: <strong>${dem}</strong></div>
+              <div class="countItem"><span class="dot dotRep"></span> GOP holders: <strong>${rep}</strong></div>
+            </div>
+          </div>
+
           ${tickerLinksHTML(t)}
         </div>
       `;
     }
 
-    function renderHoldingsKpis(items){
-      const top = items[0];
-      const totalTickers = items.length;
-      const avg = totalTickers ? Math.round(items.reduce((s,x)=>s+Number(x.holders||0),0) / totalTickers) : 0;
-      const top5 = items.slice(0,5);
+    function renderHoldingsKpis(payload, list){
+      const win = Number(payload?.windowDays || 365);
+      const breadth = payload?.breadth || {};
+      const uniquePol = Number(breadth.uniquePoliticians || 0);
+      const uniqueTickers = Number(breadth.uniqueTickers || 0);
+
+      const items = Array.isArray(list) ? list : [];
+      const top = items[0] || null;
+
+      const avgHolders = items.length ? Math.round(items.reduce((s,x)=>s+Number(x.holderCount||0),0) / items.length) : 0;
+      const avgScore = items.length ? Math.round(items.reduce((s,x)=>s+Number(x.holdingsScore||0),0) / items.length) : 0;
 
       el("holdingsKpiTop").innerHTML = `
         <div class="kpiTop">
@@ -1790,16 +1813,14 @@
             <div class="kpiTitle">Top holding</div>
             <div class="kpiValue">${top ? String(top.ticker).toUpperCase() : "—"}</div>
           </div>
-          <span class="kpiBadge badgeNeu">365D</span>
+          <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
-        <div class="kpiSub">${top ? `Holders: <strong>${Number(top.holders||0)}</strong>` : "No holdings data."}</div>
+        <div class="kpiSub">
+          ${top ? `Holders: <strong>${Number(top.holderCount||0)}</strong> · Score: <strong>${Number(top.holdingsScore||0)}/100</strong>` : "No overlap data."}
+        </div>
         <div class="kpiList">
-          ${top5.length ? top5.map(x => `
-            <div class="kpiRow">
-              <a href="#stock=${encodeURIComponent(String(x.ticker).toUpperCase())}"><strong>${String(x.ticker).toUpperCase()}</strong></a>
-              <span class="kpiBadge badgeNeu">${Number(x.holders||0)} holders</span>
-            </div>
-          `).join("") : `<div class="kpiRow"><span class="muted">No data</span></div>`}
+          <div class="kpiRow"><span class="muted">Avg holders (top list)</span><span class="kpiBadge badgeNeu">${avgHolders}</span></div>
+          <div class="kpiRow"><span class="muted">Avg score (top list)</span><span class="kpiBadge badgeNeu">${avgScore}/100</span></div>
         </div>
       `;
 
@@ -1807,13 +1828,16 @@
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Breadth</div>
-            <div class="kpiValue">${totalTickers || 0} tickers</div>
+            <div class="kpiValue">${uniquePol || 0} members</div>
           </div>
-          <span class="kpiBadge badgeNeu">Top 30</span>
+          <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
-        <div class="kpiSub">Average holder count across this list.</div>
+        <div class="kpiSub">
+          Universe is the unique members who disclosed activity in this window.
+        </div>
         <div class="kpiList">
-          <div class="kpiRow"><span class="muted">Average</span><span class="kpiBadge badgeNeu">${avg}</span></div>
+          <div class="kpiRow"><span class="muted">Unique tickers</span><span class="kpiBadge badgeNeu">${uniqueTickers || 0}</span></div>
+          <div class="kpiRow"><span class="muted">Displayed</span><span class="kpiBadge badgeNeu">${items.length}</span></div>
         </div>
       `;
 
@@ -1821,46 +1845,55 @@
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Holdings score</div>
-            <div class="kpiValue">Holder count</div>
+            <div class="kpiValue">0–100</div>
           </div>
-          <span class="kpiBadge badgeNeu">Simple</span>
+          <span class="kpiBadge badgeNeu">Proxy</span>
         </div>
         <div class="kpiSub">
-          <div class="kpiRow"><span>Score</span><span class="kpiBadge badgeNeu">= # holders</span></div>
-          <div class="kpiRow"><span>Window</span><span class="kpiBadge badgeNeu">365D</span></div>
+          <div class="kpiRow"><span>Primary</span><span class="kpiBadge badgeNeu">Breadth</span></div>
+          <div class="kpiRow"><span>Input</span><span class="kpiBadge badgeNeu">holderCount / uniquePoliticians</span></div>
+          <div class="kpiRow"><span>Boost</span><span class="kpiBadge badgeBoth">Bipartisan</span></div>
           <div class="scoreExplain">
-            Backend must aggregate disclosures into per-ticker holder counts.
+            This is a proxy based on disclosures, not a real-time holdings statement. Use it to find common names, not to time entries.
           </div>
         </div>
       `;
     }
 
     function renderHoldingsCommon(payload){
-      const list = Array.isArray(payload?.commonHoldings) ? payload.commonHoldings : Array.isArray(payload?.holdings) ? payload.holdings : [];
       const win = Number(payload?.windowDays || 365);
       el("holdingsWindowBadge").textContent = `${win}D`;
+
+      const list = Array.isArray(payload?.topHoldings) ? payload.topHoldings
+        : Array.isArray(payload?.holdings) ? payload.holdings
+        : [];
 
       if (!list.length){
         el("holdingsList").innerHTML = "<div class='subtle'>No holdings overlap data returned.</div>";
         el("holdingsHint").textContent =
-          "If this is empty, implement /report/holdings/common to return {ticker, companyName, holders}.";
-        renderHoldingsKpis([]);
+          "If this is empty, confirm the backend is deployed with /report/congress-holdings.";
+        renderHoldingsKpis(payload || {}, []);
         return;
       }
 
-      const sorted = list.slice().map(x => ({
-        ticker: x.ticker,
-        companyName: x.companyName,
-        holders: Number(x.holders ?? x.holderCount ?? x.count ?? 0)
-      })).filter(x => x.ticker && x.holders >= 0)
-        .sort((a,b) => (b.holders - a.holders) || String(a.ticker).localeCompare(String(b.ticker)));
+      const cleaned = list.slice().map(x => ({
+        ticker: String(x.ticker || "").toUpperCase(),
+        holderCount: Number(x.holderCount ?? x.holders ?? 0),
+        demHolders: Number(x.demHolders ?? 0),
+        repHolders: Number(x.repHolders ?? 0),
+        breadthPct: Number(x.breadthPct ?? 0),
+        holdingsScore: Number(x.holdingsScore ?? 0),
+        lastActivity: String(x.lastActivity || "")
+      })).filter(x => x.ticker && x.holderCount >= 0);
 
-      const trimmed = sorted.slice(0, 30);
-      renderHoldingsKpis(trimmed);
+      cleaned.sort((a,b) => (b.holderCount - a.holderCount) || (b.holdingsScore - a.holdingsScore) || a.ticker.localeCompare(b.ticker));
+
+      const trimmed = cleaned.slice(0, 30);
+      renderHoldingsKpis(payload || {}, trimmed);
 
       el("holdingsList").innerHTML = trimmed.map(holdingsRowHTML).join("");
       el("holdingsHint").textContent =
-        "This is popularity by holdings, not a timing signal. Combine with Market Entry Index for pacing.";
+        "Common overlap finds crowding. Combine with the Market Entry Index to pace buying.";
     }
 
     async function loadHoldingsCommon(windowDays, force){
@@ -1883,9 +1916,9 @@
         CACHE_HOLDINGS.set(key, data);
         renderHoldingsCommon(data);
       }catch(err){
-        renderHoldingsCommon({ windowDays: windowDays || 365, commonHoldings: [] });
+        renderHoldingsCommon({ windowDays: windowDays || 365, topHoldings: [], holdings: [] });
         el("holdingsHint").textContent =
-          "Holdings overlap could not load. Backend likely does not have /report/holdings/common implemented yet.";
+          "Holdings overlap could not load. Confirm backend has /report/congress-holdings and it is deployed.";
       }
     }
 
