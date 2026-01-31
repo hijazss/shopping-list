@@ -357,7 +357,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(5,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -384,6 +384,26 @@
       border-radius:12px;
       padding:9px;
     }
+
+    .newsGrid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    @media (min-width: 980px){
+      .newsGrid{grid-template-columns:1fr 1fr;}
+    }
+
+    .input{
+      width:100%;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      color:#fff;
+      border-radius:12px;
+      padding:10px;
+      font-size:12px;
+      outline:none;
+    }
   </style>
 </head>
 
@@ -404,6 +424,7 @@
 
     <div class="tabRow">
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
+      <button class="tabBtn" id="tabNewsBtn">News</button>
       <button class="tabBtn" id="tabCongressBtn">Congress</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
       <button class="tabBtn" id="tabPerfBtn">Performance</button>
@@ -434,22 +455,52 @@
       <div class="sectionTitle">What this app is for</div>
       <div class="panel">
         <div class="kpiSub">
-          This is a “signals dashboard” for pacing, not prediction.
-          Use Market Entry to decide how aggressive to DCA. Use Congress and Crypto for idea discovery and sentiment context.
+          This is a pacing dashboard, not a prediction engine.
+          Use Market Entry to decide how aggressive to DCA. Use News for sentiment context.
+          Use Congress and Crypto for idea discovery.
         </div>
       </div>
     </section>
 
+    <!-- NEWS TAB -->
+    <section id="viewNews" style="display:none;">
+      <div class="sectionTitle">Market sentiment</div>
+      <div class="grid3">
+        <div class="kpi" id="newsKpiSentiment"></div>
+        <div class="kpi" id="newsKpiTop"></div>
+        <div class="kpi" id="newsKpiWatch"></div>
+      </div>
+
+      <div class="sectionTitle">Your watchlist</div>
+      <div class="panel">
+        <div class="kpiSub">Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL</div>
+        <div style="margin-top:10px;">
+          <input class="input" id="watchInput" value="SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B" />
+        </div>
+        <div class="miniLinks" style="margin-top:10px;">
+          <button class="pillBtn" id="watchApplyBtn">Load watchlist news</button>
+        </div>
+      </div>
+
+      <div class="sectionTitle">Top headlines</div>
+      <div class="newsGrid" id="newsTopList"></div>
+
+      <div class="sectionTitle">Watchlist headlines</div>
+      <div class="newsGrid" id="newsWatchList"></div>
+
+      <div class="subtle" id="newsHint" style="margin-top:12px;"></div>
+    </section>
+
     <!-- CONGRESS TAB -->
     <section id="viewCongress" style="display:none;">
-      <div class="sectionTitle">Common holdings (simplified)</div>
+      <div class="sectionTitle">Common holdings (simple)</div>
       <div class="panel">
         <div class="panelTitle">
           <h2>Most commonly held tickers</h2>
           <span class="kpiBadge badgeNeu" id="holdingsWindowBadge">365D</span>
         </div>
         <div class="subtle" style="margin-top:6px;">
-          Simple list: ticker + how many unique politicians disclosed activity in that ticker during the selected window.
+          Ticker + how many unique politicians disclosed activity in that ticker during the selected window.
         </div>
 
         <div class="divider"></div>
@@ -462,6 +513,16 @@
         <div id="holdingsList" class="holdingsGrid"></div>
 
         <div class="subtle" id="holdingsHint" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="sectionTitle">Day-by-day trade feed</div>
+      <div class="panel">
+        <div class="kpiSub">
+          This is the detailed activity view. Grouped by filed date when available.
+        </div>
+        <div class="divider"></div>
+        <div id="dailyTradeList"></div>
+        <div class="subtle" id="dailyHint" style="margin-top:10px;"></div>
       </div>
 
       <div class="sectionTitle" id="kpiTitle">Congress activity dashboard</div>
@@ -495,7 +556,7 @@
 
       <div class="panel">
         <div class="kpiSub">
-          This tab shows more than just “direct BTC/ETH” by also including hint-only disclosures and crypto-linked tickers.
+          Includes direct coin mapping, hint-only disclosures, and crypto-linked tickers.
           Use 180D or 365D if 30D looks sparse.
         </div>
       </div>
@@ -512,11 +573,11 @@
         <div>
           <div class="sectionTitle">Hint-only crypto disclosures (BUY/SELL)</div>
           <div class="subtle" style="margin-top:-4px;">
-            These are disclosures that mention “crypto / digital asset” but do not cleanly map to a coin symbol.
+            Mentions “crypto / digital asset” but does not cleanly map to a coin symbol.
           </div>
           <div id="cryptoHintOnly"></div>
 
-          <div class="sectionTitle" style="margin-top:14px;">Crypto-linked tickers (ETFs, miners, exchanges)</div>
+          <div class="sectionTitle" style="margin-top:14px;">Crypto-linked tickers</div>
           <div id="cryptoLinkedTickers"></div>
         </div>
       </div>
@@ -529,24 +590,16 @@
       <div class="sectionTitle">Politician performance</div>
       <div class="panel">
         <div class="kpiSub">
-          Pulling portfolio performance reliably needs a backend integration (most providers block cross-site requests).
-          For now, here are quick jump links to public trackers.
+          Portfolio performance inside the app needs a backend integration.
+          Many providers block browser-side scraping.
+          Use these trackers plus the Congress day-by-day feed.
         </div>
 
         <div class="miniLinks" style="margin-top:10px;">
           <a class="miniLink" target="_blank" rel="noopener" href="https://www.capitoltrades.com/">Capitol Trades</a>
-          <a class="miniLink" target="_blank" rel="noopener" href="https://www.quiverquant.com/congresstrading/">Quiver Quant Congress Trading</a>
+          <a class="miniLink" target="_blank" rel="noopener" href="https://www.quiverquant.com/congresstrading/">QuiverQuant Congress Trading</a>
           <a class="miniLink" target="_blank" rel="noopener" href="https://efdsearch.senate.gov/search/home/">Senate EFD Search</a>
           <a class="miniLink" target="_blank" rel="noopener" href="https://disclosures-clerk.house.gov/">House Disclosures</a>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="kpiSub">
-          If you want performance inside this app, the clean approach is:
-          add a backend endpoint like <span class="mono">/report/politicians/top</span> that returns
-          <span class="mono">{ name, chamber, party, return1y, return3y, winRate }</span>,
-          then the front end can render it.
         </div>
       </div>
     </section>
@@ -555,6 +608,7 @@
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
+      <div class="tabBottom" id="navNews">News</div>
       <div class="tabBottom" id="navCongress">Congress</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
       <div class="tabBottom" id="navPerf">Performance</div>
@@ -562,18 +616,25 @@
   </nav>
 
   <script>
-    // Updated to your LIVE Render URL from logs:
     const BACKEND_BASE = "https://finance-backend-1-bbi9.onrender.com";
 
     const TODAY_URL = (windowDays) =>
       `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(windowDays))}`;
 
-    // Updated to match your backend endpoint that returns { commonHoldings: [...] }
-    const HOLDINGS_COMMON_URL = (windowDays) =>
+    const HOLDINGS_URL = (windowDays) =>
       `${BACKEND_BASE}/report/holdings/common?window_days=${encodeURIComponent(String(windowDays))}&top_n=30`;
+
+    const DAILY_URL = (windowDays) =>
+      `${BACKEND_BASE}/report/congress/daily?window_days=${encodeURIComponent(String(windowDays))}&limit=250`;
 
     const ENTRY_URL = (windowDays) =>
       `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
+
+    const NEWS_TOP_URL = (maxItems) =>
+      `${BACKEND_BASE}/news/top?max_items=${encodeURIComponent(String(maxItems || 30))}`;
+
+    const NEWS_WATCH_URL = (tickers) =>
+      `${BACKEND_BASE}/news/watchlist?tickers=${encodeURIComponent(String(tickers||""))}&max_items_per_ticker=8`;
 
     const el = (id) => document.getElementById(id);
 
@@ -581,8 +642,11 @@
     let WINDOW_DAYS = 30;
 
     let CACHE_MAIN = new Map();
-    let CACHE_HOLDINGS = new Map();
     let CACHE_ENTRY = new Map();
+    let CACHE_HOLDINGS = new Map();
+    let CACHE_DAILY = new Map();
+    let CACHE_NEWS_TOP = null;
+    let CACHE_NEWS_WATCH = new Map();
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -595,6 +659,7 @@
     function setTitleForTab(tab){
       const map = {
         "Main":"Convergence",
+        "News":"News",
         "Congress":"Congress",
         "Crypto":"Crypto",
         "Performance":"Performance",
@@ -602,6 +667,7 @@
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
 
+    // ----------- chart panel ----------
     function setStockPanel(ticker){
       const t = String(ticker||"").toUpperCase();
       if (!t){
@@ -661,6 +727,133 @@
       `;
     }
 
+    // ----------- Market Entry ----------
+    function entryBadge(score){
+      const s = Number(score || 0);
+      if (s >= 75) return {label:"RISK-ON", cls:"badgePos"};
+      if (s >= 55) return {label:"NEUTRAL", cls:"badgeNeu"};
+      return {label:"RISK-OFF", cls:"badgeNeg"};
+    }
+
+    function renderEntryIndex(payload){
+      if (!payload || typeof payload.score !== "number"){
+        el("entryKpiScore").innerHTML = `
+          <div class="kpiTop">
+            <div>
+              <div class="kpiTitle">Market entry index</div>
+              <div class="kpiValue">Unavailable</div>
+            </div>
+            <span class="kpiBadge badgeNeu">Backend</span>
+          </div>
+          <div class="kpiSub">
+            Backend must expose <span class="mono">/market/entry</span>.
+          </div>
+        `;
+        el("entryKpiRules").innerHTML = `
+          <div class="kpiTop">
+            <div>
+              <div class="kpiTitle">Simple strategy</div>
+              <div class="kpiValue">Pacing DCA</div>
+            </div>
+            <span class="kpiBadge badgeNeu">Rules</span>
+          </div>
+          <div class="kpiSub">
+            <div class="kpiList">
+              <div class="kpiRow"><span>75–100</span><span class="kpiBadge badgePos">Aggressive buys</span></div>
+              <div class="kpiRow"><span>55–74</span><span class="kpiBadge badgeNeu">Normal DCA</span></div>
+              <div class="kpiRow"><span>0–54</span><span class="kpiBadge badgeNeg">Small DCA only</span></div>
+            </div>
+          </div>
+        `;
+        el("entryKpiNotes").innerHTML = `
+          <div class="kpiTop">
+            <div>
+              <div class="kpiTitle">What it means</div>
+              <div class="kpiValue">One number</div>
+            </div>
+            <span class="kpiBadge badgeNeu">0–100</span>
+          </div>
+          <div class="kpiSub">Risk temperature, not prediction.</div>
+        `;
+        el("entryHint").textContent = "Once /market/entry returns data, this is your pacing meter.";
+        return;
+      }
+
+      const b = entryBadge(payload.score);
+      const regime = payload.regime || b.label;
+      const signal = payload.signal || (payload.score >= 70 ? "ACCUMULATE" : payload.score >= 55 ? "ACCUMULATE SLOWLY" : "WAIT / SMALL DCA");
+      const notes = payload.notes || "";
+      const c = payload.components || {};
+      const pct01 = (x) => `${Math.round(100 * Number(x || 0))}%`;
+
+      el("entryKpiScore").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Market entry index</div>
+            <div class="kpiValue">${Math.round(payload.score)}/100</div>
+          </div>
+          <span class="kpiBadge ${b.cls}">${regime}</span>
+        </div>
+        <div class="kpiSub">
+          Suggested action: <strong>${signal}</strong><br/>
+          ${notes ? `<span class="subtle">${notes}</span>` : ""}
+        </div>
+      `;
+
+      el("entryKpiRules").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Drivers</div>
+            <div class="kpiValue">What moved it</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${payload.date || ""}</span>
+        </div>
+        <div class="kpiSub">
+          <div class="kpiList">
+            <div class="kpiRow"><span>SPX trend</span><span class="kpiBadge badgeNeu">${pct01(c.spxTrend)}</span></div>
+            <div class="kpiRow"><span>Volatility</span><span class="kpiBadge badgeNeu">${pct01(c.vix)}</span></div>
+            <div class="kpiRow"><span>Breadth</span><span class="kpiBadge badgeNeu">${pct01(c.breadth)}</span></div>
+            <div class="kpiRow"><span>Credit</span><span class="kpiBadge badgeNeu">${pct01(c.credit)}</span></div>
+            <div class="kpiRow"><span>Rates</span><span class="kpiBadge badgeNeu">${pct01(c.rates)}</span></div>
+          </div>
+        </div>
+      `;
+
+      el("entryKpiNotes").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">How to use it</div>
+            <div class="kpiValue">Pacing</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Simple</span>
+        </div>
+        <div class="kpiSub">
+          Increase buys when score is high. Slow down when low. Combine with watchlist quality.
+        </div>
+      `;
+
+      el("entryHint").textContent = "High score: faster DCA. Low score: smaller buys and patience.";
+    }
+
+    async function loadEntryIndex(windowDays, force){
+      const key = String(windowDays || 365);
+      if (CACHE_ENTRY.has(key) && !force){
+        renderEntryIndex(CACHE_ENTRY.get(key));
+        return;
+      }
+      try{
+        const url = ENTRY_URL(windowDays || 365);
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_ENTRY.set(key, data);
+        renderEntryIndex(data);
+      }catch(err){
+        renderEntryIndex(null);
+      }
+    }
+
+    // ----------- Congress scoring helpers ----------
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
 
     function congressScore(x){
@@ -874,141 +1067,10 @@
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sells found.</div>";
     }
 
-    function entryBadge(score){
-      const s = Number(score || 0);
-      if (s >= 75) return {label:"RISK-ON", cls:"badgePos"};
-      if (s >= 55) return {label:"NEUTRAL", cls:"badgeNeu"};
-      return {label:"RISK-OFF", cls:"badgeNeg"};
-    }
-
-    function renderEntryIndex(payload){
-      if (!payload || typeof payload.score !== "number"){
-        el("entryKpiScore").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">Market entry index</div>
-              <div class="kpiValue">Unavailable</div>
-            </div>
-            <span class="kpiBadge badgeNeu">Backend</span>
-          </div>
-          <div class="kpiSub">
-            Your backend must expose <span class="mono">/market/entry</span>.
-          </div>
-        `;
-
-        el("entryKpiRules").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">Simple strategy</div>
-              <div class="kpiValue">Pacing DCA</div>
-            </div>
-            <span class="kpiBadge badgeNeu">Rules</span>
-          </div>
-          <div class="kpiSub">
-            <div class="kpiList">
-              <div class="kpiRow"><span>75–100</span><span class="kpiBadge badgePos">Aggressive buys</span></div>
-              <div class="kpiRow"><span>55–74</span><span class="kpiBadge badgeNeu">Normal DCA</span></div>
-              <div class="kpiRow"><span>0–54</span><span class="kpiBadge badgeNeg">Small DCA only</span></div>
-            </div>
-          </div>
-        `;
-
-        el("entryKpiNotes").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">What it means</div>
-              <div class="kpiValue">One number</div>
-            </div>
-            <span class="kpiBadge badgeNeu">0–100</span>
-          </div>
-          <div class="kpiSub">
-            Think of it as a risk temperature, not a prediction engine.
-          </div>
-        `;
-
-        el("entryHint").textContent = "Once /market/entry returns data, this becomes your pacing meter.";
-        return;
-      }
-
-      const b = entryBadge(payload.score);
-      const regime = payload.regime || b.label;
-      const signal = payload.signal || (payload.score >= 70 ? "ACCUMULATE" : payload.score >= 55 ? "ACCUMULATE SLOWLY" : "WAIT / SMALL DCA");
-      const notes = payload.notes || "";
-      const c = payload.components || {};
-
-      function pct01(x){ return `${Math.round(100 * Number(x || 0))}%`; }
-
-      el("entryKpiScore").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Market entry index</div>
-            <div class="kpiValue">${Math.round(payload.score)}/100</div>
-          </div>
-          <span class="kpiBadge ${b.cls}">${regime}</span>
-        </div>
-        <div class="kpiSub">
-          Suggested action: <strong>${signal}</strong><br/>
-          ${notes ? `<span class="subtle">${notes}</span>` : ""}
-        </div>
-      `;
-
-      el("entryKpiRules").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Drivers</div>
-            <div class="kpiValue">What moved it</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${payload.date || ""}</span>
-        </div>
-        <div class="kpiSub">
-          <div class="kpiList">
-            <div class="kpiRow"><span>SPX trend</span><span class="kpiBadge badgeNeu">${pct01(c.spxTrend)}</span></div>
-            <div class="kpiRow"><span>Volatility</span><span class="kpiBadge badgeNeu">${pct01(c.vix)}</span></div>
-            <div class="kpiRow"><span>Breadth</span><span class="kpiBadge badgeNeu">${pct01(c.breadth)}</span></div>
-            <div class="kpiRow"><span>Credit</span><span class="kpiBadge badgeNeu">${pct01(c.credit)}</span></div>
-            <div class="kpiRow"><span>Rates</span><span class="kpiBadge badgeNeu">${pct01(c.rates)}</span></div>
-          </div>
-        </div>
-      `;
-
-      el("entryKpiNotes").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">How to use it</div>
-            <div class="kpiValue">Pacing</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Simple</span>
-        </div>
-        <div class="kpiSub">
-          Increase buys when score is high. Slow down when low. Combine with your watchlist quality.
-        </div>
-      `;
-
-      el("entryHint").textContent = "High score means faster DCA. Low score means smaller buys and patience.";
-    }
-
-    async function loadEntryIndex(windowDays, force){
-      const key = String(windowDays || 365);
-      if (CACHE_ENTRY.has(key) && !force){
-        renderEntryIndex(CACHE_ENTRY.get(key));
-        return;
-      }
-      try{
-        const url = ENTRY_URL(windowDays || 365);
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-        CACHE_ENTRY.set(key, data);
-        renderEntryIndex(data);
-      }catch(err){
-        renderEntryIndex(null);
-      }
-    }
-
+    // ----------- Holdings ----------
     function holdingsRowHTML(item){
       const t = String(item.ticker || "").toUpperCase();
-      const holders = Number(item.holders ?? item.holderCount ?? 0);
+      const holders = Number(item.holders ?? 0);
       return `
         <div class="holdingsItem">
           <div class="cardTop">
@@ -1017,7 +1079,7 @@
                 <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
                 <span class="kpiBadge badgeNeu">Holders: <strong>${holders}</strong></span>
               </div>
-              <div class="who">Popularity list (not a timing signal)</div>
+              <div class="who">Popularity list (idea discovery)</div>
             </div>
             <div class="tags">
               <span class="tag tagSEC">HOLDINGS</span>
@@ -1044,7 +1106,7 @@
             <span class="kpiBadge badgeNeu">${win}D</span>
           </div>
           <div class="kpiSub">
-            This UI expects <span class="mono">/report/holdings/common</span> to return JSON with <span class="mono">commonHoldings</span>.
+            Backend must return JSON with <span class="mono">commonHoldings</span>.
           </div>
         `;
         el("holdingsList").innerHTML = "<div class='subtle'>No holdings data returned.</div>";
@@ -1053,12 +1115,9 @@
       }
 
       const sorted = list.slice()
-        .map(x => ({
-          ticker: x.ticker,
-          holderCount: Number(x.holders ?? x.holderCount ?? 0),
-        }))
+        .map(x => ({ ticker: x.ticker, holders: Number(x.holders||0) }))
         .filter(x => x.ticker)
-        .sort((a,b) => (b.holderCount - a.holderCount) || String(a.ticker).localeCompare(String(b.ticker)));
+        .sort((a,b) => (b.holders - a.holders) || String(a.ticker).localeCompare(String(b.ticker)));
 
       const top = sorted[0];
 
@@ -1070,32 +1129,29 @@
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
-        <div class="kpiSub">
-          Keep this list as idea discovery. Do not use it alone for entry timing.
-        </div>
+        <div class="kpiSub">Keep this list as idea discovery. Not a timing signal.</div>
         <div class="kpiList">
           ${sorted.slice(0,5).map(x => `
             <div class="kpiRow">
               <a href="#stock=${encodeURIComponent(String(x.ticker).toUpperCase())}"><strong>${String(x.ticker).toUpperCase()}</strong></a>
-              <span class="kpiBadge badgeNeu">${Number(x.holderCount||0)} holders</span>
+              <span class="kpiBadge badgeNeu">${Number(x.holders||0)} holders</span>
             </div>
           `).join("")}
         </div>
       `;
 
-      el("holdingsList").innerHTML = sorted.map(x => holdingsRowHTML({ ticker:x.ticker, holders:x.holderCount })).join("");
-      el("holdingsHint").textContent = "Simple view: ticker + holders. That is it.";
+      el("holdingsList").innerHTML = sorted.map(holdingsRowHTML).join("");
+      el("holdingsHint").textContent = "Simple view: ticker + holders.";
     }
 
     async function loadHoldingsCommon(windowDays, force){
       const key = String(windowDays || 365);
-      const cached = CACHE_HOLDINGS.get(key);
-      if (cached && !force){
-        renderHoldingsCommon(cached);
+      if (CACHE_HOLDINGS.has(key) && !force){
+        renderHoldingsCommon(CACHE_HOLDINGS.get(key));
         return;
       }
 
-      const url = HOLDINGS_COMMON_URL(windowDays || 365);
+      const url = HOLDINGS_URL(windowDays || 365);
       el("holdingsList").innerHTML = "<div class='subtle'>Loading holdings…</div>";
       el("holdingsHint").textContent = `Loading from: ${url}`;
 
@@ -1103,7 +1159,6 @@
         const res = await fetch(url, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
         CACHE_HOLDINGS.set(key, data);
         renderHoldingsCommon(data);
       }catch(err){
@@ -1112,19 +1167,122 @@
       }
     }
 
-    const DIRECT_COIN_SET = new Set(["BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"]);
-    const CRYPTO_LINKED_TICKERS = new Set([
-      "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
-      "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
-      "ETHE","ETHA","WGMI","BKCH","BLOK","BITQ","DAPP"
-    ]);
-
+    // ----------- Daily Congress feed ----------
     function partyTag(p){
       const s = String(p||"").toUpperCase();
       if (s === "D") return `<span class="tag tagDem">DEM</span>`;
       if (s === "R") return `<span class="tag tagRep">GOP</span>`;
       return `<span class="tag badgeNeu">?</span>`;
     }
+
+    function dailyItemHTML(it){
+      const kind = String(it.kind||"").toUpperCase();
+      const t = String(it.ticker||"").toUpperCase();
+      const who = String(it.politician||"").trim();
+      const chamber = String(it.chamber||"").trim();
+      const amt = String(it.amountRange||"").trim();
+      const traded = String(it.traded||"");
+      const filed = String(it.filed||"");
+      const desc = String(it.description||"").trim();
+
+      const links = it.links || {};
+      const capPol = links.capitoltrades_politician || "";
+      const capTick = links.capitoltrades_ticker || "";
+
+      return `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                ${t ? `<a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>` : `<div class="ticker">N/A</div>`}
+                <div class="who">${who}${chamber ? " · " + chamber : ""}</div>
+              </div>
+            </div>
+            <div class="tags">
+              ${kind === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
+              ${partyTag(it.party)}
+              <span class="tag tagSEC">DISCLOSURE</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="metaRow">
+            <div class="counts">
+              ${amt ? `<div class="countItem">Amount: <strong>${amt}</strong></div>` : ""}
+              ${traded ? `<div class="countItem">Traded: <strong>${traded}</strong></div>` : ""}
+              ${filed ? `<div class="countItem">Filed: <strong>${filed}</strong></div>` : ""}
+            </div>
+          </div>
+
+          ${desc ? `
+            <div class="metaRow">
+              <div style="max-width:900px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                ${desc}
+              </div>
+            </div>
+          ` : ""}
+
+          <div class="miniLinks">
+            ${capPol ? `<a class="miniLink" href="${capPol}" target="_blank" rel="noopener">CapitolTrades: ${who || "Politician"}</a>` : ""}
+            ${capTick ? `<a class="miniLink" href="${capTick}" target="_blank" rel="noopener">CapitolTrades: ${t || "Ticker"}</a>` : ""}
+            <a class="miniLink" href="https://www.quiverquant.com/congresstrading/" target="_blank" rel="noopener">QuiverQuant</a>
+            <a class="miniLink" href="https://efdsearch.senate.gov/search/home/" target="_blank" rel="noopener">Senate EFD</a>
+            <a class="miniLink" href="https://disclosures-clerk.house.gov/" target="_blank" rel="noopener">House</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDaily(payload){
+      const days = Array.isArray(payload?.days) ? payload.days : [];
+      if (!days.length){
+        el("dailyTradeList").innerHTML = "<div class='subtle'>No daily trades returned for this window.</div>";
+        el("dailyHint").textContent = "If this is empty, try 180D or 365D.";
+        return;
+      }
+
+      el("dailyTradeList").innerHTML = days.map(d => {
+        const items = Array.isArray(d.items) ? d.items : [];
+        return `
+          <div class="sectionTitle">${d.date}</div>
+          ${items.map(dailyItemHTML).join("")}
+        `;
+      }).join("");
+
+      el("dailyHint").textContent = "This is the detailed day-by-day activity feed.";
+    }
+
+    async function loadDaily(windowDays, force){
+      const key = String(windowDays || 30);
+      if (CACHE_DAILY.has(key) && !force){
+        renderDaily(CACHE_DAILY.get(key));
+        return;
+      }
+
+      const url = DAILY_URL(windowDays || 30);
+      el("dailyTradeList").innerHTML = "<div class='subtle'>Loading daily feed…</div>";
+      el("dailyHint").textContent = `Loading from: ${url}`;
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_DAILY.set(key, data);
+        renderDaily(data);
+      }catch(err){
+        renderDaily({ days: [] });
+        el("dailyHint").textContent = "Could not load daily feed. Confirm backend has /report/congress/daily and CORS allows this origin.";
+      }
+    }
+
+    // ----------- Crypto rendering ----------
+    const DIRECT_COIN_SET = new Set(["BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"]);
+    const CRYPTO_LINKED_TICKERS = new Set([
+      "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
+      "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
+      "ETHE","ETHA","WGMI","BKCH","BLOK","BITQ","DAPP"
+    ]);
 
     function coinsToLabel(coins){
       const arr = Array.isArray(coins) ? coins.map(x => String(x||"").toUpperCase()).filter(Boolean) : [];
@@ -1237,6 +1395,7 @@
         `Showing direct, hint-only, and crypto-linked. If 30D looks empty, switch to 180D or 365D.`;
     }
 
+    // ----------- Main loader ----------
     function renderMain(payload){
       const win = Number(payload.windowDays || WINDOW_DAYS || 30);
       el("reportDate").textContent = payload.date ? `${payload.date} · window ${win}D` : `window ${win}D`;
@@ -1262,7 +1421,6 @@
         const res = await fetch(url, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
 
         CACHE_MAIN.set(key, data);
         setStatus("ok", "Live congress data loaded ✅", "");
@@ -1275,21 +1433,196 @@
       }
     }
 
+    // ----------- News ----------
+    function sentimentBadge(s){
+      const score = Number(s?.score ?? 50);
+      const label = String(s?.label ?? "NEUTRAL");
+      if (score >= 60) return { cls: "badgePos", label: label, score };
+      if (score <= 40) return { cls: "badgeNeg", label: label, score };
+      return { cls: "badgeNeu", label: label, score };
+    }
+
+    function newsItemCardHTML(x){
+      const title = String(x.title||"").trim();
+      const link = String(x.link||"").trim();
+      const pub = String(x.published||"").trim();
+      const src = String(x.sourceFeed||"").trim();
+
+      return `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <div class="ticker">NEWS</div>
+                <div class="who">${title}</div>
+              </div>
+            </div>
+            <div class="tags">
+              <span class="tag tagSEC">HEADLINE</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="metaRow">
+            <div class="counts">
+              ${pub ? `<div class="countItem">Published: <strong>${pub}</strong></div>` : ""}
+            </div>
+          </div>
+          <div class="miniLinks">
+            ${link ? `<a class="miniLink" href="${link}" target="_blank" rel="noopener">Open</a>` : ""}
+            ${src ? `<span class="miniLink">${src}</span>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadNewsTop(force){
+      if (CACHE_NEWS_TOP && !force){
+        renderNewsTop(CACHE_NEWS_TOP);
+        return;
+      }
+
+      const url = NEWS_TOP_URL(30);
+      el("newsTopList").innerHTML = "<div class='subtle'>Loading top headlines…</div>";
+      el("newsHint").textContent = `Loading from: ${url}`;
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_NEWS_TOP = data;
+        renderNewsTop(data);
+      }catch(err){
+        el("newsTopList").innerHTML = "<div class='subtle'>Could not load news.</div>";
+        el("newsHint").textContent = "Backend must expose /news/top and allow CORS.";
+      }
+    }
+
+    function renderNewsTop(data){
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const s = sentimentBadge(data?.sentiment);
+
+      el("newsKpiSentiment").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Headline sentiment</div>
+            <div class="kpiValue">${s.score}/100</div>
+          </div>
+          <span class="kpiBadge ${s.cls}">${s.label}</span>
+        </div>
+        <div class="kpiSub">Lightweight gauge from headline wording.</div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Sample size</span><span class="kpiBadge badgeNeu">${Number(data?.sentiment?.total ?? 0)}</span></div>
+          <div class="kpiRow"><span>Positive</span><span class="kpiBadge badgePos">${Number(data?.sentiment?.pos ?? 0)}</span></div>
+          <div class="kpiRow"><span>Negative</span><span class="kpiBadge badgeNeg">${Number(data?.sentiment?.neg ?? 0)}</span></div>
+        </div>
+      `;
+
+      el("newsKpiTop").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Top headlines</div>
+            <div class="kpiValue">${items.length}</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${data?.date || ""}</span>
+        </div>
+        <div class="kpiSub">General market drivers, macro, earnings, rates.</div>
+      `;
+
+      el("newsKpiWatch").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Watchlist</div>
+            <div class="kpiValue">Load tickers</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Yahoo RSS</span>
+        </div>
+        <div class="kpiSub">Use this to focus on your portfolio names.</div>
+      `;
+
+      el("newsTopList").innerHTML = items.length
+        ? items.map(newsItemCardHTML).join("")
+        : "<div class='subtle'>No top headlines returned.</div>";
+
+      const err = Array.isArray(data?.errors) ? data.errors : [];
+      el("newsHint").textContent = err.length ? ("Some feeds failed: " + err.slice(0,2).join(" | ")) : "Top headlines loaded.";
+    }
+
+    async function loadNewsWatch(tickers, force){
+      const key = String(tickers||"");
+      if (CACHE_NEWS_WATCH.has(key) && !force){
+        renderNewsWatch(CACHE_NEWS_WATCH.get(key));
+        return;
+      }
+
+      const url = NEWS_WATCH_URL(tickers);
+      el("newsWatchList").innerHTML = "<div class='subtle'>Loading watchlist headlines…</div>";
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_NEWS_WATCH.set(key, data);
+        renderNewsWatch(data);
+      }catch(err){
+        el("newsWatchList").innerHTML = "<div class='subtle'>Could not load watchlist news.</div>";
+      }
+    }
+
+    function renderNewsWatch(data){
+      const itemsBy = data?.itemsByTicker || {};
+      const tickers = Array.isArray(data?.tickers) ? data.tickers : [];
+      const s = sentimentBadge(data?.sentiment);
+
+      el("newsKpiWatch").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Watchlist sentiment</div>
+            <div class="kpiValue">${s.score}/100</div>
+          </div>
+          <span class="kpiBadge ${s.cls}">${s.label}</span>
+        </div>
+        <div class="kpiSub">Based on headlines for tickers you entered.</div>
+      `;
+
+      const cards = [];
+      for (const t of tickers){
+        const arr = Array.isArray(itemsBy[t]) ? itemsBy[t] : [];
+        if (!arr.length) continue;
+
+        cards.push(`
+          <div class="panel">
+            <div class="panelTitle">
+              <h2>${t}</h2>
+              <span class="kpiBadge badgeNeu">${arr.length} headlines</span>
+            </div>
+            <div class="divider"></div>
+            ${arr.map(newsItemCardHTML).join("")}
+          </div>
+        `);
+      }
+
+      el("newsWatchList").innerHTML = cards.length ? cards.join("") : "<div class='subtle'>No watchlist headlines returned.</div>";
+    }
+
+    // ----------- Tabs ----------
     function showTab(tab){
       ACTIVE_TAB = tab;
       setTitleForTab(tab);
 
       el("viewMain").style.display = tab === "Main" ? "" : "none";
+      el("viewNews").style.display = tab === "News" ? "" : "none";
       el("viewCongress").style.display = tab === "Congress" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
       el("viewPerf").style.display = tab === "Performance" ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
+      el("tabNewsBtn").classList.toggle("tabBtnActive", tab === "News");
       el("tabCongressBtn").classList.toggle("tabBtnActive", tab === "Congress");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
       el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
 
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
+      el("navNews").classList.toggle("tabBottomActive", tab === "News");
       el("navCongress").classList.toggle("tabBottomActive", tab === "Congress");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
@@ -1300,9 +1633,14 @@
         loadMain(false);
         loadEntryIndex(365, false);
       }
+      if (tab === "News"){
+        loadNewsTop(false);
+        loadNewsWatch(el("watchInput").value, false);
+      }
       if (tab === "Congress"){
         loadMain(false);
         loadHoldingsCommon(365, false);
+        loadDaily(WINDOW_DAYS, false);
       }
       if (tab === "Crypto"){
         loadMain(false);
@@ -1311,6 +1649,7 @@
       handleHash();
     }
 
+    // ----------- Window toggle ----------
     function setWindow(days){
       WINDOW_DAYS = days;
       el("btn30").classList.toggle("on", WINDOW_DAYS === 30);
@@ -1320,36 +1659,50 @@
       if (ACTIVE_TAB === "Congress" || ACTIVE_TAB === "Crypto"){
         loadMain(false);
       }
+      if (ACTIVE_TAB === "Congress"){
+        loadDaily(WINDOW_DAYS, false);
+      }
     }
 
     function handleRefresh(){
       CACHE_MAIN.delete(String(WINDOW_DAYS));
-      CACHE_HOLDINGS.delete("365");
       CACHE_ENTRY.delete("365");
+      CACHE_HOLDINGS.delete("365");
+      CACHE_DAILY.delete(String(WINDOW_DAYS));
+      CACHE_NEWS_TOP = null;
 
-      if (ACTIVE_TAB === "Congress"){
-        loadMain(true);
-        loadHoldingsCommon(365, true);
-        return;
-      }
       if (ACTIVE_TAB === "Main"){
         loadMain(true);
         loadEntryIndex(365, true);
         return;
       }
+      if (ACTIVE_TAB === "News"){
+        loadNewsTop(true);
+        loadNewsWatch(el("watchInput").value, true);
+        return;
+      }
+      if (ACTIVE_TAB === "Congress"){
+        loadMain(true);
+        loadHoldingsCommon(365, true);
+        loadDaily(WINDOW_DAYS, true);
+        return;
+      }
       loadMain(true);
     }
 
+    // ----------- Events ----------
     el("btn30").addEventListener("click", () => setWindow(30));
     el("btn180").addEventListener("click", () => setWindow(180));
     el("btn365").addEventListener("click", () => setWindow(365));
 
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
+    el("tabNewsBtn").addEventListener("click", () => showTab("News"));
     el("tabCongressBtn").addEventListener("click", () => showTab("Congress"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
     el("tabPerfBtn").addEventListener("click", () => showTab("Performance"));
 
     el("navMain").addEventListener("click", () => showTab("Main"));
+    el("navNews").addEventListener("click", () => showTab("News"));
     el("navCongress").addEventListener("click", () => showTab("Congress"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
     el("navPerf").addEventListener("click", () => showTab("Performance"));
@@ -1357,6 +1710,11 @@
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
 
+    el("watchApplyBtn").addEventListener("click", () => {
+      loadNewsWatch(el("watchInput").value, true);
+    });
+
+    // Start
     showTab("Main");
     loadMain(false);
     loadEntryIndex(365, false);
