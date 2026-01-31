@@ -189,6 +189,21 @@
       color:var(--muted);
       letter-spacing:.08em;
       text-transform:uppercase;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .kpiIcon{
+      width:18px;
+      height:18px;
+      border-radius:8px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      font-size:12px;
+      line-height:1;
     }
     .kpiValue{
       font-size:16px;
@@ -214,6 +229,7 @@
       font-size:12px;
       color:rgba(255,255,255,.90);
       align-items:center;
+      flex-wrap:wrap;
     }
     .kpiRow .muted{color:var(--muted)}
     .kpiBadge{
@@ -404,7 +420,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(3,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -416,43 +432,7 @@
     }
     .tabBottomActive{color:#fff}
 
-    /* Leaders: stock rows */
-    .leaderGrid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-    @media (min-width: 900px){
-      .leaderGrid{grid-template-columns:1fr 1fr;}
-    }
-    .leaderBox{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.02);
-      border-radius:12px;
-      padding:10px;
-    }
-    .leaderBoxTitle{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:8px;
-    }
-    .leaderList{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .leaderRow{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      font-size:12px;
-    }
-
-    /* Insight panel */
+    /* Insight */
     .tvTape{
       border:1px solid var(--border);
       background:rgba(255,255,255,.02);
@@ -483,6 +463,18 @@
       line-height:1.25;
       font-size:12px;
     }
+
+    .miniWidget{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.02);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .miniWidget iframe{
+      height:240px;
+      margin-top:0;
+      border-radius:0;
+    }
   </style>
 </head>
 
@@ -503,7 +495,6 @@
 
     <div class="tabRow">
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
-      <button class="tabBtn" id="tabLeadersBtn">Leaders</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
       <button class="tabBtn" id="tabSearchBtn">Search</button>
 
@@ -523,17 +514,18 @@
       <div class="sectionTitle" id="insightTitle">Market snapshot + accumulation insight</div>
 
       <div class="tvTape" style="margin-bottom:10px;">
-        <!-- TradingView ticker tape (no CORS issues) -->
         <div class="tradingview-widget-container" style="padding:10px;">
           <div class="tradingview-widget-container__widget"></div>
         </div>
       </div>
 
-      <div class="grid3">
+      <div class="grid3" style="margin-bottom:10px;">
         <div class="smallKpi" id="marketRegimeBox">
           <div class="smallKpiTitle">Market regime</div>
           <div class="smallKpiValue" id="marketRegimeValue">Loading…</div>
-          <div class="smallKpiSub" id="marketRegimeSub">Using SPY + VIX when available.</div>
+          <div class="smallKpiSub" id="marketRegimeSub">
+            Uses a widget-based read first, then tries SPY + VIX (best effort).
+          </div>
         </div>
 
         <div class="smallKpi" id="shortListBox">
@@ -549,7 +541,37 @@
         </div>
       </div>
 
-      <div class="hint" id="insightHint">
+      <div class="grid2">
+        <div class="miniWidget">
+          <div style="padding:10px;">
+            <div class="sectionTitle" style="margin:0 0 8px;">Crypto sentiment + major proxies</div>
+            <div class="hint" style="margin-top:0;">
+              Tape + heatmap for BTC, ETH, and crypto proxies. "Major traders" is approximated using public liquid proxies (ETFs, exchanges, miners) since cross-site holder data is usually blocked by CORS.
+            </div>
+          </div>
+          <iframe
+            title="Crypto Heatmap"
+            src="https://s.tradingview.com/widgetembed/?frameElementId=tv_crypto_heatmap&symbol=&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=%23151522&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&hideideas=1&widget_type=crypto_heatmap"
+            loading="lazy">
+          </iframe>
+        </div>
+
+        <div class="miniWidget">
+          <div style="padding:10px;">
+            <div class="sectionTitle" style="margin:0 0 8px;">Precious metals + macro</div>
+            <div class="hint" style="margin-top:0;">
+              Gold, silver, dollar, and yields for context when you are accumulating.
+            </div>
+          </div>
+          <iframe
+            title="Metals Watchlist"
+            src="https://s.tradingview.com/widgetembed/?frameElementId=tv_metals&symbol=&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=%23151522&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&hideideas=1&widget_type=market_quotes&symbols=%5B%7B%22s%22%3A%22TVC%3AGOLD%22%2C%22d%22%3A%22Gold%22%7D%2C%7B%22s%22%3A%22TVC%3ASILVER%22%2C%22d%22%3A%22Silver%22%7D%2C%7B%22s%22%3A%22TVC%3ADXY%22%2C%22d%22%3A%22DXY%22%7D%2C%7B%22s%22%3A%22TVC%3AUS10Y%22%2C%22d%22%3A%2210Y%22%7D%5D"
+            loading="lazy">
+          </iframe>
+        </div>
+      </div>
+
+      <div class="hint" id="insightHint" style="margin-top:10px;">
         This is not trading advice. It ranks tickers by congressional accumulation, participation, and persistence across 30D, 180D, and 365D.
       </div>
     </section>
@@ -582,17 +604,6 @@
       <div class="hint" id="mainHint">
         Sort is by total participation (both parties) within the rolling window. Tap ticker for chart.
       </div>
-    </section>
-
-    <section id="viewLeaders" style="display:none;">
-      <div class="sectionTitle">Leaders</div>
-      <div class="panel">
-        <div class="hint" style="margin-top:0;">
-          This tab shows stock-level activity when available.
-          Form 4 can show tickers (buys/sells). 13F requires backend holdings parsing to show adds/trims.
-        </div>
-      </div>
-      <div id="leadersList"></div>
     </section>
 
     <section id="viewCrypto" style="display:none;">
@@ -644,7 +655,6 @@
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
-      <div class="tabBottom" id="navLeaders">Leaders</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
       <div class="tabBottom" id="navSearch">Search</div>
     </div>
@@ -652,15 +662,12 @@
 
   <script>
     const BACKEND_BASE = "https://finance-backend-dzta.onrender.com";
-    const LEADERS_URL = BACKEND_BASE + "/report/public-leaders";
-
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "Main";
     let WINDOW_DAYS = 30;
 
     let CACHE_MAIN = new Map();
-    let CACHE_LEADERS = null;
 
     // Crypto-linked stock tickers (ETFs, miners, exchanges)
     const CRYPTO_TICKERS = new Set([
@@ -685,7 +692,6 @@
     function setTitleForTab(tab){
       const map = {
         "Main":"Convergence",
-        "Leaders":"Leaders",
         "Crypto":"Crypto",
         "Search":"Search"
       };
@@ -697,7 +703,6 @@
       setTitleForTab(tab);
 
       el("viewMain").style.display = tab === "Main" ? "" : "none";
-      el("viewLeaders").style.display = tab === "Leaders" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
@@ -706,12 +711,10 @@
       el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
-      el("tabLeadersBtn").classList.toggle("tabBtnActive", tab === "Leaders");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
       el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
 
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
-      el("navLeaders").classList.toggle("tabBottomActive", tab === "Leaders");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
@@ -720,7 +723,6 @@
         refreshInsightForWindow();
       }
       if (tab === "Crypto") loadMain(false);
-      if (tab === "Leaders") loadLeaders(false);
     }
 
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
@@ -929,6 +931,8 @@
       return a.slice(0, n);
     }
 
+    function iconSpan(txt){ return `<span class="kpiIcon" aria-hidden="true">${txt}</span>`; }
+
     function renderKpis(convergence, buys, sells, windowDays){
       const merged = new Map();
       function addCard(x){
@@ -953,7 +957,7 @@
       el("kpiNet").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Net flow</div>
+            <div class="kpiTitle">${iconSpan("📈")} Net flow</div>
             <div class="kpiValue">Buys - Sells</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
@@ -973,7 +977,7 @@
       el("kpiPart").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Participation</div>
+            <div class="kpiTitle">${iconSpan("👥")} Participation</div>
             <div class="kpiValue">Total activity</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
@@ -993,7 +997,7 @@
       el("kpiTop").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Top tickers</div>
+            <div class="kpiTitle">${iconSpan("🏷️")} Top tickers</div>
             <div class="kpiValue">Intensity</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
@@ -1014,16 +1018,16 @@
       el("kpiHighlights").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Top signals</div>
+            <div class="kpiTitle">${iconSpan("✨")} Top signals</div>
             <div class="kpiValue">Fast read</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
         <div class="kpiSub">Best accumulation, selling, and overlap in rolling ${win}D.</div>
         <div class="kpiList">
-          <div class="kpiRow"><span class="muted">Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">Overlap</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">${iconSpan("🟢")} Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">${iconSpan("🔴")} Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">${iconSpan("🟣")} Overlap</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
         </div>
       `;
     }
@@ -1167,142 +1171,7 @@
       }
     }
 
-    // Leaders: show tickers from Form 4 details when available
-    function aggregateForm4Tickers(transactions){
-      const buys = new Map();
-      const sells = new Map();
-      (Array.isArray(transactions) ? transactions : []).forEach(t => {
-        const sym = String(t.ticker || "").toUpperCase().trim();
-        const code = String(t.code || "").toUpperCase().trim(); // P or S
-        if (!sym) return;
-        if (code === "P") buys.set(sym, (buys.get(sym)||0) + 1);
-        if (code === "S") sells.set(sym, (sells.get(sym)||0) + 1);
-      });
-
-      function toList(m){
-        const arr = Array.from(m.entries()).map(([ticker,count]) => ({ticker,count}));
-        arr.sort((a,b) => (b.count-a.count) || a.ticker.localeCompare(b.ticker));
-        return arr.slice(0, 12);
-      }
-
-      return { buyList: toList(buys), sellList: toList(sells) };
-    }
-
-    function leaderTickerListHTML(title, items, kind){
-      const tag = kind === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`;
-      return `
-        <div class="leaderBox">
-          <div class="leaderBoxTitle">
-            <strong>${title}</strong>
-            <div class="tags">${tag}</div>
-          </div>
-          <div class="leaderList">
-            ${items.length ? items.map(r => {
-              const t = r.ticker;
-              return `
-                <div class="leaderRow">
-                  <div class="tickerLine">
-                    <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
-                    <div class="who">Form 4 tx count: ${r.count}</div>
-                  </div>
-                  <span class="kpiBadge badgeNeu">${r.count}</span>
-                </div>
-              `;
-            }).join("") : `<div class="subtle">No tickers found.</div>`}
-          </div>
-        </div>
-      `;
-    }
-
-    function renderLeaders(payload){
-      const leaders = payload && Array.isArray(payload.leaders) ? payload.leaders : [];
-      const windowDays = payload && payload.windowDays ? payload.windowDays : 365;
-
-      el("reportDate").textContent = payload.date ? `${payload.date} · leaders ${windowDays}D` : `leaders ${windowDays}D`;
-
-      if (!leaders.length){
-        el("leadersList").innerHTML = "<div class='subtle'>No leaders data returned yet.</div>";
-        return;
-      }
-
-      const html = leaders.map(l => {
-        const name = String(l.name || "");
-        const cik = String(l.cik || "");
-        const events = Array.isArray(l.events) ? l.events : [];
-
-        const form4 = events.find(ev => String(ev.form || "").startsWith("4") && ev.details && Array.isArray(ev.details.transactions));
-        const txs = form4 && form4.details ? form4.details.transactions : null;
-
-        const hasForm4Tx = Array.isArray(txs) && txs.length > 0;
-        let form4HTML = "";
-        if (hasForm4Tx){
-          const agg = aggregateForm4Tickers(txs);
-          form4HTML = `
-            <div class="divider"></div>
-            <div class="hint" style="margin-top:0;">
-              Showing stock tickers extracted from Form 4 transactions (P=buy, S=sell).
-            </div>
-            <div class="leaderGrid">
-              ${leaderTickerListHTML("Form 4 buys", agg.buyList, "BUY")}
-              ${leaderTickerListHTML("Form 4 sells", agg.sellList, "SELL")}
-            </div>
-          `;
-        }
-
-        const has13f = events.some(ev => String(ev.form || "").toUpperCase().includes("13F"));
-        const needs13F = has13f ? `
-          <div class="divider"></div>
-          <div class="hint" style="margin-top:0;">
-            13F tickers are not shown yet. Backend must parse the 13F holdings table to compute adds/trims.
-          </div>
-        ` : "";
-
-        const fallbackEvents = events.length ? `
-          <div class="divider"></div>
-          <div class="hint" style="margin-top:0;">Recent filings (reference)</div>
-          <div class="leaderBox" style="margin-top:8px;">
-            ${events.slice(0,6).map(ev => {
-              const form = String(ev.form || "");
-              const label = String(ev.label || "");
-              const filingDate = String(ev.filingDate || "");
-              const indexUrl = String(ev.indexUrl || "");
-              return `
-                <div class="leaderRow">
-                  <div class="tickerLine">
-                    <div class="ticker">${form}</div>
-                    <div class="who">${label || "FILED"}${filingDate ? " · " + filingDate : ""}</div>
-                  </div>
-                  ${indexUrl ? `<a class="miniLink" href="${indexUrl}" target="_blank" rel="noopener">SEC</a>` : `<span class="kpiBadge badgeNeu">—</span>`}
-                </div>
-              `;
-            }).join("")}
-          </div>
-        ` : "";
-
-        return `
-          <div class="card">
-            <div class="cardTop">
-              <div>
-                <div class="tickerLine">
-                  <div class="ticker">${name}</div>
-                  <div class="who">CIK: <span class="mono">${cik}</span></div>
-                </div>
-              </div>
-              <div class="tags"><span class="tag tagSEC">SEC</span></div>
-            </div>
-
-            ${form4HTML || ""}
-            ${needs13F || ""}
-            ${fallbackEvents}
-          </div>
-        `;
-      }).join("");
-
-      el("leadersList").innerHTML = html;
-      handleHash();
-    }
-
-    // -------- Insight Engine (value-style accumulation) --------
+    // Insight engine
     function mergeTickerCards(cards){
       const merged = new Map();
       (Array.isArray(cards) ? cards : []).forEach(x => {
@@ -1328,7 +1197,6 @@
       const overlap = Math.min(Number(row.demBuyers||0), Number(row.repBuyers||0));
       const intensity = total;
 
-      // Value-style bias: reward net buys, participation, overlap, punish selling
       let score = 0;
       if (nf > 0) score += Math.min(6, nf) * 1.4;
       if (overlap > 0) score += Math.min(4, overlap) * 1.8;
@@ -1368,7 +1236,6 @@
     }
 
     async function updateInsightLists(){
-      // Pull 30/180/365 to compute persistence
       el("shortList").innerHTML = `<div class="subtle">Loading…</div>`;
       el("longList").innerHTML = `<div class="subtle">Loading…</div>`;
 
@@ -1383,24 +1250,16 @@
         const m180 = mergeTickerCards([...(normalizeList(d180.politicianBuys)), ...(normalizeList(d180.politicianSells))]);
         const m365 = mergeTickerCards([...(normalizeList(d365.politicianBuys)), ...(normalizeList(d365.politicianSells))]);
 
-        // union tickers
         const all = new Set([...m30.keys(), ...m180.keys(), ...m365.keys()]);
         const scored = [];
         for (const t of all){
-          const a30 = m30.get(t);
-          const a180 = m180.get(t);
-          const a365 = m365.get(t);
-
-          // prefer current selected window for near-term weighting
           const activeMap = WINDOW_DAYS === 365 ? m365 : WINDOW_DAYS === 180 ? m180 : m30;
-          const active = activeMap.get(t) || a30 || a180 || a365;
+          const active = activeMap.get(t) || m30.get(t) || m180.get(t) || m365.get(t);
           if (!active) continue;
 
           const s = scoreAccumulation(active);
-          const persist =
-            (m30.has(t) ? 1 : 0) + (m180.has(t) ? 1 : 0) + (m365.has(t) ? 1 : 0);
+          const persist = (m30.has(t) ? 1 : 0) + (m180.has(t) ? 1 : 0) + (m365.has(t) ? 1 : 0);
 
-          // only keep things with some activity and positive-ish bias for accumulation lists
           scored.push({
             ticker: t,
             score: s.score + (persist * 2.0),
@@ -1411,13 +1270,11 @@
           });
         }
 
-        // Short-term: more responsive to 30D, but still wants quality
         const shortList = scored
           .filter(x => x.nf > 0)
           .sort((a,b) => (b.score - a.score) || a.ticker.localeCompare(b.ticker))
           .slice(0, 8);
 
-        // Long-term: persistence is key
         const longList = scored
           .filter(x => x.nf > 0 && x.persist >= 2)
           .sort((a,b) => ((b.persist - a.persist) || (b.score - a.score) || a.ticker.localeCompare(b.ticker)))
@@ -1435,13 +1292,23 @@
       }
     }
 
-    // Market regime: try fetch SPY and VIX from Stooq (best effort, safe fallback)
+    // Market regime: make it feel "loaded" immediately, then best-effort refine
+    async function fetchWithTimeout(url, ms){
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), ms);
+      try{
+        const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
+        return res;
+      } finally {
+        clearTimeout(to);
+      }
+    }
+
     async function fetchStooqLastClose(sym){
-      // sym examples: "spy.us", "vix"
       const url = `https://stooq.com/q/l/?s=${encodeURIComponent(sym)}&f=sd2t2ohlcv&h&e=csv`;
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetchWithTimeout(url, 2500);
+      if (!res || !res.ok) return null;
       const text = await res.text();
-      // CSV: Symbol,Date,Time,Open,High,Low,Close,Volume
       const lines = (text || "").trim().split("\n");
       if (lines.length < 2) return null;
       const parts = lines[1].split(",");
@@ -1451,36 +1318,34 @@
       return close;
     }
 
+    function classifyRegime(spy, vix){
+      if (!spy || !vix) return null;
+      if (vix < 18) return { label:"Accumulation-friendly", sub:`SPY ${spy.toFixed(2)} · VIX ${vix.toFixed(2)}.` };
+      if (vix <= 25) return { label:"Cautious accumulation", sub:`SPY ${spy.toFixed(2)} · VIX ${vix.toFixed(2)}.` };
+      return { label:"Risk-off, slow buys", sub:`SPY ${spy.toFixed(2)} · VIX ${vix.toFixed(2)}.` };
+    }
+
     async function updateMarketRegime(){
-      el("marketRegimeValue").textContent = "Loading…";
-      el("marketRegimeSub").textContent = "Using SPY + VIX when available.";
+      // Always show something immediately
+      el("marketRegimeValue").textContent = "Reading tape + volatility";
+      el("marketRegimeSub").textContent = "If SPY/VIX fetch succeeds, this will refine automatically.";
 
       try{
         const [spy, vix] = await Promise.all([
           fetchStooqLastClose("spy.us"),
           fetchStooqLastClose("vix")
         ]);
-
-        if (!spy || !vix){
+        const c = classifyRegime(spy, vix);
+        if (!c){
           el("marketRegimeValue").textContent = "Context via widgets";
-          el("marketRegimeSub").textContent = "Could not fetch SPY/VIX due to CORS or upstream limits. The tape above is live.";
+          el("marketRegimeSub").textContent = "SPY/VIX fetch blocked upstream. Use tape, heatmap, and metals panel.";
           return;
         }
-
-        // Simple regime classification
-        let regime = "Neutral";
-        let sub = `SPY close ${spy.toFixed(2)} · VIX ${vix.toFixed(2)}.`;
-
-        if (vix < 18) regime = "Accumulation-friendly";
-        else if (vix >= 18 && vix <= 25) regime = "Cautious accumulation";
-        else regime = "Risk-off, slow buys";
-
-        el("marketRegimeValue").textContent = regime;
-        el("marketRegimeSub").textContent = sub;
-
-      }catch(e){
+        el("marketRegimeValue").textContent = c.label;
+        el("marketRegimeSub").textContent = c.sub;
+      } catch (e){
         el("marketRegimeValue").textContent = "Context via widgets";
-        el("marketRegimeSub").textContent = "SPY/VIX fetch failed. The tape above is live market context.";
+        el("marketRegimeSub").textContent = "SPY/VIX fetch failed. Use tape, heatmap, and metals panel.";
       }
     }
 
@@ -1491,7 +1356,6 @@
       updateMarketRegime();
     }
 
-    // -------- Data loading --------
     async function loadMain(force){
       const key = String(WINDOW_DAYS);
       const cached = CACHE_MAIN.get(key);
@@ -1524,6 +1388,8 @@
         setStatus("err", "Could not load congress data", String(err));
         if (ACTIVE_TAB === "Main"){
           el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
+          el("buyList").innerHTML = "<div class='subtle'>No data displayed.</div>";
+          el("sellList").innerHTML = "<div class='subtle'>No data displayed.</div>";
         }
         if (ACTIVE_TAB === "Crypto"){
           el("cryptoDirectBuys").innerHTML = "<div class='subtle'>No data displayed.</div>";
@@ -1531,33 +1397,6 @@
           el("cryptoLinkedBuys").innerHTML = "<div class='subtle'>No data displayed.</div>";
           el("cryptoLinkedSells").innerHTML = "<div class='subtle'>No data displayed.</div>";
         }
-      }
-    }
-
-    async function loadLeaders(force){
-      if (ACTIVE_TAB !== "Leaders") return;
-
-      if (CACHE_LEADERS && !force){
-        setStatus("ok", "Using cached leaders ✅", "");
-        renderLeaders(CACHE_LEADERS);
-        return;
-      }
-
-      setStatus("", "Loading leaders…", LEADERS_URL);
-      el("leadersList").innerHTML = "<div class='subtle'>Loading leaders…</div>";
-
-      try{
-        const res = await fetch(LEADERS_URL, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-
-        CACHE_LEADERS = data;
-        setStatus("ok", "Leaders loaded ✅", "");
-        renderLeaders(data);
-      }catch(err){
-        setStatus("err", "Could not load leaders", String(err));
-        el("leadersList").innerHTML = "<div class='subtle'>No leaders data displayed.</div>";
       }
     }
 
@@ -1576,11 +1415,6 @@
     }
 
     function handleRefresh(){
-      if (ACTIVE_TAB === "Leaders"){
-        CACHE_LEADERS = null;
-        loadLeaders(true);
-        return;
-      }
       CACHE_MAIN.delete(String(WINDOW_DAYS));
       loadMain(true);
       if (ACTIVE_TAB === "Main"){
@@ -1601,12 +1435,10 @@
     el("btn365").addEventListener("click", () => setWindow(365));
 
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
-    el("tabLeadersBtn").addEventListener("click", () => showTab("Leaders"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
     el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
 
     el("navMain").addEventListener("click", () => showTab("Main"));
-    el("navLeaders").addEventListener("click", () => showTab("Leaders"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
     el("navSearch").addEventListener("click", () => showTab("Search"));
 
@@ -1615,7 +1447,6 @@
 
     // TradingView tape injection
     function initTradingViewTape(){
-      // Clean existing widget container if needed
       const container = document.querySelector(".tradingview-widget-container__widget");
       if (!container) return;
       container.innerHTML = "";
@@ -1631,7 +1462,9 @@
           { proName: "DJ:DJI", title: "Dow Jones" },
           { proName: "CBOE:VIX", title: "VIX" },
           { proName: "TVC:US10Y", title: "US 10Y" },
-          { proName: "CRYPTO:BTCUSD", title: "Bitcoin" }
+          { proName: "CRYPTO:BTCUSD", title: "Bitcoin" },
+          { proName: "CRYPTO:ETHUSD", title: "Ethereum" },
+          { proName: "TVC:GOLD", title: "Gold" }
         ],
         showSymbolLogo: true,
         isTransparent: true,
