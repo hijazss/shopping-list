@@ -64,7 +64,7 @@
     .container{
       max-width:1100px;
       margin:0 auto;
-      padding:8px 14px 110px;
+      padding:8px 14px 140px;
     }
 
     .status{
@@ -147,18 +147,6 @@
       .grid2{grid-template-columns:1fr 1fr;}
     }
 
-    .grid3{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
-    @media (min-width: 980px){
-      .grid3{grid-template-columns:repeat(3,1fr);}
-    }
-    @media (min-width: 760px) and (max-width: 979px){
-      .grid3{grid-template-columns:repeat(2,1fr);}
-    }
-
     .grid4{
       display:grid;
       grid-template-columns:1fr;
@@ -193,17 +181,16 @@
       align-items:center;
       gap:8px;
     }
-    .kpiIcon{
+    .kpiTitleIcon{
       width:18px;
       height:18px;
-      border-radius:8px;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      border:1px solid var(--border);
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,.12);
       background:rgba(255,255,255,.04);
       font-size:12px;
-      line-height:1;
     }
     .kpiValue{
       font-size:16px;
@@ -229,7 +216,6 @@
       font-size:12px;
       color:rgba(255,255,255,.90);
       align-items:center;
-      flex-wrap:wrap;
     }
     .kpiRow .muted{color:var(--muted)}
     .kpiBadge{
@@ -244,9 +230,7 @@
     .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
     .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
     .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
-    .badgeDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
-    .badgeRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
-    .badgeBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
+    .badgeSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .card{
       background:var(--card);
@@ -303,6 +287,7 @@
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
+    .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .metaRow{
       margin-top:7px;
@@ -430,38 +415,182 @@
     }
     .tabBottomActive{color:#fff}
 
-    /* Strategy section */
-    .tvTape{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.02);
-      border-radius:14px;
-      overflow:hidden;
+    /* Strategy */
+    .strategyWrap{ margin:12px 0 12px; }
+    .strategyHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
     }
-    .smallCard{
+    .strategyTitle{
+      margin:0;
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .strategySub{
+      margin-top:6px;
+      font-size:12px;
+      color:rgba(255,255,255,.82);
+      line-height:1.25;
+      max-width:850px;
+    }
+    .strategyTools{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .strategySelect{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:12px;
+      outline:none;
+    }
+    .strategyGrid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    @media (min-width: 980px){
+      .strategyGrid{grid-template-columns:repeat(2,1fr);}
+    }
+    .strCard{
       background:var(--card);
       border:1px solid var(--border);
       border-radius:14px;
       padding:10px;
     }
-    .smallTitle{
+    .strTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .strLeft{min-width:0}
+    .strTickerRow{
+      display:flex;
+      gap:8px;
+      align-items:baseline;
+      flex-wrap:wrap;
+    }
+    .strTicker{
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.03em;
+    }
+    .strName{
+      font-size:12px;
+      color:var(--muted);
+      max-width:520px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      margin-top:4px;
+    }
+    .strMeta{
+      margin-top:8px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      color:rgba(255,255,255,.88);
+      font-size:12px;
+    }
+    .strWhy{
+      margin-top:10px;
+      border-top:1px solid rgba(255,255,255,.08);
+      padding-top:8px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:12px;
+      color:rgba(255,255,255,.86);
+      line-height:1.25;
+    }
+    .whyRow{
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+    }
+    .whyIcon{
+      width:18px;
+      flex:0 0 18px;
+      text-align:center;
+      opacity:.95;
+    }
+    .themeChip{
+      font-size:10px;
+      padding:4px 7px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .themeAI{border-color:rgba(124,255,192,.35); color:rgba(124,255,192,.95)}
+    .themeChips{border-color:rgba(255,210,125,.35); color:rgba(255,210,125,.95)}
+    .themeMedical{border-color:rgba(74,163,255,.35); color:rgba(74,163,255,.95)}
+    .themeRobotics{border-color:rgba(179,139,255,.35); color:rgba(179,139,255,.95)}
+    .themeInfra{border-color:rgba(255,138,138,.30); color:rgba(255,138,138,.92)}
+    .horizonBadge{
+      font-size:10px;
+      padding:4px 7px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      color:rgba(255,255,255,.90);
+      background:rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+
+    /* Philosophy mini window */
+    .philosophyBar{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin:10px 0 10px;
+    }
+    @media (min-width: 980px){
+      .philosophyBar{grid-template-columns:2fr 1fr;}
+    }
+    .philoCard{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px;
+    }
+    .philoTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .philoTitle{
       font-size:11px;
       color:var(--muted);
       letter-spacing:.08em;
       text-transform:uppercase;
       display:flex;
-      gap:8px;
       align-items:center;
+      gap:8px;
     }
-    .smallValue{
-      font-size:14px;
-      font-weight:900;
-      margin-top:6px;
-      letter-spacing:.02em;
+    .philoText{
+      font-size:12px;
+      color:rgba(255,255,255,.86);
+      line-height:1.35;
     }
-    .smallSub{
-      margin-top:6px;
-      color:rgba(255,255,255,.82);
-      line-height:1.25;
+    .philoBullets{
+      margin:8px 0 0;
+      padding-left:16px;
+      color:rgba(255,255,255,.86);
+      line-height:1.35;
       font-size:12px;
     }
   </style>
@@ -498,47 +627,73 @@
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <!-- MARKET SNAPSHOT + VALUE STRATEGY -->
-    <section id="strategyStrip">
-      <div class="sectionTitle" id="strategyTitle">Market snapshot + value accumulation strategy</div>
-
-      <div class="tvTape" style="margin-bottom:10px;">
-        <div class="tradingview-widget-container" style="padding:10px;">
-          <div class="tradingview-widget-container__widget"></div>
+    <!-- Philosophy mini window -->
+    <section class="philosophyBar" id="philosophyBar">
+      <div class="philoCard">
+        <div class="philoTop">
+          <div class="philoTitle"><span class="kpiTitleIcon">📜</span> Strategy philosophy</div>
+          <span class="kpiBadge badgeNeu" id="philoHorizon">5–10Y</span>
         </div>
+        <div class="philoText" id="philoText">
+          Accumulate durable innovators with a long runway in AI, chips, medical advances, and robotics. Use Congress activity as confirmation, not as a prediction engine. Favor gradual buys on pullbacks and stay within a 5–10 year horizon.
+        </div>
+        <ul class="philoBullets" id="philoBullets">
+          <li>Prefer quality and compounding over short-term momentum.</li>
+          <li>Use rolling windows to confirm accumulation, not to chase headlines.</li>
+          <li>Size positions gradually and rebalance only when the thesis breaks.</li>
+        </ul>
       </div>
 
-      <div class="grid3" style="margin-bottom:10px;">
-        <div class="smallCard">
-          <div class="smallTitle"><span class="kpiIcon">🧭</span> Market context</div>
-          <div class="smallValue" id="marketCtxValue">Loading…</div>
-          <div class="smallSub" id="marketCtxSub">
-            Uses SPY trend + VIX level when available. If blocked, it falls back to tape only.
-          </div>
+      <div class="philoCard">
+        <div class="philoTop">
+          <div class="philoTitle"><span class="kpiTitleIcon">🧭</span> Scoring rules</div>
+          <span class="kpiBadge badgeNeu" id="scoreWindowBadge">30D</span>
         </div>
-
-        <div class="smallCard">
-          <div class="smallTitle"><span class="kpiIcon">🧱</span> Value-style plan</div>
-          <div class="smallSub" id="valuePlanText">
-            Loading…
-          </div>
+        <div class="philoText" id="scoreRules">
+          Score blends net accumulation, total participation, and bipartisan overlap in the selected window. Theme filter constrains candidates to innovation sectors.
         </div>
-
-        <div class="smallCard">
-          <div class="smallTitle"><span class="kpiIcon">🔎</span> 10 stocks to research</div>
-          <div class="smallSub" style="margin-top:6px;">
-            Ranked by congressional accumulation plus persistence across 30D, 180D, 365D.
-          </div>
-          <div class="kpiList" id="valueList"></div>
+        <div class="hint" style="margin-top:8px;">
+          This is informational only, not financial advice.
         </div>
-      </div>
-
-      <div class="hint" id="strategyHint">
-        This is informational and for research only, not financial advice. Use it as a starting point for valuation work (free cash flow, balance sheet strength, margin stability, and price vs intrinsic value).
       </div>
     </section>
 
-    <!-- KPI strip -->
+    <!-- Strategy section -->
+    <section class="strategyWrap" id="strategySection">
+      <div class="strategyHeader">
+        <div>
+          <div class="strategyTitle">Future innovation strategy</div>
+          <div class="strategySub" id="strategySubtitle">
+            Ranked accumulation candidates. Designed for long-term value investors focusing on AI, chips, medical advances, and robotics.
+          </div>
+        </div>
+
+        <div class="strategyTools">
+          <select class="strategySelect" id="strategyUniverse">
+            <option value="innovation" selected>Innovation focus</option>
+            <option value="ai">AI</option>
+            <option value="chips">Chips</option>
+            <option value="medical">Medical</option>
+            <option value="robotics">Robotics</option>
+            <option value="infra">Infra</option>
+          </select>
+
+          <select class="strategySelect" id="strategyHorizon">
+            <option value="long" selected>5–10Y</option>
+            <option value="mid">2–5Y</option>
+          </select>
+
+          <button class="pillBtn" id="strategyRefreshBtn">Re-rank</button>
+        </div>
+      </div>
+
+      <div class="strategyGrid" id="strategyGrid"></div>
+
+      <div class="hint" id="strategyHint" style="margin-top:8px;">
+        Score uses rolling Congress activity: net accumulation, participation, and bipartisan overlap. Built for accumulation.
+      </div>
+    </section>
+
     <section id="kpiStrip">
       <div class="sectionTitle" id="kpiTitle">Signal dashboard (top 4, rolling 30 days)</div>
       <div class="grid4">
@@ -653,11 +808,7 @@
     }
 
     function setTitleForTab(tab){
-      const map = {
-        "Main":"Convergence",
-        "Crypto":"Crypto",
-        "Search":"Search"
-      };
+      const map = { "Main":"Convergence", "Crypto":"Crypto", "Search":"Search" };
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
 
@@ -670,7 +821,8 @@
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
       el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
-      el("strategyStrip").style.display = (tab === "Main") ? "" : "none";
+      el("philosophyBar").style.display = (tab === "Main") ? "" : "none";
+      el("strategySection").style.display = (tab === "Main") ? "" : "none";
       el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
@@ -681,10 +833,7 @@
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
-      if (tab === "Main") {
-        loadMain(false);
-        refreshStrategy();
-      }
+      if (tab === "Main") loadMain(false);
       if (tab === "Crypto") loadMain(false);
     }
 
@@ -747,19 +896,6 @@
       `;
     }
 
-    function demRepTagRow(dem, rep){
-      const d = Number(dem||0);
-      const r = Number(rep||0);
-      const total = d + r;
-      if (!total) return "";
-      return `
-        <span class="kpiBadge badgeDem">DEM ${d}</span>
-        <span class="kpiBadge badgeRep">GOP ${r}</span>
-      `;
-    }
-
-    function iconSpan(txt){ return `<span class="kpiIcon" aria-hidden="true">${txt}</span>`; }
-
     function cardHTML(x, mode){
       const ticker = String(x.ticker || "").toUpperCase();
       const who = String(x.companyName || "").trim();
@@ -782,7 +918,6 @@
             <div class="tags">
               ${mode === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
               <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
-              ${demRepTagRow(dem, rep)}
             </div>
           </div>
 
@@ -819,10 +954,11 @@
               </div>
             </div>
             <div class="tags">
+              <span class="tag tagDem">DEM</span>
+              <span class="tag tagRep">GOP</span>
               <span class="tag tagBoth">OVERLAP</span>
               <span class="tag tagBuy">BUY</span>
               <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
-              ${demRepTagRow(dem, rep)}
             </div>
           </div>
 
@@ -920,7 +1056,7 @@
       el("kpiNet").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">${iconSpan("📈")} Net flow</div>
+            <div class="kpiTitle"><span class="kpiTitleIcon">📈</span> Net flow</div>
             <div class="kpiValue">Buys - Sells</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
@@ -940,7 +1076,7 @@
       el("kpiPart").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">${iconSpan("👥")} Participation</div>
+            <div class="kpiTitle"><span class="kpiTitleIcon">👥</span> Participation</div>
             <div class="kpiValue">Total activity</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
@@ -960,7 +1096,7 @@
       el("kpiTop").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">${iconSpan("🏷️")} Top tickers</div>
+            <div class="kpiTitle"><span class="kpiTitleIcon">🏷️</span> Top tickers</div>
             <div class="kpiValue">Intensity</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
@@ -981,45 +1117,18 @@
       el("kpiHighlights").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">${iconSpan("✨")} Top signals</div>
+            <div class="kpiTitle"><span class="kpiTitleIcon">✨</span> Top signals</div>
             <div class="kpiValue">Fast read</div>
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
         <div class="kpiSub">Best accumulation, selling, and overlap in rolling ${win}D.</div>
         <div class="kpiList">
-          <div class="kpiRow"><span class="muted">${iconSpan("🟢")} Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">${iconSpan("🔴")} Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">${iconSpan("🟣")} Overlap</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">Overlap</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
         </div>
       `;
-    }
-
-    function renderMain(data){
-      const win = Number(data.windowDays || WINDOW_DAYS || 30);
-
-      el("reportDate").textContent = data.date ? `${data.date} · window ${win}D` : `window ${win}D`;
-      el("convTitle").textContent = `Convergence 🔥 (bipartisan overlap on BUY, rolling ${win} days)`;
-      el("partTitle").textContent = `Congress trades by participation (rolling ${win} days)`;
-      el("mainHint").textContent = `Sort is by total participation (both parties) within the rolling ${win}-day window. Tap ticker for chart.`;
-
-      const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
-      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
-      const sells = normalizeList(data.politicianSells).sort(sortByCongressStrength);
-
-      renderKpis(convergence, buys, sells, win);
-
-      el("convergenceList").innerHTML =
-        convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers in this window.</div>";
-
-      el("buyList").innerHTML =
-        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No buy trades found.</div>";
-
-      el("sellList").innerHTML =
-        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
-
-      renderCryptoFromMain(data);
-      handleHash();
     }
 
     // Crypto helpers
@@ -1105,11 +1214,11 @@
       el("cryptoDirectSells").innerHTML =
         directSells.length ? directSells.map(cryptoDirectCardHTML).join("") : "<div class='subtle'>No direct crypto sells in this window.</div>";
 
-      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers)
+      const buys = normalizeList(data.politicianBuys || [])
         .filter(x => CRYPTO_TICKERS.has(String(x.ticker||"").toUpperCase()))
         .sort(sortByCongressStrength);
 
-      const sells = normalizeList(data.politicianSells)
+      const sells = normalizeList(data.politicianSells || [])
         .filter(x => CRYPTO_TICKERS.has(String(x.ticker||"").toUpperCase()))
         .sort(sortByCongressStrength);
 
@@ -1134,230 +1243,247 @@
       }
     }
 
-    // Strategy engine
-    async function fetchWindow(days){
-      const key = String(days);
-      const cached = CACHE_MAIN.get(key);
-      if (cached) return cached;
+    // -------- Strategy taxonomy + ranking --------
 
-      const url = `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(days))}`;
-      const res = await fetch(url, { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      if (data.error) throw new Error(data.error);
-      CACHE_MAIN.set(key, data);
-      return data;
+    // Sector taxonomy for innovation focus (extend any time)
+    const TAXONOMY = {
+      AI: new Set(["NVDA","MSFT","GOOGL","META","AMZN","ORCL","CRM","SNOW","NOW","PLTR"]),
+      Chips: new Set(["NVDA","AMD","AVGO","TSM","ASML","AMAT","LRCX","KLAC","MU","INTC","QCOM","TXN"]),
+      Medical: new Set(["LLY","NVO","TMO","DHR","ISRG","BSX","ABT","MDT","SYK","MRNA","REGN"]),
+      Robotics: new Set(["ISRG","TSLA","TER","SYM","ABB","ROK","FANUY","IRBT"]),
+      Infra: new Set(["PLTR","AVGO","MSFT","AMZN","GOOGL","ORCL","PANW","CRWD","FTNT"])
+    };
+
+    // Human-friendly labels and styling
+    const THEME_STYLE = {
+      AI: { cls:"themeAI", icon:"🧠" },
+      Chips: { cls:"themeChips", icon:"⚡" },
+      Medical: { cls:"themeMedical", icon:"🏥" },
+      Robotics: { cls:"themeRobotics", icon:"🤖" },
+      Infra: { cls:"themeInfra", icon:"🛰️" }
+    };
+
+    // Optional "thesis notes" for a subset of tickers
+    const THESIS = {
+      NVDA: ["AI compute backbone", "Platform ecosystem", "Long-cycle infrastructure spend"],
+      MSFT: ["AI distribution at scale", "Cloud monetization", "Enterprise moat"],
+      GOOGL: ["AI research depth", "Data advantage", "Multiple monetization levers"],
+      AMD: ["CPU + accelerator roadmap", "Hyperscaler adoption", "Share gains"],
+      AVGO: ["AI networking + infra", "Cash flow durability", "Strategic assets"],
+      TSM: ["Foundry dominance", "AI demand pull-through", "Strategic manufacturing role"],
+      ASML: ["EUV monopoly", "Required for advanced nodes", "Backlog resilience"],
+      LLY: ["Metabolic platform", "Pipeline optionality", "Demand durability"],
+      NVO: ["Metabolic franchise", "Global scale", "Long runway"],
+      ISRG: ["Surgical robotics leader", "Installed base moat", "Procedure growth"],
+      PLTR: ["AI ops positioning", "Gov + enterprise leverage", "Sticky platforms"]
+    };
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function themeForTicker(t){
+      const sym = String(t||"").toUpperCase();
+      for (const [theme,set] of Object.entries(TAXONOMY)){
+        if (set.has(sym)) return theme;
+      }
+      return "AI";
     }
 
-    function mergeTickerCards(cards){
-      const merged = new Map();
-      (Array.isArray(cards) ? cards : []).forEach(x => {
-        const t = String(x.ticker||"").toUpperCase().trim();
+    function universeAllows(theme, universe){
+      if (universe === "innovation") return true;
+      if (universe === "ai") return theme === "AI";
+      if (universe === "chips") return theme === "Chips";
+      if (universe === "medical") return theme === "Medical";
+      if (universe === "robotics") return theme === "Robotics";
+      if (universe === "infra") return theme === "Infra";
+      return true;
+    }
+
+    function computeStrategyRows(data){
+      const buys = normalizeList(data.politicianBuys || []);
+      const sells = normalizeList(data.politicianSells || []);
+
+      const overlapMap = new Map();
+      normalizeList(data.convergence || []).forEach(x => {
+        const t = String(x.ticker||"").toUpperCase();
+        overlapMap.set(t, Number(x.demBuyers||0) + Number(x.repBuyers||0));
+      });
+
+      const m = new Map();
+      function add(x){
+        const t = String(x.ticker||"").toUpperCase();
         if (!t) return;
-        const cur = merged.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0, lastFiledAt:"" };
+        const cur = m.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0, last:"", companyName:"" };
         cur.demBuyers += Number(x.demBuyers||0);
         cur.repBuyers += Number(x.repBuyers||0);
         cur.demSellers += Number(x.demSellers||0);
         cur.repSellers += Number(x.repSellers||0);
-        const lf = String(x.lastFiledAt||"");
-        if (lf && (!cur.lastFiledAt || lf > cur.lastFiledAt)) cur.lastFiledAt = lf;
-        merged.set(t, cur);
+        cur.companyName = cur.companyName || String(x.companyName||"");
+        cur.last = cur.last || String(x.lastFiledAt||"");
+        m.set(t, cur);
+      }
+      buys.forEach(add);
+      sells.forEach(add);
+
+      const arr = Array.from(m.values());
+
+      return arr.map(x => {
+        const t = x.ticker;
+        const total = congressScore(x);
+        const net = netFlow(x);
+        const bi = overlapMap.get(t) || 0;
+
+        const netN = clamp(net, -10, 10) / 10;  // -1..1
+        const totN = clamp(total, 0, 20) / 20;  // 0..1
+        const biN  = clamp(bi, 0, 10) / 10;     // 0..1
+
+        const theme = themeForTicker(t);
+        const style = THEME_STYLE[theme] || THEME_STYLE.AI;
+
+        // Quality bias: small preference for known compounding innovators (if in taxonomy set)
+        const qualityBias = 0.08;
+
+        // Score emphasizes accumulation, then participation, then overlap
+        const score =
+          (0.48 * ((netN + 1) / 2)) +
+          (0.30 * totN) +
+          (0.22 * biN) +
+          qualityBias;
+
+        return {
+          ticker: t,
+          companyName: x.companyName || "",
+          last: x.last || "",
+          total,
+          net,
+          overlap: bi,
+          theme,
+          themeCls: style.cls,
+          icon: style.icon,
+          score: Math.round(score * 100),
+          why: THESIS[t] || ["Innovation watchlist", "Confirm thesis with fundamentals", "Accumulate on weakness"]
+        };
       });
-      return merged;
     }
 
-    function scoreAccumulation(row){
-      const buys = Number(row.demBuyers||0) + Number(row.repBuyers||0);
-      const sells = Number(row.demSellers||0) + Number(row.repSellers||0);
-      const nf = buys - sells;
-      const overlap = Math.min(Number(row.demBuyers||0), Number(row.repBuyers||0));
-      const intensity = buys + sells;
+    function strategyCardHTML(r, horizon){
+      const hz = horizon === "mid" ? "2–5Y" : "5–10Y";
 
-      let score = 0;
-      if (nf > 0) score += Math.min(8, nf) * 1.6;
-      if (overlap > 0) score += Math.min(6, overlap) * 2.0;
-      score += Math.min(10, intensity) * 0.8;
-      if (sells > 0) score -= Math.min(8, sells) * 0.9;
+      const scoreBadgeCls = r.score >= 75 ? "badgePos" : r.score >= 55 ? "badgeNeu" : "badgeNeg";
+      const netCls = r.net > 0 ? "badgePos" : r.net < 0 ? "badgeNeg" : "badgeNeu";
+      const netSign = r.net > 0 ? "+" : "";
 
-      return { score, nf, overlap, buys, sells, intensity };
-    }
+      const whyLines = (Array.isArray(r.why) ? r.why : []).slice(0,3);
 
-    function valueRowHTML(r){
-      const t = r.ticker;
-      const persistBadge = r.persist === 3 ? "badgeBoth" : r.persist === 2 ? "badgeNeu" : "badgeNeu";
-      const persistLabel = r.persist === 3 ? "PERSIST 30/180/365" : r.persist === 2 ? "PERSIST 2 WINDOWS" : "PERSIST 1 WINDOW";
-      const nfCls = r.nf > 0 ? "badgePos" : r.nf < 0 ? "badgeNeg" : "badgeNeu";
-      const sign = r.nf > 0 ? "+" : "";
-      const last = r.lastFiledAt ? ` · ${r.lastFiledAt}` : "";
       return `
-        <div class="kpiRow">
-          <a href="#stock=${encodeURIComponent(t)}"><strong>${t}</strong></a>
-          <span class="kpiBadge ${persistBadge}">${persistLabel}</span>
-          <span class="kpiBadge ${nfCls}">${sign}${r.nf} net</span>
-          <span class="kpiBadge badgeNeu">overlap ${r.overlap}</span>
-          <span class="kpiBadge badgeNeu">score ${r.score.toFixed(1)}${last}</span>
+        <div class="strCard">
+          <div class="strTop">
+            <div class="strLeft">
+              <div class="strTickerRow">
+                <a class="strTicker" href="#stock=${encodeURIComponent(r.ticker)}">${r.ticker}</a>
+                <span class="themeChip ${r.themeCls}">${r.icon} ${r.theme}</span>
+                <span class="horizonBadge">${hz}</span>
+              </div>
+              ${r.companyName ? `<div class="strName">${r.companyName}</div>` : ""}
+              <div class="strMeta">
+                <span class="kpiBadge ${scoreBadgeCls}"><strong>Strategy</strong> ${r.score}/100</span>
+                <span class="kpiBadge ${netCls}">Net ${netSign}${r.net}</span>
+                <span class="kpiBadge badgeNeu">Total ${r.total}</span>
+                ${r.overlap ? `<span class="kpiBadge badgeNeu">Overlap ${r.overlap}</span>` : ""}
+                ${r.last ? `<span class="kpiBadge badgeNeu">Last ${r.last}</span>` : ""}
+              </div>
+            </div>
+            <div class="tags">
+              <span class="tag tagBuy">ACCUMULATE</span>
+            </div>
+          </div>
+
+          <div class="strWhy">
+            ${whyLines.map(line => `
+              <div class="whyRow">
+                <div class="whyIcon">✅</div>
+                <div>${line}</div>
+              </div>
+            `).join("")}
+            <div class="whyRow">
+              <div class="whyIcon">📌</div>
+              <div>Plan: buy in tranches, prefer pullbacks, re-check Congress confirmation each window.</div>
+            </div>
+          </div>
+
+          ${tickerLinksHTML(r.ticker)}
         </div>
       `;
     }
 
-    async function fetchWithTimeout(url, ms){
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), ms);
-      try{
-        const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
-        return res;
-      } finally {
-        clearTimeout(to);
-      }
-    }
+    function updatePhilosophyUI(data){
+      const horizon = String(el("strategyHorizon").value || "long");
+      const hzLabel = horizon === "mid" ? "2–5Y" : "5–10Y";
+      el("philoHorizon").textContent = hzLabel;
 
-    async function fetchStooqDaily(sym){
-      // daily history csv
-      const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(sym)}&i=d`;
-      const res = await fetchWithTimeout(url, 3500);
-      if (!res || !res.ok) return null;
-      const text = await res.text();
-      const lines = (text || "").trim().split("\n");
-      if (lines.length < 3) return null;
+      const win = Number(data.windowDays || WINDOW_DAYS || 30);
+      el("scoreWindowBadge").textContent = `${win}D`;
 
-      // columns: Date,Open,High,Low,Close,Volume
-      const closes = [];
-      for (let i = 1; i < lines.length; i++){
-        const parts = lines[i].split(",");
-        if (parts.length < 5) continue;
-        const c = Number(parts[4]);
-        if (isFinite(c)) closes.push(c);
-      }
-      return closes;
-    }
+      // Keep philosophy consistent and visible
+      el("philoText").textContent =
+        "Accumulate durable innovators with a long runway in AI, chips, medical advances, and robotics. Use Congress activity as confirmation, not as a prediction engine. Favor gradual buys on pullbacks and stay within a long horizon.";
 
-    function sma(arr, n){
-      if (!arr || arr.length < n) return null;
-      let sum = 0;
-      for (let i = arr.length - n; i < arr.length; i++) sum += arr[i];
-      return sum / n;
-    }
-
-    function pct(a, b){
-      if (!isFinite(a) || !isFinite(b) || b === 0) return null;
-      return (a - b) / b;
-    }
-
-    async function updateMarketContext(){
-      el("marketCtxValue").textContent = "Reading SPY trend…";
-
-      try{
-        const spy = await fetchStooqDaily("spy.us");
-        const vix = await fetchStooqDaily("vix");
-
-        if (!spy || spy.length < 220){
-          el("marketCtxValue").textContent = "Tape only";
-          el("marketCtxSub").textContent = "SPY trend fetch blocked or insufficient. Use the tape as context.";
-          return;
-        }
-
-        const last = spy[spy.length - 1];
-        const ma50 = sma(spy, 50);
-        const ma200 = sma(spy, 200);
-        const rel50 = ma50 ? pct(last, ma50) : null;
-        const rel200 = ma200 ? pct(last, ma200) : null;
-
-        let volTxt = "VIX unavailable";
-        let volLvl = null;
-        if (vix && vix.length > 20){
-          volLvl = vix[vix.length - 1];
-          volTxt = `VIX ${volLvl.toFixed(1)}`;
-        }
-
-        const trend = (rel200 != null && rel200 >= 0) ? "Uptrend" : "Below 200D";
-        const risk =
-          volLvl == null ? "Neutral"
-          : volLvl < 18 ? "Lower vol"
-          : volLvl <= 25 ? "Medium vol"
-          : "High vol";
-
-        el("marketCtxValue").textContent = `${trend} · ${risk}`;
-        el("marketCtxSub").textContent =
-          `SPY ${last.toFixed(2)} · 50D ${ma50 ? ma50.toFixed(2) : "—"} · 200D ${ma200 ? ma200.toFixed(2) : "—"} · ${volTxt}.`;
-
-      }catch(e){
-        el("marketCtxValue").textContent = "Tape only";
-        el("marketCtxSub").textContent = "Market context fetch failed. Use the tape as context.";
-      }
-    }
-
-    function setValuePlanText(){
-      // generic, value-style, accumulation. Not dependent on market data so it always shows.
-      const win = Number(WINDOW_DAYS || 30);
-      const text = `
-        <div>
-          <div><strong>Core rule:</strong> accumulate gradually, never chase, size buys based on volatility.</div>
-          <div style="margin-top:6px;"><strong>Signals used:</strong> positive net buying, bipartisan overlap, and persistence across 30D/180D/365D.</div>
-          <div style="margin-top:6px;"><strong>Execution idea:</strong> build a watchlist, pick 3 to 5 names that pass valuation checks, and add in 3 to 6 tranches over time.</div>
-          <div style="margin-top:6px;"><strong>Window:</strong> your dashboard is currently ${win}D for the live signal view.</div>
-        </div>
+      // Bullets stay stable so you keep your philosophy anchored
+      el("philoBullets").innerHTML = `
+        <li>Prefer quality and compounding over short-term momentum.</li>
+        <li>Use rolling windows to confirm accumulation, not to chase headlines.</li>
+        <li>Size positions gradually and rebalance only when the thesis breaks.</li>
       `;
-      el("valuePlanText").innerHTML = text;
     }
 
-    async function updateValueList(){
-      el("valueList").innerHTML = `<div class="subtle">Loading…</div>`;
+    function renderStrategy(data){
+      const universe = String(el("strategyUniverse").value || "innovation");
+      const horizon = String(el("strategyHorizon").value || "long");
+      const win = Number(data.windowDays || WINDOW_DAYS || 30);
 
-      try{
-        const [d30, d180, d365] = await Promise.all([
-          fetchWindow(30),
-          fetchWindow(180),
-          fetchWindow(365)
-        ]);
+      const rows = computeStrategyRows(data)
+        .filter(r => universeAllows(r.theme, universe))
+        // Require at least some signal. Adjust thresholds any time.
+        .filter(r => (r.total >= 2) || (r.net > 0) || (r.overlap > 0))
+        .sort((a,b) => (b.score - a.score) || (b.net - a.net) || (b.total - a.total) || a.ticker.localeCompare(b.ticker))
+        .slice(0, 10);
 
-        const m30 = mergeTickerCards([...(normalizeList(d30.politicianBuys)), ...(normalizeList(d30.politicianSells))]);
-        const m180 = mergeTickerCards([...(normalizeList(d180.politicianBuys)), ...(normalizeList(d180.politicianSells))]);
-        const m365 = mergeTickerCards([...(normalizeList(d365.politicianBuys)), ...(normalizeList(d365.politicianSells))]);
+      el("strategyGrid").innerHTML = rows.length
+        ? rows.map(r => strategyCardHTML(r, horizon)).join("")
+        : `<div class="subtle">No strategy candidates found in this window. Try 180D or 365D.</div>`;
 
-        const all = new Set([...m30.keys(), ...m180.keys(), ...m365.keys()]);
-        const scored = [];
+      el("strategyHint").textContent =
+        `Ranked using rolling ${win}D Congress data: net accumulation, participation, and overlap. Filtered to innovation sectors.`;
 
-        for (const t of all){
-          const active = (WINDOW_DAYS === 365 ? m365.get(t) : WINDOW_DAYS === 180 ? m180.get(t) : m30.get(t)) || m30.get(t) || m180.get(t) || m365.get(t);
-          if (!active) continue;
-
-          const s = scoreAccumulation(active);
-          const persist = (m30.has(t) ? 1 : 0) + (m180.has(t) ? 1 : 0) + (m365.has(t) ? 1 : 0);
-
-          // value-leaning heuristics from this dataset only:
-          // - prefer net buyers
-          // - prefer persistence
-          // - do not hard exclude anything else (valuation is done by user later)
-          const totalScore = s.score + (persist * 2.2);
-
-          scored.push({
-            ticker: t,
-            score: totalScore,
-            nf: s.nf,
-            overlap: s.overlap,
-            persist,
-            lastFiledAt: active.lastFiledAt || ""
-          });
-        }
-
-        const top10 = scored
-          .filter(x => x.nf > 0)
-          .sort((a,b) => (b.persist - a.persist) || (b.score - a.score) || a.ticker.localeCompare(b.ticker))
-          .slice(0, 10);
-
-        el("valueList").innerHTML =
-          top10.length ? top10.map(valueRowHTML).join("") : `<div class="subtle">No clear accumulation candidates in this data.</div>`;
-
-      }catch(err){
-        el("valueList").innerHTML = `<div class="subtle">Could not load the value list.</div>`;
-      }
+      updatePhilosophyUI(data);
+      handleHash();
     }
 
-    function refreshStrategy(){
-      el("strategyTitle").textContent = `Market snapshot + value accumulation strategy (window ${WINDOW_DAYS}D)`;
-      setValuePlanText();
-      updateMarketContext();
-      updateValueList();
+    function renderMain(data){
+      const win = Number(data.windowDays || WINDOW_DAYS || 30);
+
+      el("reportDate").textContent = data.date ? `${data.date} · window ${win}D` : `window ${win}D`;
+      el("convTitle").textContent = `Convergence 🔥 (bipartisan overlap on BUY, rolling ${win} days)`;
+      el("partTitle").textContent = `Congress trades by participation (rolling ${win} days)`;
+      el("mainHint").textContent = `Sort is by total participation (both parties) within the rolling ${win}-day window. Tap ticker for chart.`;
+
+      const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
+      const buys = normalizeList(data.politicianBuys || []).sort(sortByCongressStrength);
+      const sells = normalizeList(data.politicianSells || []).sort(sortByCongressStrength);
+
+      renderStrategy(data);
+      renderKpis(convergence, buys, sells, win);
+
+      el("convergenceList").innerHTML =
+        convergence.length ? convergence.map(overlapCardHTML).join("") : "<div class='subtle'>No overlap tickers in this window.</div>";
+
+      el("buyList").innerHTML =
+        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No buy trades found.</div>";
+
+      el("sellList").innerHTML =
+        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
+
+      renderCryptoFromMain(data);
+      handleHash();
     }
 
     async function loadMain(force){
@@ -1391,6 +1517,7 @@
       }catch(err){
         setStatus("err", "Could not load congress data", String(err));
         if (ACTIVE_TAB === "Main"){
+          el("strategyGrid").innerHTML = "<div class='subtle'>No data displayed.</div>";
           el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
           el("buyList").innerHTML = "<div class='subtle'>No data displayed.</div>";
           el("sellList").innerHTML = "<div class='subtle'>No data displayed.</div>";
@@ -1413,17 +1540,11 @@
       if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
         loadMain(false);
       }
-      if (ACTIVE_TAB === "Main"){
-        refreshStrategy();
-      }
     }
 
     function handleRefresh(){
       CACHE_MAIN.delete(String(WINDOW_DAYS));
       loadMain(true);
-      if (ACTIVE_TAB === "Main"){
-        refreshStrategy();
-      }
     }
 
     el("searchBtn").addEventListener("click", () => {
@@ -1446,41 +1567,24 @@
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
     el("navSearch").addEventListener("click", () => showTab("Search"));
 
+    el("strategyRefreshBtn").addEventListener("click", () => {
+      const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
+      if (cached) renderStrategy(cached);
+    });
+    el("strategyUniverse").addEventListener("change", () => {
+      const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
+      if (cached) renderStrategy(cached);
+    });
+    el("strategyHorizon").addEventListener("change", () => {
+      const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
+      if (cached) renderStrategy(cached);
+    });
+
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
 
-    // TradingView tape injection (clean, minimal)
-    function initTradingViewTape(){
-      const container = document.querySelector(".tradingview-widget-container__widget");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const script = document.createElement("script");
-      script.type = "text/javascript";
-      script.async = true;
-      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
-      script.innerHTML = JSON.stringify({
-        symbols: [
-          { proName: "AMEX:SPY", title: "S&P 500" },
-          { proName: "NASDAQ:QQQ", title: "Nasdaq 100" },
-          { proName: "DJ:DJI", title: "Dow" },
-          { proName: "CBOE:VIX", title: "VIX" },
-          { proName: "TVC:US10Y", title: "US 10Y" }
-        ],
-        showSymbolLogo: true,
-        isTransparent: true,
-        displayMode: "adaptive",
-        colorTheme: "dark",
-        locale: "en"
-      });
-      container.appendChild(script);
-    }
-
-    // boot
-    initTradingViewTape();
     showTab("Main");
     loadMain(false);
-    refreshStrategy();
   </script>
 </body>
 </html>
