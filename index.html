@@ -215,7 +215,6 @@
       color:rgba(255,255,255,.90);
       align-items:center;
     }
-    .kpiRow .muted{color:var(--muted)}
     .kpiBadge{
       font-size:10px;
       padding:4px 7px;
@@ -228,7 +227,6 @@
     .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
     .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
     .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
-    .badgeSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
     .badgeBoth{border-color:rgba(179,139,255,.45); color:var(--both)}
 
     .card{
@@ -285,7 +283,6 @@
     .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
-    .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .metaRow{
       margin-top:7px;
@@ -447,20 +444,6 @@
       background:rgba(255,255,255,.10);
       color:#fff;
     }
-    .scoreBig{
-      font-size:18px;
-      font-weight:900;
-      letter-spacing:.02em;
-    }
-    .scoreRow{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      font-size:12px;
-      color:rgba(255,255,255,.88);
-      margin-top:6px;
-    }
     .scoreExplain{
       color:var(--muted);
       font-size:12px;
@@ -502,7 +485,6 @@
       font-size:12px;
       line-height:1.25;
     }
-
     .rowBadges{
       display:flex;
       gap:6px;
@@ -553,7 +535,6 @@
       </div>
     </section>
 
-    <!-- Strategy block -->
     <section id="strategySection">
       <div class="sectionTitle">Strategy</div>
 
@@ -670,19 +651,16 @@
 
     let CACHE_MAIN = new Map();
 
-    // Crypto-linked stock tickers (ETFs, miners, exchanges)
     const CRYPTO_TICKERS = new Set([
       "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
       "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
       "ETHE","ETHA","WGMI","BKCH","BLOK","BITQ","DAPP"
     ]);
 
-    // Coin symbols you consider "direct crypto"
     const DIRECT_COIN_SET = new Set([
       "BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"
     ]);
 
-    // Strategy weights (sum to 100)
     const STRATEGY_WEIGHTS = {
       innovationFit: 40,
       congressSignal: 25,
@@ -690,7 +668,6 @@
       riskPenalty: 15
     };
 
-    // Strategy sector taxonomy (seeds keep tabs non-empty)
     const SECTOR_ORDER = [
       { key:"ai", label:"AI" },
       { key:"chips", label:"Chips" },
@@ -700,12 +677,41 @@
     ];
 
     const SECTOR_SEEDS = {
-      ai: ["NVDA","MSFT","GOOGL","AMZN","META","AVGO","ORCL","SNOW","PLTR"],
-      chips: ["NVDA","AVGO","AMD","INTC","ASML","TSM","MU","QCOM","ARM"],
-      medical: ["ISRG","MDT","BSX","SYK","JNJ","ABT","TMO","DHR","ILMN"],
-      robotics: ["ISRG","ROK","TER","ZBRA","SYM","ABB","BOTZ","ROBO","IFR"],
-      infrastructure: ["ANET","EQIX","DLR","VRT","SMCI","CSCO","ORCL","MSFT"]
+      ai: ["NVDA","MSFT","GOOGL","AMZN","META","AVGO","ORCL","PLTR","SNOW","DDOG","NOW","CRM"],
+      chips: ["NVDA","AVGO","AMD","INTC","ASML","TSM","MU","QCOM","ARM","LRCX","AMAT","KLAC","ADI","MRVL"],
+      medical: ["ISRG","MDT","BSX","SYK","JNJ","ABT","TMO","DHR","IDXX","EW","ZBH","DXCM","PODD","RMD","REGN","VRTX","MRNA","BMY","LLY","NVO","HCA","UHS"],
+      robotics: ["ISRG","ROK","TER","ZBRA","SYM","ABB","FANUY","YASKY","KUKAY","HON","EMR","IR","PH","AME","RRX","CGNX","TDY","BOTZ","ROBO"],
+      infrastructure: ["ANET","CSCO","MSFT","AMZN","GOOGL","ORCL","EQIX","DLR","VRT","ETN","PWR","NVT","HUBB","AME","TT","NEE","CEG","CCJ","BEPC","ENPH"]
     };
+
+    const TICKER_SECTOR_MAP = {
+      "NVDA":["ai","chips"], "MSFT":["ai","infrastructure"], "GOOGL":["ai","infrastructure"], "AMZN":["ai","infrastructure"],
+      "META":["ai"], "PLTR":["ai"], "SNOW":["ai"], "DDOG":["ai"], "NOW":["ai"], "CRM":["ai"], "ORCL":["ai","infrastructure"],
+      "AVGO":["chips","ai","infrastructure"], "AMD":["chips"], "INTC":["chips"], "ASML":["chips"], "TSM":["chips"],
+      "MU":["chips"], "QCOM":["chips"], "ARM":["chips"], "LRCX":["chips"], "AMAT":["chips"], "KLAC":["chips"], "ADI":["chips"], "MRVL":["chips"],
+      "ISRG":["medical","robotics"], "MDT":["medical"], "BSX":["medical"], "SYK":["medical"], "JNJ":["medical"], "ABT":["medical"],
+      "TMO":["medical"], "DHR":["medical"], "IDXX":["medical"], "EW":["medical"], "ZBH":["medical"], "DXCM":["medical"], "PODD":["medical"],
+      "RMD":["medical"], "REGN":["medical"], "VRTX":["medical"], "MRNA":["medical"], "BMY":["medical"], "LLY":["medical"], "NVO":["medical"],
+      "HCA":["medical"], "UHS":["medical"],
+      "ROK":["robotics","infrastructure"], "TER":["robotics","chips"], "ZBRA":["robotics","infrastructure"], "SYM":["robotics"],
+      "ABB":["robotics","infrastructure"], "FANUY":["robotics"], "YASKY":["robotics"], "KUKAY":["robotics"],
+      "HON":["robotics","infrastructure"], "EMR":["robotics","infrastructure"], "IR":["robotics","infrastructure"], "PH":["robotics","infrastructure"],
+      "AME":["robotics","infrastructure"], "RRX":["robotics"], "CGNX":["robotics"], "TDY":["robotics"],
+      "BOTZ":["robotics"], "ROBO":["robotics"],
+      "ANET":["infrastructure"], "CSCO":["infrastructure"], "EQIX":["infrastructure"], "DLR":["infrastructure"],
+      "VRT":["infrastructure"], "ETN":["infrastructure"], "PWR":["infrastructure"], "NVT":["infrastructure"], "HUBB":["infrastructure"],
+      "TT":["infrastructure"], "NEE":["infrastructure"], "CEG":["infrastructure"], "CCJ":["infrastructure"], "BEPC":["infrastructure"], "ENPH":["infrastructure"]
+    };
+
+    function classifyFallback(ticker){
+      const t = String(ticker||"").toUpperCase().trim();
+      if (!t) return [];
+      if (t === "ROBO" || t === "BOTZ") return ["robotics"];
+      if (t === "XLV" || t === "IBB" || t === "XBI") return ["medical"];
+      if (t === "SOXX" || t === "SMH") return ["chips"];
+      if (t === "IRBO") return ["ai"];
+      return [];
+    }
 
     let STRATEGY_ACTIVE_SECTOR = "ai";
 
@@ -718,11 +724,7 @@
     }
 
     function setTitleForTab(tab){
-      const map = {
-        "Main":"Convergence",
-        "Crypto":"Crypto",
-        "Search":"Search"
-      };
+      const map = { "Main":"Convergence", "Crypto":"Crypto", "Search":"Search" };
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
 
@@ -734,10 +736,8 @@
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
-      // Main-only panels
       el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
       el("strategySection").style.display = (tab === "Main") ? "" : "none";
-
       el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
@@ -748,50 +748,39 @@
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
-      if (tab === "Main") loadMain(false);
-      if (tab === "Crypto") loadMain(false);
+      // FIX: ensure tab switch triggers loading and rendering
+      if (tab === "Main" || tab === "Crypto") loadMain(false);
+      handleHash();
     }
 
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
 
     function congressScore(x){
-      return (
-        Number(x.demBuyers || 0) +
-        Number(x.repBuyers || 0) +
-        Number(x.demSellers || 0) +
-        Number(x.repSellers || 0)
-      );
+      return Number(x.demBuyers||0)+Number(x.repBuyers||0)+Number(x.demSellers||0)+Number(x.repSellers||0);
     }
-
     function bipartisanScore(x){
-      const dem = Number(x.demBuyers || 0) + Number(x.demSellers || 0);
-      const rep = Number(x.repBuyers || 0) + Number(x.repSellers || 0);
+      const dem = Number(x.demBuyers||0)+Number(x.demSellers||0);
+      const rep = Number(x.repBuyers||0)+Number(x.repSellers||0);
       return Math.min(dem, rep);
     }
-
-    function sortByCongressStrength(a, b){
-      const totalA = congressScore(a);
-      const totalB = congressScore(b);
-      if (totalA !== totalB) return totalB - totalA;
-      const biA = bipartisanScore(a);
-      const biB = bipartisanScore(b);
-      if (biA !== biB) return biB - biA;
-      return String(a.ticker || "").localeCompare(String(b.ticker || ""), undefined, {sensitivity:"base"});
+    function sortByCongressStrength(a,b){
+      const ta = congressScore(a), tb = congressScore(b);
+      if (ta !== tb) return tb - ta;
+      const ba = bipartisanScore(a), bb = bipartisanScore(b);
+      if (ba !== bb) return bb - ba;
+      return String(a.ticker||"").localeCompare(String(b.ticker||""), undefined, {sensitivity:"base"});
     }
-
     function netFlow(x){
-      const buys = Number(x.demBuyers || 0) + Number(x.repBuyers || 0);
-      const sells = Number(x.demSellers || 0) + Number(x.repSellers || 0);
+      const buys = Number(x.demBuyers||0) + Number(x.repBuyers||0);
+      const sells = Number(x.demSellers||0) + Number(x.repSellers||0);
       return buys - sells;
     }
-
     function confidenceLabel(x){
       const t = congressScore(x);
       if (t >= 6) return "STRONG";
       if (t >= 3) return "MOD";
       return "WEAK";
     }
-
     function confidenceBadgeClass(lbl){
       if (lbl === "STRONG") return "badgePos";
       if (lbl === "MOD") return "badgeNeu";
@@ -799,7 +788,7 @@
     }
 
     function tickerLinksHTML(ticker){
-      const t = String(ticker || "").toUpperCase();
+      const t = String(ticker||"").toUpperCase();
       const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
       const tvChart = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent("NASDAQ:" + t)}`;
       return `
@@ -812,13 +801,11 @@
     }
 
     function cardHTML(x, mode){
-      const ticker = String(x.ticker || "").toUpperCase();
-      const who = String(x.companyName || "").trim();
+      const ticker = String(x.ticker||"").toUpperCase();
+      const who = String(x.companyName||"").trim();
       const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
-
-      const dem = mode === "BUY" ? Number(x.demBuyers || 0) : Number(x.demSellers || 0);
-      const rep = mode === "BUY" ? Number(x.repBuyers || 0) : Number(x.repSellers || 0);
-
+      const dem = mode === "BUY" ? Number(x.demBuyers||0) : Number(x.demSellers||0);
+      const rep = mode === "BUY" ? Number(x.repBuyers||0) : Number(x.repSellers||0);
       const conf = confidenceLabel(x);
 
       return `
@@ -835,28 +822,25 @@
               <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
             </div>
           </div>
-
           <div class="divider"></div>
-
           <div class="metaRow">
             <div class="counts">
               <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
               <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
-              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
+              <div class="countItem">Total: <strong>${dem+rep}</strong></div>
             </div>
             <div>${filed ? `Filed: ${filed}` : ""}</div>
           </div>
-
           ${tickerLinksHTML(ticker)}
         </div>
       `;
     }
 
     function overlapCardHTML(x){
-      const ticker = String(x.ticker || "").toUpperCase();
+      const ticker = String(x.ticker||"").toUpperCase();
       const filed = x.lastFiledAt ? String(x.lastFiledAt) : "";
-      const dem = Number(x.demBuyers || 0);
-      const rep = Number(x.repBuyers || 0);
+      const dem = Number(x.demBuyers||0);
+      const rep = Number(x.repBuyers||0);
       const conf = confidenceLabel(x);
 
       return `
@@ -876,31 +860,27 @@
               <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
             </div>
           </div>
-
           <div class="divider"></div>
-
           <div class="metaRow">
             <div class="counts">
               <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
               <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
-              <div class="countItem">Total: <strong>${dem + rep}</strong></div>
+              <div class="countItem">Total: <strong>${dem+rep}</strong></div>
             </div>
             <div>${filed ? `Filed: ${filed}` : ""}</div>
           </div>
-
           ${tickerLinksHTML(ticker)}
         </div>
       `;
     }
 
     function setStockPanel(ticker){
-      const t = String(ticker || "").toUpperCase();
+      const t = String(ticker||"").toUpperCase();
       if (!t){
         el("stockPanel").style.display = "none";
         el("stockPanel").innerHTML = "";
         return;
       }
-
       const symbol = "NASDAQ:" + t;
       const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
       const tv = `https://www.tradingview.com/symbols/${encodeURIComponent(symbol)}/`;
@@ -950,7 +930,7 @@
     function renderKpis(convergence, buys, sells, windowDays){
       const merged = new Map();
       function addCard(x){
-        const t = String(x.ticker || "").toUpperCase();
+        const t = String(x.ticker||"").toUpperCase();
         if (!t) return;
         const cur = merged.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
         cur.demBuyers += Number(x.demBuyers||0);
@@ -964,7 +944,6 @@
 
       const mergedArr = Array.from(merged.values());
       const win = Number(windowDays || 30);
-
       el("kpiTitle").textContent = `Signal dashboard (top 4, rolling ${win} days)`;
 
       const topNet = topBy(mergedArr, x => netFlow(x), 5);
@@ -1075,26 +1054,22 @@
       handleHash();
     }
 
-    // Crypto helpers
     function partyTag(p){
       const s = String(p||"").toUpperCase();
       if (s === "D") return `<span class="tag tagDem">DEM</span>`;
       if (s === "R") return `<span class="tag tagRep">GOP</span>`;
       return `<span class="tag badgeNeu">?</span>`;
     }
-
     function coinsToLabel(coins){
       const arr = Array.isArray(coins) ? coins.map(x => String(x||"").toUpperCase()).filter(Boolean) : [];
       const cleaned = arr.filter(c => c !== "CRYPTO-LINKED");
       if (!cleaned.length) return "CRYPTO";
       return cleaned.join(" · ");
     }
-
     function isDirectCryptoRow(r){
       const coins = Array.isArray(r.coins) ? r.coins : [];
       return coins.some(c => DIRECT_COIN_SET.has(String(c||"").toUpperCase()));
     }
-
     function cryptoDirectCardHTML(r){
       const kind = String(r.kind || "").toUpperCase();
       const who = String(r.politician || "").trim();
@@ -1171,25 +1146,8 @@
 
       el("cryptoLinkedSells").innerHTML =
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No crypto-linked sells in this window.</div>";
-
-      const sumBuys = normalizeList(crypto.buys);
-      const sumSells = normalizeList(crypto.sells);
-      const topBuy = sumBuys.slice(0,5).map(x => `${String(x.symbol||"").toUpperCase()} (${Number(x.count||0)})`).join(", ");
-      const topSell = sumSells.slice(0,5).map(x => `${String(x.symbol||"").toUpperCase()} (${Number(x.count||0)})`).join(", ");
-      const hintBits = [];
-      if (topBuy) hintBits.push(`Top tags BUY: ${topBuy}`);
-      if (topSell) hintBits.push(`Top tags SELL: ${topSell}`);
-      if (hintBits.length){
-        el("cryptoHint").textContent = hintBits.join(" · ");
-      } else {
-        el("cryptoHint").textContent =
-          "Direct crypto items come from disclosure descriptions (BTC, ETH, SOL, LINK, etc). Crypto-linked tickers are ETFs, miners, and exchanges pulled from the same congress feed.";
-      }
     }
 
-    // =========================
-    // Strategy scoring (Congress is a score input, never a requirement)
-    // =========================
     const clamp01 = (x) => Math.max(0, Math.min(1, x));
     function saturating01(x, k=6){
       return 1 - Math.exp(-(Number(x||0) / k));
@@ -1203,105 +1161,79 @@
       function add(card){
         const t = String(card?.ticker || "").toUpperCase().trim();
         if (!t) return;
-
-        const cur = map.get(t) || {
-          ticker: t,
-          demBuyers: 0, repBuyers: 0, demSellers: 0, repSellers: 0
-        };
-
+        const cur = map.get(t) || { ticker: t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
         cur.demBuyers += Number(card.demBuyers || 0);
         cur.repBuyers += Number(card.repBuyers || 0);
         cur.demSellers += Number(card.demSellers || 0);
         cur.repSellers += Number(card.repSellers || 0);
-
         map.set(t, cur);
       }
-
       buys.forEach(add);
       sells.forEach(add);
       return map;
     }
 
     function congressMetrics(agg){
-      if (!agg) {
-        return {
-          hasCongress: false,
-          participation: 0,
-          buys: 0,
-          sells: 0,
-          net: 0,
-          bipartisanBuyOverlap: 0
-        };
-      }
-
+      if (!agg) return { hasCongress:false, participation:0, buys:0, sells:0, net:0, bipartisanBuyOverlap:0 };
       const buys = Number(agg.demBuyers||0) + Number(agg.repBuyers||0);
       const sells = Number(agg.demSellers||0) + Number(agg.repSellers||0);
       const participation = buys + sells;
       const bipartisanBuyOverlap = Math.min(Number(agg.demBuyers||0), Number(agg.repBuyers||0));
-
-      return {
-        hasCongress: participation > 0,
-        participation,
-        buys,
-        sells,
-        net: buys - sells,
-        bipartisanBuyOverlap
-      };
+      return { hasCongress: participation>0, participation, buys, sells, net: buys-sells, bipartisanBuyOverlap };
     }
 
     function scoreCongressSignal(metrics){
       const part01 = saturating01(metrics.participation, 5);
-      const net01 = clamp01((metrics.net + 4) / 8); // net -4..+4
+      const net01 = clamp01((metrics.net + 4) / 8);
       const overlap01 = saturating01(metrics.bipartisanBuyOverlap, 2);
-
-      const weighted01 = (
-        0.55 * part01 +
-        0.30 * net01 +
-        0.15 * overlap01
-      );
-
-      return weighted01 * STRATEGY_WEIGHTS.congressSignal; // 0..25
+      const weighted01 = 0.55*part01 + 0.30*net01 + 0.15*overlap01;
+      return weighted01 * STRATEGY_WEIGHTS.congressSignal;
     }
 
-    function scoreInnovationFit(sectorKey, ticker){
-      const baseBySector = {
-        ai: 0.95,
-        chips: 0.95,
-        medical: 0.90,
-        robotics: 0.90,
-        infrastructure: 0.75
-      };
+    function sectorsForTicker(ticker){
+      const t = String(ticker||"").toUpperCase().trim();
+      if (!t) return [];
+      const mapped = TICKER_SECTOR_MAP[t];
+      if (Array.isArray(mapped) && mapped.length) return mapped.slice();
+      return classifyFallback(t);
+    }
+
+    function buildSectorCandidates(sectorKey, discoveredTickers){
+      const seeds = (SECTOR_SEEDS[sectorKey] || []).map(t => t.toUpperCase());
+      const discAll = (Array.isArray(discoveredTickers) ? discoveredTickers : [])
+        .map(t => String(t||"").toUpperCase().trim())
+        .filter(Boolean);
+
+      const discFiltered = discAll.filter(t => sectorsForTicker(t).includes(sectorKey));
+      return Array.from(new Set([...seeds, ...discFiltered]));
+    }
+
+    function scoreInnovationFit(sectorKey, ticker, isInSector){
+      const baseBySector = { ai:0.95, chips:0.95, medical:0.92, robotics:0.92, infrastructure:0.85 };
       const base01 = baseBySector[sectorKey] ?? 0.6;
+      const sectorCap = isInSector ? 1.0 : 0.25;
       const isSeed = (SECTOR_SEEDS[sectorKey] || []).includes(String(ticker).toUpperCase());
       const boost = isSeed ? 0.05 : 0;
-      return clamp01(base01 + boost) * STRATEGY_WEIGHTS.innovationFit; // 0..40
+      return clamp01((base01 + boost) * sectorCap) * STRATEGY_WEIGHTS.innovationFit;
     }
 
-    function scoreValueDiscipline(ticker){
-      // Placeholder neutral until you add fundamentals
-      return 0.50 * STRATEGY_WEIGHTS.valueDiscipline; // 0..20
+    function scoreValueDiscipline(){
+      return 0.50 * STRATEGY_WEIGHTS.valueDiscipline;
     }
 
     function riskPenalty(ticker){
       const highBetaSpec = new Set(["MARA","RIOT","GME"]);
       const pen01 = highBetaSpec.has(String(ticker).toUpperCase()) ? 0.50 : 0.20;
-      return pen01 * STRATEGY_WEIGHTS.riskPenalty; // 0..15
-    }
-
-    function buildSectorCandidates(sectorKey, discoveredTickers){
-      const seeds = (SECTOR_SEEDS[sectorKey] || []).map(t => t.toUpperCase());
-      const disc = (Array.isArray(discoveredTickers) ? discoveredTickers : [])
-        .map(t => String(t||"").toUpperCase().trim())
-        .filter(Boolean);
-
-      return Array.from(new Set([...seeds, ...disc]));
+      return pen01 * STRATEGY_WEIGHTS.riskPenalty;
     }
 
     function scoreTicker({ sectorKey, ticker, congressAggMap }){
       const agg = congressAggMap.get(ticker);
       const cm = congressMetrics(agg);
 
-      const sInnovation = scoreInnovationFit(sectorKey, ticker);
+      const isInSector = (SECTOR_SEEDS[sectorKey] || []).includes(ticker) || sectorsForTicker(ticker).includes(sectorKey);
+
+      const sInnovation = scoreInnovationFit(sectorKey, ticker, isInSector);
       const sCongress   = scoreCongressSignal(cm);
       const sValue      = scoreValueDiscipline(ticker);
       const pRisk       = riskPenalty(ticker);
@@ -1321,8 +1253,7 @@
         badges: {
           horizon: "5–10Y",
           congress: cm.hasCongress ? "Congress-confirmed" : "Research list"
-        },
-        congress: cm
+        }
       };
     }
 
@@ -1331,10 +1262,7 @@
       const discovered = Array.from(congressAggMap.keys());
       const candidates = buildSectorCandidates(sectorKey, discovered);
 
-      const scored = candidates.map(ticker =>
-        scoreTicker({ sectorKey, ticker, congressAggMap })
-      );
-
+      const scored = candidates.map(ticker => scoreTicker({ sectorKey, ticker, congressAggMap }));
       scored.sort((a,b) => (b.score - a.score) || a.ticker.localeCompare(b.ticker));
       return scored;
     }
@@ -1352,7 +1280,7 @@
           buildStrategyPills();
           const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
           if (cached) renderStrategy(cached);
-        });
+        }, { once:true });
       });
     }
 
@@ -1362,7 +1290,6 @@
       const b = row.breakdown || {};
       const horizon = row.badges?.horizon || "5–10Y";
       const cBadge = row.badges?.congress || "Research list";
-
       const cCls = (cBadge === "Congress-confirmed") ? "badgeBoth" : "badgeNeu";
 
       return `
@@ -1399,7 +1326,6 @@
     function renderStrategy(payload){
       buildStrategyPills();
 
-      // Philosophy box
       el("strategyPhilosophyBox").innerHTML = `
         <div class="kpiTop">
           <div>
@@ -1410,12 +1336,11 @@
         </div>
         <div class="kpiSub">
           Focus on durable moats in AI, chips, medical, robotics, and infrastructure.
-          Use Congress data as an extra signal, not a gate.
+          Congress is a weighted signal, not a gate.
           Prefer accumulation and patience over short-term trading.
         </div>
       `;
 
-      // Scoring box (explicit total score definition)
       const w = STRATEGY_WEIGHTS;
       el("strategyScoringBox").innerHTML = `
         <div class="kpiTop">
@@ -1426,19 +1351,17 @@
           <span class="kpiBadge badgeNeu">0–100</span>
         </div>
         <div class="kpiSub">
-          <div class="scoreRow"><span>Innovation fit</span><span class="kpiBadge badgeNeu">${w.innovationFit} pts</span></div>
-          <div class="scoreRow"><span>Congress signal</span><span class="kpiBadge badgeNeu">${w.congressSignal} pts</span></div>
-          <div class="scoreRow"><span>Value discipline</span><span class="kpiBadge badgeNeu">${w.valueDiscipline} pts</span></div>
-          <div class="scoreRow"><span>Risk penalty</span><span class="kpiBadge badgeNeg">-${w.riskPenalty} pts</span></div>
-
+          <div class="kpiRow"><span>Innovation fit</span><span class="kpiBadge badgeNeu">${w.innovationFit} pts</span></div>
+          <div class="kpiRow"><span>Congress signal</span><span class="kpiBadge badgeNeu">${w.congressSignal} pts</span></div>
+          <div class="kpiRow"><span>Value discipline</span><span class="kpiBadge badgeNeu">${w.valueDiscipline} pts</span></div>
+          <div class="kpiRow"><span>Risk penalty</span><span class="kpiBadge badgeNeg">-${w.riskPenalty} pts</span></div>
           <div class="scoreExplain">
             <strong>Total Score</strong> = Innovation + Congress + Value − Risk.<br/>
-            Congress is never required. If there is no Congress activity, the ticker can still rank based on Innovation and Value.
+            Congress is never required. No Congress activity means it can still rank based on Innovation and Value.
           </div>
         </div>
       `;
 
-      // Ranked list
       const sectorLabel = (SECTOR_ORDER.find(s => s.key === STRATEGY_ACTIVE_SECTOR)?.label) || "Strategy";
       el("strategyListTitle").textContent = `Ranked ideas: ${sectorLabel}`;
 
@@ -1448,7 +1371,6 @@
         ? ranked.map(strategyStockHTML).join("")
         : "<div class='subtle'>No strategy candidates found.</div>";
 
-      // Top picks box
       const top = ranked.slice(0, 5);
       el("strategyTopPicksBox").innerHTML = `
         <div class="kpiTop">
@@ -1476,7 +1398,7 @@
       `;
 
       el("strategyHint").textContent =
-        "Tip: switch sectors above. A ticker labeled Research list can still be a top idea. Congress-confirmed just means it appeared in the current window.";
+        "Sector lists are separated. Discovered tickers from Congress only appear in a sector if the taxonomy maps them there.";
     }
 
     async function loadMain(force){
@@ -1484,10 +1406,8 @@
       const cached = CACHE_MAIN.get(key);
 
       if (cached && !force){
-        if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
-          setStatus("ok", "Using cached congress data ✅", "");
-          renderMain(cached);
-        }
+        setStatus("ok", "Using cached congress data ✅", "");
+        if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto") renderMain(cached);
         return;
       }
 
@@ -1509,16 +1429,8 @@
         }
       }catch(err){
         setStatus("err", "Could not load congress data", String(err));
-        if (ACTIVE_TAB === "Main"){
-          el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
-          el("strategyList").innerHTML = "<div class='subtle'>No strategy displayed.</div>";
-        }
-        if (ACTIVE_TAB === "Crypto"){
-          el("cryptoDirectBuys").innerHTML = "<div class='subtle'>No data displayed.</div>";
-          el("cryptoDirectSells").innerHTML = "<div class='subtle'>No data displayed.</div>";
-          el("cryptoLinkedBuys").innerHTML = "<div class='subtle'>No data displayed.</div>";
-          el("cryptoLinkedSells").innerHTML = "<div class='subtle'>No data displayed.</div>";
-        }
+        el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
+        el("strategyList").innerHTML = "<div class='subtle'>No strategy displayed.</div>";
       }
     }
 
@@ -1527,10 +1439,7 @@
       el("btn30").classList.toggle("on", WINDOW_DAYS === 30);
       el("btn180").classList.toggle("on", WINDOW_DAYS === 180);
       el("btn365").classList.toggle("on", WINDOW_DAYS === 365);
-
-      if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
-        loadMain(false);
-      }
+      if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto") loadMain(false);
     }
 
     function handleRefresh(){
@@ -1563,7 +1472,6 @@
 
     // Init
     showTab("Main");
-    loadMain(false);
   </script>
 </body>
 </html>
