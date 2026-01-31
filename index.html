@@ -594,11 +594,11 @@
 
       <div class="panel">
         <div class="panelTitle">
-          <h2>Common holdings (overlap)</h2>
+          <h2>Common holdings (portfolio overlap)</h2>
           <span class="kpiBadge badgeNeu" id="holdingsWindowBadge">365D</span>
         </div>
         <div class="hint" style="margin-top:6px;">
-          This uses a holdings proxy based on disclosures in the selected window. It ranks tickers by how many unique members disclosed activity.
+          This ranks stocks by how many members hold them in the last 365 days. Independent of buy or sell activity.
         </div>
         <div class="divider"></div>
 
@@ -727,11 +727,8 @@
     // Existing trade activity endpoint
     const TODAY_URL = (windowDays) => `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(windowDays))}`;
 
-    // Holdings overlap endpoint (matches the cleaned backend: /report/congress-holdings)
-    const HOLDINGS_COMMON_URL = (windowDays) => `${BACKEND_BASE}/report/congress-holdings?window_days=${encodeURIComponent(String(windowDays))}&top_n=30`;
-
-    // Market entry endpoint (backend should implement for reliable scoring)
-    const ENTRY_URL = (windowDays) => `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
+    // Holdings overlap endpoint (backend must implement)
+    const HOLDINGS_COMMON_URL = (windowDays) => `${BACKEND_BASE}/report/holdings/common?window_days=${encodeURIComponent(String(windowDays))}`;
 
     const el = (id) => document.getElementById(id);
 
@@ -740,7 +737,6 @@
 
     let CACHE_MAIN = new Map();
     let CACHE_HOLDINGS = new Map();
-    let CACHE_ENTRY = new Map();
 
     // Crypto
     const CRYPTO_TICKERS = new Set([
@@ -778,7 +774,7 @@
       infrastructure: ["ANET","CSCO","MSFT","AMZN","GOOGL","ORCL","EQIX","DLR","VRT","ETN","PWR","NVT","HUBB","AME","TT","NEE","CEG","CCJ","BEPC","ENPH"]
     };
 
-    // Taxonomy map
+    // Taxonomy map (tighten overlaps here)
     const TICKER_SECTOR_MAP = {
       "NVDA":["ai","chips"], "MSFT":["ai","infrastructure"], "GOOGL":["ai","infrastructure"], "AMZN":["ai","infrastructure"],
       "META":["ai"], "PLTR":["ai"], "SNOW":["ai"], "DDOG":["ai"], "NOW":["ai"], "CRM":["ai"], "ORCL":["ai","infrastructure"],
@@ -839,11 +835,11 @@
       el("navScore").classList.toggle("tabBottomActive", tab === "Score");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
+      // show window toggles on tabs that use congress window data
       el("mainWindowTools").style.display = (tab === "Congress" || tab === "Crypto" || tab === "Score") ? "" : "none";
 
       if (tab === "Main"){
         loadMain(false);
-        loadEntryIndex(365, false);
       }
       if (tab === "Congress"){
         loadMain(false);
@@ -1375,6 +1371,7 @@
       const disc = (Array.isArray(discoveredTickers) ? discoveredTickers : [])
         .map(t => String(t||"").toUpperCase().trim()).filter(Boolean);
 
+      // Only allow discovered tickers if taxonomy maps them to the sector
       const filteredDisc = disc.filter(t => sectorsForTicker(t).includes(sectorKey));
       return Array.from(new Set([...seeds, ...filteredDisc]));
     }
@@ -1598,108 +1595,115 @@
       }
     }
 
-    // Market Entry Index (backend driven)
-    function entryBadge(score){
-      const s = Number(score || 0);
-      if (s >= 75) return {label:"RISK-ON", cls:"badgePos"};
-      if (s >= 55) return {label:"NEUTRAL", cls:"badgeNeu"};
-      return {label:"RISK-OFF", cls:"badgeNeg"};
+    // -----------------------------
+    // Market Entry Index (frontend-only, congress-based)
+    // -----------------------------
+    function computeMarketEntryFromCongress(payload){
+      const buys = Array.isArray(payload?.politicianBuys) ? payload.politicianBuys : [];
+      const sells = Array.isArray(payload?.politicianSells) ? payload.politicianSells : [];
+      const overlap = Array.isArray(payload?.convergence) ? payload.convergence : [];
+
+      const buyCount = buys.reduce((s,x)=>s + Number(x.demBuyers||0) + Number(x.repBuyers||0),0);
+      const sellCount = sells.reduce((s,x)=>s + Number(x.demSellers||0) + Number(x.repSellers||0),0);
+
+      const participation = buyCount + sellCount;
+      const net = buyCount - sellCount;
+      const ratio = sellCount === 0 ? (buyCount > 0 ? 2 : 1) : (buyCount / sellCount);
+
+      const overlapStrength = overlap.reduce((s,x)=>s + Math.min(Number(x.demBuyers||0), Number(x.repBuyers||0)),0);
+
+      // 0–100 score
+      let score = 0;
+
+      // 40% net accumulation, normalized by participation
+      score += Math.max(0, Math.min(40, (net / Math.max(10, participation)) * 40 + 20));
+
+      // 30% buy/sell ratio dominance
+      score += Math.max(0, Math.min(30, ratio * 15));
+
+      // 20% participation breadth
+      score += Math.min(20, participation / 10);
+
+      // 10% bipartisan overlap bonus
+      score += Math.min(10, overlapStrength * 2);
+
+      score = Math.round(Math.max(0, Math.min(100, score)));
+
+      let regime = "WAIT";
+      let action = "Wait or very small DCA";
+      if (score >= 70){
+        regime = "ENTER";
+        action = "Increase DCA pace";
+      } else if (score >= 50){
+        regime = "NEUTRAL";
+        action = "Slow DCA only";
+      }
+
+      return {
+        score,
+        regime,
+        action,
+        stats: { buyCount, sellCount, net, participation, overlapStrength, ratio }
+      };
     }
 
-    function renderEntryIndex(payload){
-      if (!payload || typeof payload.score !== "number"){
+    function entryBadgeByScore(score){
+      const s = Number(score || 0);
+      if (s >= 70) return {label:"ENTER", cls:"badgePos"};
+      if (s >= 50) return {label:"NEUTRAL", cls:"badgeNeu"};
+      return {label:"WAIT", cls:"badgeNeg"};
+    }
+
+    function renderEntryIndexFromCongress(payload){
+      if (!payload){
         el("entryKpiScore").innerHTML = `
           <div class="kpiTop">
             <div>
               <div class="kpiTitle">Market entry index</div>
-              <div class="kpiValue">Unavailable</div>
+              <div class="kpiValue">Loading…</div>
             </div>
-            <span class="kpiBadge badgeNeu">Needs backend</span>
+            <span class="kpiBadge badgeNeu">Congress</span>
           </div>
-          <div class="kpiSub">
-            Add <span class="mono">/market/entry</span> to compute a real entry score from SPX trend, volatility, breadth, credit, and a Buffett proxy.
-          </div>
+          <div class="kpiSub">Waiting for congress data.</div>
         `;
-
-        el("entryKpiRules").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">How it works</div>
-              <div class="kpiValue">Score 0–100</div>
-            </div>
-            <span class="kpiBadge badgeNeu">Rules</span>
-          </div>
-          <div class="kpiSub">
-            Suggested components:
-            <div class="kpiList">
-              <div class="kpiRow"><span>SPX trend</span><span class="kpiBadge badgeNeu">40%</span></div>
-              <div class="kpiRow"><span>Volatility (VIX)</span><span class="kpiBadge badgeNeu">20%</span></div>
-              <div class="kpiRow"><span>Breadth</span><span class="kpiBadge badgeNeu">15%</span></div>
-              <div class="kpiRow"><span>Credit stress</span><span class="kpiBadge badgeNeu">15%</span></div>
-              <div class="kpiRow"><span>Rates stress</span><span class="kpiBadge badgeNeu">10%</span></div>
-            </div>
-          </div>
-        `;
-
-        el("entryKpiBuffett").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">Buffett proxy</div>
-              <div class="kpiValue">Optional</div>
-            </div>
-            <span class="kpiBadge badgeNeu">Proxy</span>
-          </div>
-          <div class="kpiSub">
-            Two simple options to add to backend:
-            <div class="kpiList">
-              <div class="kpiRow"><span>BRK relative strength vs SPY</span><span class="kpiBadge badgeNeu">trend</span></div>
-              <div class="kpiRow"><span>Cash-tilt signal</span><span class="kpiBadge badgeNeu">if available</span></div>
-            </div>
-          </div>
-        `;
-
-        el("entryHint").textContent =
-          "Once the backend exposes /market/entry, this box becomes your go or no-go meter for adding risk. Until then, it stays explicit about being unavailable.";
+        el("entryKpiRules").innerHTML = `<div class="kpiSub">—</div>`;
+        el("entryKpiBuffett").innerHTML = `<div class="kpiSub">—</div>`;
+        el("entryHint").textContent = "";
         return;
       }
 
-      const b = entryBadge(payload.score);
-      const regime = payload.regime || b.label;
-      const signal = payload.signal || (payload.score >= 70 ? "ACCUMULATE" : payload.score >= 55 ? "ACCUMULATE SLOWLY" : "WAIT / SMALL DCA");
-      const notes = payload.notes || "";
+      const r = computeMarketEntryFromCongress(payload);
+      const b = entryBadgeByScore(r.score);
 
       el("entryKpiScore").innerHTML = `
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Market entry index</div>
-            <div class="kpiValue">${Math.round(payload.score)}/100</div>
+            <div class="kpiValue">${r.score}/100</div>
           </div>
-          <span class="kpiBadge ${b.cls}">${regime}</span>
+          <span class="kpiBadge ${b.cls}">${b.label}</span>
         </div>
         <div class="kpiSub">
-          Suggested action: <strong>${signal}</strong><br/>
-          ${notes ? `<span class="muted">${notes}</span>` : ""}
+          Suggested action: <strong>${r.action}</strong><br/>
+          <span class="muted">Congress-based pacing signal</span>
         </div>
       `;
-
-      const c = payload.components || {};
-      function pct01(x){ return `${Math.round(100 * Number(x || 0))}%`; }
 
       el("entryKpiRules").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Components</div>
-            <div class="kpiValue">What drove it</div>
+            <div class="kpiTitle">Inputs</div>
+            <div class="kpiValue">Buys vs sells</div>
           </div>
-          <span class="kpiBadge badgeNeu">${payload.date || ""}</span>
+          <span class="kpiBadge badgeNeu">${Number(payload.windowDays || 30)}D</span>
         </div>
         <div class="kpiSub">
           <div class="kpiList">
-            <div class="kpiRow"><span>SPX trend</span><span class="kpiBadge badgeNeu">${pct01(c.spxTrend)}</span></div>
-            <div class="kpiRow"><span>Volatility</span><span class="kpiBadge badgeNeu">${pct01(c.vix)}</span></div>
-            <div class="kpiRow"><span>Breadth</span><span class="kpiBadge badgeNeu">${pct01(c.breadth)}</span></div>
-            <div class="kpiRow"><span>Credit</span><span class="kpiBadge badgeNeu">${pct01(c.credit)}</span></div>
-            <div class="kpiRow"><span>Rates</span><span class="kpiBadge badgeNeu">${pct01(c.rates)}</span></div>
+            <div class="kpiRow"><span>Buys</span><span class="kpiBadge badgeNeu">${r.stats.buyCount}</span></div>
+            <div class="kpiRow"><span>Sells</span><span class="kpiBadge badgeNeu">${r.stats.sellCount}</span></div>
+            <div class="kpiRow"><span>Net</span><span class="kpiBadge ${r.stats.net >= 0 ? "badgePos" : "badgeNeg"}">${r.stats.net >= 0 ? "+" : ""}${r.stats.net}</span></div>
+            <div class="kpiRow"><span>Participation</span><span class="kpiBadge badgeNeu">${r.stats.participation}</span></div>
+            <div class="kpiRow"><span>Overlap</span><span class="kpiBadge badgeBoth">${r.stats.overlapStrength}</span></div>
           </div>
         </div>
       `;
@@ -1707,59 +1711,34 @@
       el("entryKpiBuffett").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Buffett proxy</div>
-            <div class="kpiValue">${typeof c.buffettProxy === "number" ? pct01(c.buffettProxy) : "—"}</div>
+            <div class="kpiTitle">Interpretation</div>
+            <div class="kpiValue">Value investor</div>
           </div>
-          <span class="kpiBadge badgeNeu">Proxy</span>
+          <span class="kpiBadge badgeNeu">Simple</span>
         </div>
         <div class="kpiSub">
-          Uses a proxy, not private Buffett cash data. Best option: relative strength (BRK.B vs SPY) plus drawdown filters.
+          This does not time tops or bottoms. It measures whether congress disclosures show accumulation (risk-on) or distribution (risk-off).
         </div>
       `;
 
       el("entryHint").textContent =
-        "Use this as a pacing tool. High score means increase DCA pace and accept risk. Low score means slow down, stay selective, or wait for better conditions.";
+        "Use ENTER to speed up DCA into your strategy basket. Use WAIT to slow down and be selective.";
     }
 
-    async function loadEntryIndex(windowDays, force){
-      const key = String(windowDays || 365);
-      if (CACHE_ENTRY.has(key) && !force){
-        renderEntryIndex(CACHE_ENTRY.get(key));
-        return;
-      }
-      try{
-        const url = ENTRY_URL(windowDays || 365);
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-        CACHE_ENTRY.set(key, data);
-        renderEntryIndex(data);
-      }catch(err){
-        renderEntryIndex(null);
-      }
-    }
-
-    // Holdings overlap (supports /report/congress-holdings response)
-    function holdingsBadgeByScore(score){
-      const s = Number(score || 0);
-      if (s >= 80) return { label: "VERY BROAD", cls: "badgePos" };
-      if (s >= 60) return { label: "BROAD", cls: "badgeNeu" };
-      if (s >= 40) return { label: "MODERATE", cls: "badgeNeu" };
+    // Holdings overlap
+    function holdingsBadge(holders){
+      const n = Number(holders || 0);
+      if (n >= 40) return { label: "VERY COMMON", cls: "badgePos" };
+      if (n >= 25) return { label: "COMMON", cls: "badgeNeu" };
+      if (n >= 15) return { label: "MODERATE", cls: "badgeNeu" };
       return { label: "NICHE", cls: "badgeNeu" };
     }
 
     function holdingsRowHTML(item){
       const t = String(item.ticker || "").toUpperCase();
-      const holders = Number(item.holderCount ?? item.holders ?? 0);
-      const dem = Number(item.demHolders ?? 0);
-      const rep = Number(item.repHolders ?? 0);
-      const score = Number(item.holdingsScore ?? 0);
-      const last = String(item.lastActivity || "");
-      const b = holdingsBadgeByScore(score);
-
-      const bip = (dem > 0 && rep > 0);
-      const bipBadge = bip ? `<span class="kpiBadge badgeBoth">Bipartisan</span>` : `<span class="kpiBadge badgeNeu">Single-party</span>`;
+      const name = String(item.companyName || "").trim();
+      const holders = Number(item.holders || item.holderCount || 0);
+      const b = holdingsBadge(holders);
 
       return `
         <div class="holdingsItem">
@@ -1767,45 +1746,27 @@
             <div>
               <div class="tickerLine">
                 <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
-                <span class="kpiBadge ${b.cls}">${b.label}</span>
+                ${name ? `<div class="who">${name}</div>` : ""}
               </div>
               <div class="stockMeta">
+                <span class="kpiBadge ${b.cls}">${b.label}</span>
                 <span class="kpiBadge badgeNeu">Holders: <strong>${holders}</strong></span>
-                <span class="kpiBadge badgeNeu">Score: <strong>${score}/100</strong></span>
-                ${bipBadge}
-                ${last ? `<span class="kpiBadge badgeNeu">Last: ${last}</span>` : ""}
               </div>
             </div>
             <div class="tags">
-              <span class="tag tagSEC">OVERLAP</span>
+              <span class="tag tagSEC">HOLDINGS</span>
             </div>
           </div>
-
-          <div class="divider"></div>
-
-          <div class="metaRow">
-            <div class="counts">
-              <div class="countItem"><span class="dot dotDem"></span> Dem holders: <strong>${dem}</strong></div>
-              <div class="countItem"><span class="dot dotRep"></span> GOP holders: <strong>${rep}</strong></div>
-            </div>
-          </div>
-
           ${tickerLinksHTML(t)}
         </div>
       `;
     }
 
-    function renderHoldingsKpis(payload, list){
-      const win = Number(payload?.windowDays || 365);
-      const breadth = payload?.breadth || {};
-      const uniquePol = Number(breadth.uniquePoliticians || 0);
-      const uniqueTickers = Number(breadth.uniqueTickers || 0);
-
-      const items = Array.isArray(list) ? list : [];
-      const top = items[0] || null;
-
-      const avgHolders = items.length ? Math.round(items.reduce((s,x)=>s+Number(x.holderCount||0),0) / items.length) : 0;
-      const avgScore = items.length ? Math.round(items.reduce((s,x)=>s+Number(x.holdingsScore||0),0) / items.length) : 0;
+    function renderHoldingsKpis(items){
+      const top = items[0];
+      const totalTickers = items.length;
+      const avg = totalTickers ? Math.round(items.reduce((s,x)=>s+Number(x.holders||0),0) / totalTickers) : 0;
+      const top5 = items.slice(0,5);
 
       el("holdingsKpiTop").innerHTML = `
         <div class="kpiTop">
@@ -1813,14 +1774,16 @@
             <div class="kpiTitle">Top holding</div>
             <div class="kpiValue">${top ? String(top.ticker).toUpperCase() : "—"}</div>
           </div>
-          <span class="kpiBadge badgeNeu">${win}D</span>
+          <span class="kpiBadge badgeNeu">365D</span>
         </div>
-        <div class="kpiSub">
-          ${top ? `Holders: <strong>${Number(top.holderCount||0)}</strong> · Score: <strong>${Number(top.holdingsScore||0)}/100</strong>` : "No overlap data."}
-        </div>
+        <div class="kpiSub">${top ? `Holders: <strong>${Number(top.holders||0)}</strong>` : "No holdings data."}</div>
         <div class="kpiList">
-          <div class="kpiRow"><span class="muted">Avg holders (top list)</span><span class="kpiBadge badgeNeu">${avgHolders}</span></div>
-          <div class="kpiRow"><span class="muted">Avg score (top list)</span><span class="kpiBadge badgeNeu">${avgScore}/100</span></div>
+          ${top5.length ? top5.map(x => `
+            <div class="kpiRow">
+              <a href="#stock=${encodeURIComponent(String(x.ticker).toUpperCase())}"><strong>${String(x.ticker).toUpperCase()}</strong></a>
+              <span class="kpiBadge badgeNeu">${Number(x.holders||0)} holders</span>
+            </div>
+          `).join("") : `<div class="kpiRow"><span class="muted">No data</span></div>`}
         </div>
       `;
 
@@ -1828,16 +1791,13 @@
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Breadth</div>
-            <div class="kpiValue">${uniquePol || 0} members</div>
+            <div class="kpiValue">${totalTickers || 0} tickers</div>
           </div>
-          <span class="kpiBadge badgeNeu">${win}D</span>
+          <span class="kpiBadge badgeNeu">Top 30</span>
         </div>
-        <div class="kpiSub">
-          Universe is the unique members who disclosed activity in this window.
-        </div>
+        <div class="kpiSub">Average holder count across this list.</div>
         <div class="kpiList">
-          <div class="kpiRow"><span class="muted">Unique tickers</span><span class="kpiBadge badgeNeu">${uniqueTickers || 0}</span></div>
-          <div class="kpiRow"><span class="muted">Displayed</span><span class="kpiBadge badgeNeu">${items.length}</span></div>
+          <div class="kpiRow"><span class="muted">Average</span><span class="kpiBadge badgeNeu">${avg}</span></div>
         </div>
       `;
 
@@ -1845,55 +1805,46 @@
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Holdings score</div>
-            <div class="kpiValue">0–100</div>
+            <div class="kpiValue">Holder count</div>
           </div>
-          <span class="kpiBadge badgeNeu">Proxy</span>
+          <span class="kpiBadge badgeNeu">Simple</span>
         </div>
         <div class="kpiSub">
-          <div class="kpiRow"><span>Primary</span><span class="kpiBadge badgeNeu">Breadth</span></div>
-          <div class="kpiRow"><span>Input</span><span class="kpiBadge badgeNeu">holderCount / uniquePoliticians</span></div>
-          <div class="kpiRow"><span>Boost</span><span class="kpiBadge badgeBoth">Bipartisan</span></div>
+          <div class="kpiRow"><span>Score</span><span class="kpiBadge badgeNeu">= # holders</span></div>
+          <div class="kpiRow"><span>Window</span><span class="kpiBadge badgeNeu">365D</span></div>
           <div class="scoreExplain">
-            This is a proxy based on disclosures, not a real-time holdings statement. Use it to find common names, not to time entries.
+            Backend must aggregate disclosures into per-ticker holder counts.
           </div>
         </div>
       `;
     }
 
     function renderHoldingsCommon(payload){
+      const list = Array.isArray(payload?.commonHoldings) ? payload.commonHoldings : Array.isArray(payload?.holdings) ? payload.holdings : [];
       const win = Number(payload?.windowDays || 365);
       el("holdingsWindowBadge").textContent = `${win}D`;
-
-      const list = Array.isArray(payload?.topHoldings) ? payload.topHoldings
-        : Array.isArray(payload?.holdings) ? payload.holdings
-        : [];
 
       if (!list.length){
         el("holdingsList").innerHTML = "<div class='subtle'>No holdings overlap data returned.</div>";
         el("holdingsHint").textContent =
-          "If this is empty, confirm the backend is deployed with /report/congress-holdings.";
-        renderHoldingsKpis(payload || {}, []);
+          "If this is empty, implement /report/holdings/common to return {ticker, companyName, holders}.";
+        renderHoldingsKpis([]);
         return;
       }
 
-      const cleaned = list.slice().map(x => ({
-        ticker: String(x.ticker || "").toUpperCase(),
-        holderCount: Number(x.holderCount ?? x.holders ?? 0),
-        demHolders: Number(x.demHolders ?? 0),
-        repHolders: Number(x.repHolders ?? 0),
-        breadthPct: Number(x.breadthPct ?? 0),
-        holdingsScore: Number(x.holdingsScore ?? 0),
-        lastActivity: String(x.lastActivity || "")
-      })).filter(x => x.ticker && x.holderCount >= 0);
+      const sorted = list.slice().map(x => ({
+        ticker: x.ticker,
+        companyName: x.companyName,
+        holders: Number(x.holders ?? x.holderCount ?? x.count ?? 0)
+      })).filter(x => x.ticker && x.holders >= 0)
+        .sort((a,b) => (b.holders - a.holders) || String(a.ticker).localeCompare(String(b.ticker)));
 
-      cleaned.sort((a,b) => (b.holderCount - a.holderCount) || (b.holdingsScore - a.holdingsScore) || a.ticker.localeCompare(b.ticker));
-
-      const trimmed = cleaned.slice(0, 30);
-      renderHoldingsKpis(payload || {}, trimmed);
+      const trimmed = sorted.slice(0, 30);
+      renderHoldingsKpis(trimmed);
 
       el("holdingsList").innerHTML = trimmed.map(holdingsRowHTML).join("");
       el("holdingsHint").textContent =
-        "Common overlap finds crowding. Combine with the Market Entry Index to pace buying.";
+        "This is popularity by holdings, not a timing signal. Combine with Market Entry Index for pacing.";
     }
 
     async function loadHoldingsCommon(windowDays, force){
@@ -1916,9 +1867,9 @@
         CACHE_HOLDINGS.set(key, data);
         renderHoldingsCommon(data);
       }catch(err){
-        renderHoldingsCommon({ windowDays: windowDays || 365, topHoldings: [], holdings: [] });
+        renderHoldingsCommon({ windowDays: windowDays || 365, commonHoldings: [] });
         el("holdingsHint").textContent =
-          "Holdings overlap could not load. Confirm backend has /report/congress-holdings and it is deployed.";
+          "Holdings overlap could not load. Backend likely does not have /report/holdings/common implemented yet.";
       }
     }
 
@@ -1926,6 +1877,10 @@
     function renderMain(payload){
       const win = Number(payload.windowDays || WINDOW_DAYS || 30);
       el("reportDate").textContent = payload.date ? `${payload.date} · window ${win}D` : `window ${win}D`;
+
+      // Market entry index is now computed from congress payload, no backend
+      renderEntryIndexFromCongress(payload);
+
       renderStrategy(payload);
       renderCryptoFromMain(payload);
       handleHash();
@@ -1940,6 +1895,7 @@
         if (ACTIVE_TAB === "Main") renderMain(cached);
         if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(cached);
         if (ACTIVE_TAB === "Congress") renderCongressTradeSections(cached);
+        if (ACTIVE_TAB === "Main") renderEntryIndexFromCongress(cached);
         return;
       }
 
@@ -1985,9 +1941,7 @@
       }
       if (ACTIVE_TAB === "Main"){
         CACHE_MAIN.delete(String(WINDOW_DAYS));
-        CACHE_ENTRY.delete("365");
         loadMain(true);
-        loadEntryIndex(365, true);
         return;
       }
       CACHE_MAIN.delete(String(WINDOW_DAYS));
@@ -2027,7 +1981,6 @@
     // Start
     showTab("Main");
     loadMain(false);
-    loadEntryIndex(365, false);
   </script>
 </body>
 </html>
