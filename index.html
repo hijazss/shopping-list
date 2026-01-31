@@ -267,12 +267,11 @@
       background:rgba(255,255,255,.04);
       white-space:nowrap;
     }
-    .tagDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
-    .tagRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
-    .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
+    .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
+    .tagInfo{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
 
     .metaRow{
       margin-top:7px;
@@ -284,23 +283,6 @@
       flex-wrap:wrap;
       line-height:1.25;
     }
-
-    .counts{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .countItem{
-      display:flex;
-      gap:6px;
-      align-items:center;
-      font-size:12px;
-      color:rgba(255,255,255,.88);
-    }
-    .dot{width:8px;height:8px;border-radius:999px;display:inline-block}
-    .dotDem{background:var(--dem)}
-    .dotRep{background:var(--rep)}
 
     .divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0 7px}
 
@@ -387,7 +369,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(5,1fr);
+      grid-template-columns:repeat(4,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -399,54 +381,61 @@
     }
     .tabBottomActive{color:#fff}
 
-    /* Leaders list */
-    .eventList{
+    /* Leaders delta grid */
+    .deltaGrid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
       margin-top:8px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
     }
-    .eventRow{
-      border:1px solid rgba(255,255,255,.08);
+    @media (min-width: 900px){
+      .deltaGrid{grid-template-columns:1fr 1fr;}
+    }
+    .deltaBox{
+      border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.02);
       border-radius:12px;
-      padding:8px;
+      padding:10px;
     }
-    .eventTop{
+    .deltaTitle{
       display:flex;
       justify-content:space-between;
+      align-items:center;
       gap:10px;
-      align-items:flex-start;
-      flex-wrap:wrap;
+      margin-bottom:8px;
     }
-    .eventTitle{
-      font-weight:900;
+    .deltaTitle strong{
       font-size:12px;
       letter-spacing:.02em;
     }
-    .eventMeta{
-      margin-top:6px;
+    .deltaList{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .deltaRow{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      font-size:12px;
+    }
+    .deltaLeft{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      min-width:0;
+    }
+    .deltaTicker{
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .deltaName{
       color:var(--muted);
-      font-size:12px;
-      line-height:1.25;
-    }
-
-    .smallBtn{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      color:#fff;
-      padding:7px 10px;
-      border-radius:12px;
-      font-size:12px;
-      cursor:pointer;
-    }
-    .select{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      color:#fff;
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:12px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width:520px;
     }
   </style>
 </head>
@@ -468,7 +457,6 @@
 
     <div class="tabRow">
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
-      <button class="tabBtn" id="tabPerfBtn">Performance (2Y)</button>
       <button class="tabBtn" id="tabLeadersBtn">Leaders</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
       <button class="tabBtn" id="tabSearchBtn">Search</button>
@@ -512,75 +500,30 @@
       </div>
 
       <div class="hint" id="mainHint">
-        Sort is by total participation (both parties) within the rolling 30-day window. Tap ticker for chart.
-      </div>
-    </section>
-
-    <!-- PERFORMANCE VIEW -->
-    <section id="viewPerf" style="display:none;">
-      <div class="sectionTitle">Congress trading performance (2Y)</div>
-
-      <div class="panel" style="margin-top:10px;">
-        <div class="metaRow" style="margin-top:0;">
-          <div style="color:rgba(255,255,255,.92)">
-            This tab is not affected by 30D / 180D / 365D. It analyzes the last 2 years of trades and scores forward returns.
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-          <div class="hint" style="margin:0;">Forward horizon:</div>
-          <select id="perfHorizon" class="select">
-            <option value="7">7D</option>
-            <option value="30" selected>30D</option>
-            <option value="60">60D</option>
-            <option value="90">90D</option>
-          </select>
-          <button class="smallBtn" id="perfReloadBtn">Reload</button>
-          <div class="hint" id="perfSmallStatus" style="margin:0; flex:1;"> </div>
-        </div>
-      </div>
-
-      <div id="perfBox" class="panel" style="margin-top:10px;">
-        <div class="subtle" id="perfStatus">Loading…</div>
+        Sort is by total participation (both parties) within the rolling window. Tap ticker for chart.
       </div>
     </section>
 
     <!-- LEADERS VIEW -->
     <section id="viewLeaders" style="display:none;">
-      <div class="sectionTitle">Public filings leaders (SEC EDGAR, rolling 365 days)</div>
+      <div class="sectionTitle">Leaders accumulation view (13F deltas + Form 4)</div>
+      <div class="panel">
+        <div class="hint" style="margin-top:0;">
+          Goal: show stocks, not forms. 13F is quarterly, so accumulation is quarter-over-quarter.
+          If the backend only returns filings, this will fall back to a basic filings view.
+        </div>
+      </div>
       <div id="leadersList"></div>
-      <div class="hint">Today this shows filing events. To show tickers bought/sold from 13F you need backend holdings-delta logic.</div>
     </section>
 
     <!-- CRYPTO VIEW -->
     <section id="viewCrypto" style="display:none;">
       <div class="sectionTitle" id="cryptoTitle">Crypto congress disclosures (rolling 30 days)</div>
-
-      <div class="grid2">
-        <div>
-          <div class="sectionTitle">Buys</div>
-
-          <div class="sectionTitle" style="margin-top:8px;">Direct crypto disclosures</div>
-          <div id="cryptoDirectBuys"></div>
-
-          <div class="sectionTitle" style="margin-top:14px;">Crypto-linked tickers (ETFs, miners, exchanges)</div>
-          <div id="cryptoLinkedBuys"></div>
-        </div>
-
-        <div>
-          <div class="sectionTitle">Sells</div>
-
-          <div class="sectionTitle" style="margin-top:8px;">Direct crypto disclosures</div>
-          <div id="cryptoDirectSells"></div>
-
-          <div class="sectionTitle" style="margin-top:14px;">Crypto-linked tickers (ETFs, miners, exchanges)</div>
-          <div id="cryptoLinkedSells"></div>
-        </div>
-      </div>
-
-      <div class="hint" id="cryptoHint">
-        Direct crypto items come from disclosure descriptions (BTC, ETH, SOL, LINK, etc). Crypto-linked tickers are ETFs, miners, and exchanges pulled from the same congress feed.
-      </div>
+      <div class="hint">Crypto view unchanged.</div>
+      <div id="cryptoDirectBuys"></div>
+      <div id="cryptoDirectSells"></div>
+      <div id="cryptoLinkedBuys"></div>
+      <div id="cryptoLinkedSells"></div>
     </section>
 
     <!-- SEARCH VIEW -->
@@ -604,7 +547,6 @@
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
-      <div class="tabBottom" id="navPerf">Performance</div>
       <div class="tabBottom" id="navLeaders">Leaders</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
       <div class="tabBottom" id="navSearch">Search</div>
@@ -612,31 +554,16 @@
   </nav>
 
   <script>
-    // Backend endpoints
     const BACKEND_BASE = "https://finance-backend-dzta.onrender.com";
     const LEADERS_URL = BACKEND_BASE + "/report/public-leaders";
-    const PERF_URL = BACKEND_BASE + "/report/performance-2y";
 
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "Main";
     let WINDOW_DAYS = 30;
+
     let CACHE_MAIN = new Map();
     let CACHE_LEADERS = null;
-
-    // Performance tab cache
-    let CACHE_PERF = null;
-
-    // Crypto-linked stock tickers (ETFs, miners, exchanges)
-    const CRYPTO_TICKERS = new Set([
-      "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
-      "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
-      "ETHE","ETHA","WGMI","BKCH","BLOK","BITQ","DAPP"
-    ]);
-
-    const DIRECT_COIN_SET = new Set([
-      "BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"
-    ]);
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -649,7 +576,6 @@
     function setTitleForTab(tab){
       const map = {
         "Main":"Convergence",
-        "Performance":"Performance (2Y)",
         "Leaders":"Leaders",
         "Crypto":"Crypto",
         "Search":"Search"
@@ -662,35 +588,26 @@
       setTitleForTab(tab);
 
       el("viewMain").style.display = tab === "Main" ? "" : "none";
-      el("viewPerf").style.display = tab === "Performance" ? "" : "none";
       el("viewLeaders").style.display = tab === "Leaders" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
       el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
-
-      // Only show 30/180/365 window toggles for Main and Crypto
       el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
 
-      // top tab styles
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
-      el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
       el("tabLeadersBtn").classList.toggle("tabBtnActive", tab === "Leaders");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
       el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
 
-      // bottom nav styles
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
-      el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
       el("navLeaders").classList.toggle("tabBottomActive", tab === "Leaders");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
       el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
-      // load tab data if needed
       if (tab === "Main") loadMain(false);
       if (tab === "Crypto") loadMain(false);
       if (tab === "Leaders") loadLeaders(false);
-      if (tab === "Performance") loadPerf(false);
     }
 
     function normalizeList(arr){ return Array.isArray(arr) ? arr.slice() : []; }
@@ -781,8 +698,8 @@
 
           <div class="metaRow">
             <div class="counts">
-              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
-              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
+              <div class="countItem">Dem: <strong>${dem}</strong></div>
+              <div class="countItem">GOP: <strong>${rep}</strong></div>
               <div class="countItem">Total: <strong>${dem + rep}</strong></div>
             </div>
             <div>${filed ? `Filed: ${filed}` : ""}</div>
@@ -810,8 +727,6 @@
               </div>
             </div>
             <div class="tags">
-              <span class="tag tagDem">DEM</span>
-              <span class="tag tagRep">GOP</span>
               <span class="tag tagBoth">OVERLAP</span>
               <span class="tag tagBuy">BUY</span>
               <span class="tag ${confidenceBadgeClass(conf)}">${conf}</span>
@@ -822,8 +737,8 @@
 
           <div class="metaRow">
             <div class="counts">
-              <div class="countItem"><span class="dot dotDem"></span> Dem: <strong>${dem}</strong></div>
-              <div class="countItem"><span class="dot dotRep"></span> GOP: <strong>${rep}</strong></div>
+              <div class="countItem">Dem: <strong>${dem}</strong></div>
+              <div class="countItem">GOP: <strong>${rep}</strong></div>
               <div class="countItem">Total: <strong>${dem + rep}</strong></div>
             </div>
             <div>${filed ? `Filed: ${filed}` : ""}</div>
@@ -850,12 +765,12 @@
       el("stockPanel").innerHTML = `
         <div class="panel">
           <div class="panelTitle">
-            <h2>${t} chart (MA + RSI)</h2>
+            <h2>${t} chart</h2>
             <button class="closeBtn" id="closeStockBtn">Close</button>
           </div>
           <iframe
             title="TradingView Chart"
-            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=%23151522&studies=%5B%22MASimple%40tv-basicstudies%22%2C%22RSI%40tv-basicstudies%22%5D&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1"
+            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=%23151522&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1"
             loading="lazy">
           </iframe>
           <div class="miniLinks">
@@ -917,7 +832,7 @@
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
-        <div class="kpiSub">Highest accumulation (positive) or distribution (negative) in rolling ${win}D.</div>
+        <div class="kpiSub">Highest accumulation or distribution in rolling ${win}D.</div>
         <div class="kpiList">
           ${topNet.map(x => {
             const nf = netFlow(x);
@@ -957,7 +872,7 @@
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
-        <div class="kpiSub">Most active tickers in the rolling ${win}D pull.</div>
+        <div class="kpiSub">Most active tickers in rolling ${win}D.</div>
         <div class="kpiList">
           ${topTickers.map(x => {
             const total = congressScore(x);
@@ -978,11 +893,11 @@
           </div>
           <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
-        <div class="kpiSub">Strongest accumulation, selling, and overlap in rolling ${win}D.</div>
+        <div class="kpiSub">Best accumulation, selling, and overlap in rolling ${win}D.</div>
         <div class="kpiList">
-          <div class="kpiRow"><span class="muted">🔥 Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">⚠️ Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
-          <div class="kpiRow"><span class="muted">🤝 Overlap</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">Accumulation</span>${topAcc ? `<a href="#stock=${topAcc.ticker}"><strong>${topAcc.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">Selling</span>${topDist ? `<a href="#stock=${topDist.ticker}"><strong>${topDist.ticker}</strong></a>` : `<span class="muted">None</span>`}</div>
+          <div class="kpiRow"><span class="muted">Overlap</span>${topConv ? `<a href="#stock=${String(topConv.ticker||"").toUpperCase()}"><strong>${String(topConv.ticker||"").toUpperCase()}</strong></a>` : `<span class="muted">None</span>`}</div>
         </div>
       `;
     }
@@ -993,7 +908,7 @@
       el("reportDate").textContent = data.date ? `${data.date} · window ${win}D` : `window ${win}D`;
       el("convTitle").textContent = `Convergence 🔥 (bipartisan overlap on BUY, rolling ${win} days)`;
       el("partTitle").textContent = `Congress trades by participation (rolling ${win} days)`;
-      el("mainHint").textContent = `Sort is by total participation (both parties) within the rolling ${win}-day window. Tap ticker for chart.`;
+      el("mainHint").textContent = `Sort is by total participation within the rolling ${win}-day window. Tap ticker for chart.`;
 
       const convergence = normalizeList(data.convergence).sort(sortByCongressStrength);
       const buys = normalizeList(data.politicianBuys || data.bipartisanTickers).sort(sortByCongressStrength);
@@ -1010,188 +925,7 @@
       el("sellList").innerHTML =
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
 
-      renderCryptoFromMain(data);
-
       handleHash();
-    }
-
-    function partyTag(p){
-      const s = String(p||"").toUpperCase();
-      if (s === "D") return `<span class="tag tagDem">DEM</span>`;
-      if (s === "R") return `<span class="tag tagRep">GOP</span>`;
-      return `<span class="tag badgeNeu">?</span>`;
-    }
-
-    function coinsToLabel(coins){
-      const arr = Array.isArray(coins) ? coins.map(x => String(x||"").toUpperCase()).filter(Boolean) : [];
-      const cleaned = arr.filter(c => c !== "CRYPTO-LINKED");
-      if (!cleaned.length) return "CRYPTO";
-      return cleaned.join(" · ");
-    }
-
-    function isDirectCryptoRow(r){
-      const coins = Array.isArray(r.coins) ? r.coins : [];
-      return coins.some(c => DIRECT_COIN_SET.has(String(c||"").toUpperCase()));
-    }
-
-    function cryptoDirectCardHTML(r){
-      const kind = String(r.kind || "").toUpperCase();
-      const who = String(r.politician || "").trim();
-      const chamber = String(r.chamber || "").trim();
-      const amt = String(r.amountRange || "").trim();
-      const traded = String(r.traded || "");
-      const filed = String(r.filed || "");
-      const desc = String(r.description || "").trim();
-      const sym = coinsToLabel(r.coins);
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <div class="ticker">${sym}</div>
-                ${who ? `<div class="who">${who}${chamber ? " · " + chamber : ""}</div>` : ""}
-              </div>
-            </div>
-            <div class="tags">
-              ${kind === "BUY" ? `<span class="tag tagBuy">BUY</span>` : kind === "SELL" ? `<span class="tag tagSell">SELL</span>` : `<span class="tag badgeNeu">${kind || "TX"}</span>`}
-              ${partyTag(r.party)}
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          ${desc ? `
-            <div class="metaRow">
-              <div style="max-width:820px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                ${desc}
-              </div>
-            </div>
-          ` : ""}
-
-          <div class="metaRow">
-            <div class="counts">
-              ${amt ? `<div class="countItem">Amount: <strong>${amt}</strong></div>` : ""}
-              ${traded ? `<div class="countItem">Traded: <strong>${traded}</strong></div>` : ""}
-              ${filed ? `<div class="countItem">Filed: <strong>${filed}</strong></div>` : ""}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderCryptoFromMain(data){
-      const win = Number(data.windowDays || WINDOW_DAYS || 30);
-      el("cryptoTitle").textContent = `Crypto congress disclosures (rolling ${win} days)`;
-
-      const crypto = (data && data.crypto && typeof data.crypto === "object") ? data.crypto : {};
-      const raw = normalizeList(crypto.raw);
-
-      const direct = raw.filter(isDirectCryptoRow);
-      const directBuys = direct.filter(x => String(x.kind||"").toUpperCase() === "BUY");
-      const directSells = direct.filter(x => String(x.kind||"").toUpperCase() === "SELL");
-
-      el("cryptoDirectBuys").innerHTML =
-        directBuys.length ? directBuys.map(cryptoDirectCardHTML).join("") : "<div class='subtle'>No direct crypto buys in this window.</div>";
-
-      el("cryptoDirectSells").innerHTML =
-        directSells.length ? directSells.map(cryptoDirectCardHTML).join("") : "<div class='subtle'>No direct crypto sells in this window.</div>";
-
-      const buys = normalizeList(data.politicianBuys || data.bipartisanTickers)
-        .filter(x => CRYPTO_TICKERS.has(String(x.ticker||"").toUpperCase()))
-        .sort(sortByCongressStrength);
-
-      const sells = normalizeList(data.politicianSells)
-        .filter(x => CRYPTO_TICKERS.has(String(x.ticker||"").toUpperCase()))
-        .sort(sortByCongressStrength);
-
-      el("cryptoLinkedBuys").innerHTML =
-        buys.length ? buys.map(x => cardHTML(x, "BUY")).join("") : "<div class='subtle'>No crypto-linked buys in this window.</div>";
-
-      el("cryptoLinkedSells").innerHTML =
-        sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No crypto-linked sells in this window.</div>";
-
-      const sumBuys = normalizeList(crypto.buys);
-      const sumSells = normalizeList(crypto.sells);
-      const topBuy = sumBuys.slice(0,5).map(x => `${String(x.symbol||"").toUpperCase()} (${Number(x.count||0)})`).join(", ");
-      const topSell = sumSells.slice(0,5).map(x => `${String(x.symbol||"").toUpperCase()} (${Number(x.count||0)})`).join(", ");
-      const hintBits = [];
-      if (topBuy) hintBits.push(`Top BUY tags: ${topBuy}`);
-      if (topSell) hintBits.push(`Top SELL tags: ${topSell}`);
-      el("cryptoHint").textContent = hintBits.length ? hintBits.join(" · ") :
-        "Direct crypto items come from disclosure descriptions (BTC, ETH, SOL, LINK, etc). Crypto-linked tickers are ETFs, miners, and exchanges pulled from the same congress feed.";
-    }
-
-    function labelBadge(label){
-      const s = String(label || "").toUpperCase();
-      if (s === "BUY") return `<span class="tag tagBuy">BUY</span>`;
-      if (s === "SELL") return `<span class="tag tagSell">SELL</span>`;
-      if (s === "MIXED") return `<span class="tag tagBoth">MIXED</span>`;
-      if (s.includes("13F")) return `<span class="tag tagSEC">13F</span>`;
-      return `<span class="tag tagSEC">${s || "FILED"}</span>`;
-    }
-
-    function renderLeaders(payload){
-      const leaders = payload && Array.isArray(payload.leaders) ? payload.leaders : [];
-      const windowDays = payload && payload.windowDays ? payload.windowDays : 365;
-      el("reportDate").textContent = payload.date ? `${payload.date} · leaders ${windowDays}D` : `leaders ${windowDays}D`;
-
-      if (!leaders.length){
-        el("leadersList").innerHTML = "<div class='subtle'>No leaders data returned yet.</div>";
-        return;
-      }
-
-      const html = leaders.map(l => {
-        const name = String(l.name || "");
-        const cik = String(l.cik || "");
-        const events = Array.isArray(l.events) ? l.events : [];
-
-        const evHtml = events.length ? events.map(ev => {
-          const form = String(ev.form || "");
-          const label = String(ev.label || "");
-          const filingDate = String(ev.filingDate || "");
-          const indexUrl = String(ev.indexUrl || "");
-          const primaryUrl = String(ev.primaryUrl || "");
-
-          return `
-            <div class="eventRow">
-              <div class="eventTop">
-                <div>
-                  <div class="eventTitle">${form} · ${label || "FILED"}</div>
-                  <div class="eventMeta">Filed: ${filingDate || "—"}</div>
-                </div>
-                <div class="tags">
-                  ${labelBadge(label)}
-                  ${form ? `<span class="tag badgeSEC">${form}</span>` : ""}
-                </div>
-              </div>
-
-              <div class="miniLinks">
-                ${indexUrl ? `<a class="miniLink" href="${indexUrl}" target="_blank" rel="noopener">SEC Index</a>` : ""}
-                ${primaryUrl ? `<a class="miniLink" href="${primaryUrl}" target="_blank" rel="noopener">Primary doc</a>` : ""}
-              </div>
-            </div>
-          `;
-        }).join("") : `<div class="subtle">No recent filings found.</div>`;
-
-        return `
-          <div class="card">
-            <div class="cardTop">
-              <div>
-                <div class="tickerLine">
-                  <div class="ticker">${name}</div>
-                  <div class="who">CIK: <span class="mono">${cik}</span> · Rolling ${windowDays}D</div>
-                </div>
-              </div>
-              <div class="tags"><span class="tag tagSEC">SEC</span></div>
-            </div>
-            <div class="divider"></div>
-            <div class="eventList">${evHtml}</div>
-          </div>
-        `;
-      }).join("");
-
-      el("leadersList").innerHTML = html;
     }
 
     async function loadMain(force){
@@ -1228,25 +962,169 @@
         if (ACTIVE_TAB === "Main"){
           el("convergenceList").innerHTML = "<div class='subtle'>No data displayed.</div>";
         }
-        if (ACTIVE_TAB === "Crypto"){
-          el("cryptoDirectBuys").innerHTML = "<div class='subtle'>No data displayed.</div>";
-          el("cryptoDirectSells").innerHTML = "<div class='subtle'>No data displayed.</div>";
-          el("cryptoLinkedBuys").innerHTML = "<div class='subtle'>No data displayed.</div>";
-          el("cryptoLinkedSells").innerHTML = "<div class='subtle'>No data displayed.</div>";
-        }
       }
+    }
+
+    function fmtDollar(v){
+      const n = Number(v);
+      if (!isFinite(n)) return "";
+      const abs = Math.abs(n);
+      const sign = n < 0 ? "-" : "+";
+      if (abs >= 1e9) return sign + "$" + (abs/1e9).toFixed(2) + "B";
+      if (abs >= 1e6) return sign + "$" + (abs/1e6).toFixed(2) + "M";
+      if (abs >= 1e3) return sign + "$" + (abs/1e3).toFixed(1) + "K";
+      return sign + "$" + abs.toFixed(0);
+    }
+
+    function fmtShares(v){
+      const n = Number(v);
+      if (!isFinite(n)) return "";
+      const abs = Math.abs(n);
+      const sign = n < 0 ? "-" : "+";
+      if (abs >= 1e6) return sign + (abs/1e6).toFixed(2) + "M";
+      if (abs >= 1e3) return sign + (abs/1e3).toFixed(1) + "K";
+      return sign + abs.toFixed(0);
+    }
+
+    function deltaBoxHTML(title, rows, kind){
+      const items = normalizeList(rows).slice(0, 12);
+      const badge = kind === "add" ? `<span class="tag tagBuy">ADD</span>` :
+                    kind === "trim" ? `<span class="tag tagSell">TRIM</span>` :
+                    kind === "new" ? `<span class="tag tagBuy">NEW</span>` :
+                    kind === "exit" ? `<span class="tag tagSell">EXIT</span>` :
+                    `<span class="tag tagInfo">INFO</span>`;
+
+      return `
+        <div class="deltaBox">
+          <div class="deltaTitle">
+            <strong>${title}</strong>
+            <div class="tags">${badge}</div>
+          </div>
+          <div class="deltaList">
+            ${items.length ? items.map(r => {
+              const t = String(r.ticker || "").toUpperCase();
+              const name = String(r.name || r.company || "").trim();
+              const vd = r.valueDelta != null ? fmtDollar(r.valueDelta) : "";
+              const sd = r.sharesDelta != null ? fmtShares(r.sharesDelta) : "";
+              const pct = (r.pctPortfolioCur != null) ? (Number(r.pctPortfolioCur).toFixed(2) + "%") : "";
+              const right = [vd, sd, pct].filter(Boolean).join(" · ");
+              return `
+                <div class="deltaRow">
+                  <div class="deltaLeft">
+                    <a class="deltaTicker" href="#stock=${encodeURIComponent(t)}">${t || "—"}</a>
+                    ${name ? `<div class="deltaName">${name}</div>` : ""}
+                  </div>
+                  <div class="kpiBadge badgeNeu">${right || "—"}</div>
+                </div>
+              `;
+            }).join("") : `<div class="subtle">No rows.</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLeaders(payload){
+      const leaders = payload && Array.isArray(payload.leaders) ? payload.leaders : [];
+      const windowDays = payload && payload.windowDays ? payload.windowDays : 365;
+
+      el("reportDate").textContent = payload.date ? `${payload.date} · leaders` : `leaders`;
+
+      if (!leaders.length){
+        el("leadersList").innerHTML = "<div class='subtle'>No leaders data returned yet.</div>";
+        return;
+      }
+
+      const html = leaders.map(l => {
+        const name = String(l.name || "");
+        const cik = String(l.cik || "");
+        const note = String(l.note || "");
+
+        // New richer structure (preferred)
+        const hd = (l.holdingsDelta && typeof l.holdingsDelta === "object") ? l.holdingsDelta : null;
+        const periodPrev = hd && hd.period ? String(hd.period.prev || "") : "";
+        const periodCur  = hd && hd.period ? String(hd.period.cur || "") : "";
+
+        const topAdds = hd ? hd.topAdds : null;
+        const topTrims = hd ? hd.topTrims : null;
+        const newPos = hd ? hd.newPositions : null;
+        const exits = hd ? hd.exits : null;
+
+        // Fallback: existing "events/forms"
+        const events = Array.isArray(l.events) ? l.events : [];
+
+        const hasHoldingsDelta =
+          hd && (normalizeList(topAdds).length || normalizeList(topTrims).length || normalizeList(newPos).length || normalizeList(exits).length);
+
+        const holdingsHTML = hasHoldingsDelta ? `
+          <div class="divider"></div>
+          <div class="hint" style="margin-top:0;">
+            Holdings delta: <span class="mono">${periodPrev || "prev quarter"}</span> to <span class="mono">${periodCur || "current quarter"}</span>
+          </div>
+          <div class="deltaGrid">
+            ${deltaBoxHTML("Top adds (increased positions)", topAdds, "add")}
+            ${deltaBoxHTML("Top trims (reduced positions)", topTrims, "trim")}
+            ${deltaBoxHTML("New positions", newPos, "new")}
+            ${deltaBoxHTML("Exited positions", exits, "exit")}
+          </div>
+        ` : "";
+
+        const fallbackHTML = (!hasHoldingsDelta) ? `
+          <div class="divider"></div>
+          <div class="hint" style="margin-top:0;">
+            Backend is still returning filings only. Upgrade the backend Leaders endpoint to return holdings deltas for 13F.
+          </div>
+          <div class="hint">Showing filings (fallback):</div>
+          <div class="deltaBox" style="margin-top:8px;">
+            ${events.length ? events.slice(0,8).map(ev => {
+              const form = String(ev.form || "");
+              const label = String(ev.label || "FILED");
+              const filingDate = String(ev.filingDate || "");
+              const indexUrl = String(ev.indexUrl || "");
+              return `
+                <div class="deltaRow">
+                  <div class="deltaLeft">
+                    <div class="deltaTicker">${form}</div>
+                    <div class="deltaName">${label}${filingDate ? " · " + filingDate : ""}</div>
+                  </div>
+                  ${indexUrl ? `<a class="miniLink" href="${indexUrl}" target="_blank" rel="noopener">SEC</a>` : `<span class="kpiBadge badgeNeu">—</span>`}
+                </div>
+              `;
+            }).join("") : `<div class="subtle">No filings returned.</div>`}
+          </div>
+        ` : "";
+
+        return `
+          <div class="card">
+            <div class="cardTop">
+              <div>
+                <div class="tickerLine">
+                  <div class="ticker">${name}</div>
+                  <div class="who">CIK: <span class="mono">${cik}</span> · Rolling ${windowDays}D</div>
+                </div>
+              </div>
+              <div class="tags"><span class="tag tagSEC">SEC</span></div>
+            </div>
+            ${note ? `<div class="hint">${note}</div>` : ""}
+            ${holdingsHTML || fallbackHTML}
+          </div>
+        `;
+      }).join("");
+
+      el("leadersList").innerHTML = html;
+      handleHash();
     }
 
     async function loadLeaders(force){
       if (ACTIVE_TAB !== "Leaders") return;
+
       if (CACHE_LEADERS && !force){
-        setStatus("ok", "Using cached SEC leaders ✅", "");
+        setStatus("ok", "Using cached leaders ✅", "");
         renderLeaders(CACHE_LEADERS);
         return;
       }
 
-      setStatus("", "Loading SEC leaders (rolling 365D)…", LEADERS_URL);
-      el("leadersList").innerHTML = "<div class='subtle'>Loading SEC filings…</div>";
+      setStatus("", "Loading leaders…", LEADERS_URL);
+      el("leadersList").innerHTML = "<div class='subtle'>Loading leaders…</div>";
 
       try{
         const res = await fetch(LEADERS_URL, { cache: "no-store" });
@@ -1255,192 +1133,26 @@
         if (data.error) throw new Error(data.error);
 
         CACHE_LEADERS = data;
-        setStatus("ok", "SEC leaders loaded ✅", "");
+        setStatus("ok", "Leaders loaded ✅", "");
         renderLeaders(data);
       }catch(err){
-        setStatus("err", "Could not load SEC leaders", String(err));
-        el("leadersList").innerHTML = "<div class='subtle'>No SEC leaders data displayed.</div>";
-      }
-    }
-
-    function perfRowHTML(r){
-      const name = String(r.name || r.politician || "Unknown");
-      const party = String(r.party || "");
-      const chamber = String(r.chamber || "");
-      const trades = (r.tradeCount != null) ? Number(r.tradeCount) : 0;
-      const avg = (r.avgReturnPct != null) ? Number(r.avgReturnPct).toFixed(2) + "%" : "—";
-
-      const sample = Array.isArray(r.sample) ? r.sample : [];
-      const sampleTxt = sample.length
-        ? sample.map(s => `${String(s.ticker||"")} ${String(s.kind||"")} ${String(s.scorePct||"")}%`).join(" · ")
-        : "";
-
-      return `
-        <div class="kpiRow" style="padding:6px 0;">
-          <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
-            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-              <strong style="font-size:12px;">${name}</strong>
-              <span class="subtle">${party}${chamber ? " · " + chamber : ""}${trades ? " · " + trades + " trades" : ""}</span>
-            </div>
-            ${sampleTxt ? `<div class="hint" style="margin:0; max-width:1000px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Sample: ${sampleTxt}</div>` : ""}
-          </div>
-          <span class="kpiBadge badgeNeu">${avg}</span>
-        </div>
-      `;
-    }
-
-    async function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-    async function warmBackend(){
-      const url = BACKEND_BASE + "/";
-      try{ await fetch(url, { cache:"no-store" }); } catch(e){}
-    }
-
-    async function fetchJsonWithTimeout(url, ms){
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), ms);
-      try{
-        const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
-        const txt = await res.text();
-        let data = {};
-        try{ data = JSON.parse(txt || "{}"); } catch(e){ data = { _raw: txt || "" }; }
-        return { res, data };
-      } finally {
-        clearTimeout(t);
-      }
-    }
-
-    async function fetchJsonWithRetry(url, timeoutMs, attempts){
-      let lastErr = null;
-      for (let i = 0; i < attempts; i++){
-        try{
-          return await fetchJsonWithTimeout(url, timeoutMs);
-        }catch(e){
-          lastErr = e;
-          if (String(e && e.name) === "AbortError" && i < attempts - 1){
-            await sleep(900);
-            continue;
-          }
-          throw e;
-        }
-      }
-      throw lastErr || new Error("Unknown error");
-    }
-
-    async function loadPerf(force){
-      if (ACTIVE_TAB !== "Performance") return;
-
-      const horizonDays = Number(el("perfHorizon") ? el("perfHorizon").value : 30) || 30;
-      const url = `${PERF_URL}?horizon_days=${encodeURIComponent(String(horizonDays))}`;
-
-      if (CACHE_PERF && CACHE_PERF.horizonDays === horizonDays && !force){
-        setStatus("ok", "Using cached performance ✅", "");
-        el("perfBox").innerHTML = CACHE_PERF.html || "<div class='subtle'>No cached performance HTML.</div>";
-        el("perfSmallStatus").textContent = "Cached";
-        return;
-      }
-
-      el("perfSmallStatus").textContent = "Warming backend…";
-      setStatus("", "Warming backend for performance…", BACKEND_BASE + "/");
-      el("perfBox").innerHTML = `<div class="subtle">Warming backend…</div>`;
-      await warmBackend();
-
-      const TIMEOUT_MS = 90000; // 90 seconds
-      const ATTEMPTS = 2;
-
-      el("perfSmallStatus").textContent = "Loading…";
-      setStatus("", "Loading 2Y performance…", url);
-      el("perfBox").innerHTML = `<div class="subtle">Loading performance…</div>`;
-
-      try{
-        const { res, data } = await fetchJsonWithRetry(url, TIMEOUT_MS, ATTEMPTS);
-
-        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-        if (data && data.error) throw new Error(String(data.error));
-
-        const leaders = Array.isArray(data.leaders) ? data.leaders : [];
-        const date = String(data.date || "");
-        const windowStart = String(data.windowStart || "");
-        const windowEnd = String(data.windowEnd || "");
-        const note = String(data.note || "");
-
-        el("reportDate").textContent = date ? `${date} · performance` : "performance";
-
-        if (!leaders.length){
-          const diag = `
-            <div class="subtle">
-              No performance rows returned.<br/><br/>
-              Debug details:<br/>
-              <span class="mono">leaders.length = 0</span><br/>
-              <span class="mono">windowStart=${windowStart || "—"}</span><br/>
-              <span class="mono">windowEnd=${windowEnd || "—"}</span><br/>
-              <span class="mono">horizon_days=${horizonDays}</span><br/>
-              ${note ? `<br/>Backend note: <span class="mono">${note}</span>` : ""}
-              <br/><br/>
-              If you expected rows, the backend likely filtered everything out or price lookups returned no matches.
-            </div>
-          `;
-          el("perfBox").innerHTML = diag;
-          el("perfSmallStatus").textContent = "Loaded (empty)";
-          setStatus("ok", "Performance loaded (empty) ⚠️", "Endpoint returned zero rows");
-          CACHE_PERF = { horizonDays, raw:data, html: diag };
-          return;
-        }
-
-        const top = leaders.slice(0, 60);
-        const html = `
-          <div class="sectionTitle" style="margin-top:0;">Top performers (2Y lookback, ${horizonDays}D forward scoring)</div>
-          <div class="hint" style="margin-top:6px;">
-            Lookback: <span class="mono">${windowStart || "—"}</span> to <span class="mono">${windowEnd || "—"}</span>.
-            ${note ? ` Note: <span class="mono">${note}</span>` : ""}
-          </div>
-          <div style="margin-top:10px;">
-            ${top.map(perfRowHTML).join("")}
-          </div>
-        `;
-
-        el("perfBox").innerHTML = html;
-        CACHE_PERF = { horizonDays, raw:data, html };
-        el("perfSmallStatus").textContent = "Loaded";
-        setStatus("ok", "Performance loaded ✅", "");
-      }catch(err){
-        const msg = (err && err.name === "AbortError")
-          ? "Request timed out (frontend abort after extended wait)"
-          : String(err);
-
-        el("perfSmallStatus").textContent = "Error";
-        setStatus("err", "Performance endpoint error", msg);
-        el("perfBox").innerHTML = `
-          <div class="subtle">
-            Could not load performance.<br/>
-            Error: <span class="mono">${msg}</span><br/><br/>
-            Try clicking Reload. If it keeps timing out, the backend is still taking too long to compute.
-          </div>
-        `;
+        setStatus("err", "Could not load leaders", String(err));
+        el("leadersList").innerHTML = "<div class='subtle'>No leaders data displayed.</div>";
       }
     }
 
     function setWindow(days){
       WINDOW_DAYS = days;
-
       el("btn30").classList.toggle("on", WINDOW_DAYS === 30);
       el("btn180").classList.toggle("on", WINDOW_DAYS === 180);
       el("btn365").classList.toggle("on", WINDOW_DAYS === 365);
-
-      if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
-        loadMain(false);
-      }
+      if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto") loadMain(false);
     }
 
     function handleRefresh(){
       if (ACTIVE_TAB === "Leaders"){
         CACHE_LEADERS = null;
         loadLeaders(true);
-        return;
-      }
-      if (ACTIVE_TAB === "Performance"){
-        CACHE_PERF = null;
-        loadPerf(true);
         return;
       }
       CACHE_MAIN.delete(String(WINDOW_DAYS));
@@ -1463,32 +1175,16 @@
 
     // Top tabs
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
-    el("tabPerfBtn").addEventListener("click", () => showTab("Performance"));
     el("tabLeadersBtn").addEventListener("click", () => showTab("Leaders"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
     el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
 
-    // Bottom tabs
+    // Bottom nav
     el("navMain").addEventListener("click", () => showTab("Main"));
-    el("navPerf").addEventListener("click", () => showTab("Performance"));
     el("navLeaders").addEventListener("click", () => showTab("Leaders"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
     el("navSearch").addEventListener("click", () => showTab("Search"));
 
-    // Perf controls
-    const perfReloadBtn = el("perfReloadBtn");
-    if (perfReloadBtn){
-      perfReloadBtn.addEventListener("click", () => loadPerf(true));
-    }
-    const perfHorizon = el("perfHorizon");
-    if (perfHorizon){
-      perfHorizon.addEventListener("change", () => {
-        CACHE_PERF = null;
-        if (ACTIVE_TAB === "Performance") loadPerf(true);
-      });
-    }
-
-    // Refresh + chart
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
 
