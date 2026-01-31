@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Convergence Signals</title>
+  <title>Convergence</title>
 
   <link rel="manifest" href="./manifest.webmanifest" />
   <meta name="theme-color" content="#0b0b0f" />
@@ -64,7 +64,7 @@
     .container{
       max-width:1100px;
       margin:0 auto;
-      padding:8px 14px 110px;
+      padding:8px 14px 96px;
     }
 
     .status{
@@ -399,7 +399,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(5,1fr);
+      grid-template-columns:repeat(3,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -411,46 +411,7 @@
     }
     .tabBottomActive{color:#fff}
 
-    /* Strategy */
-    .strategyHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .strategyTitle{
-      font-size:13px;
-      font-weight:900;
-      letter-spacing:.02em;
-      margin:0;
-    }
-    .strategyPills{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .strategyPill{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.04);
-      padding:6px 9px;
-      border-radius:999px;
-      font-size:11px;
-      color:rgba(255,255,255,.92);
-      cursor:pointer;
-      user-select:none;
-    }
-    .strategyPill.on{
-      background:rgba(255,255,255,.10);
-      color:#fff;
-    }
-    .scoreExplain{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.25;
-      margin-top:8px;
-    }
+    /* Strategy list grid */
     .strategyGrid{
       display:grid;
       grid-template-columns:1fr;
@@ -531,10 +492,8 @@
       <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
       <button class="tabBtn" id="tabCongressBtn">Congress Trading</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
-      <button class="tabBtn" id="tabScoreBtn">Score</button>
-      <button class="tabBtn" id="tabSearchBtn">Search</button>
 
-      <div class="rightTools" id="mainWindowTools">
+      <div class="rightTools" id="windowTools">
         <div class="seg" aria-label="window toggle">
           <button id="btn30" class="on">30D</button>
           <button id="btn180">180D</button>
@@ -559,18 +518,6 @@
 
       <div class="sectionTitle">Strategy</div>
       <div class="panel">
-        <div class="strategyHeader">
-          <div>
-            <div class="strategyTitle">5–10Y Accumulation Strategy</div>
-            <div class="hint" style="margin-top:6px;">
-              Value-tilted accumulation in AI, chips, medical innovation, robotics, and infrastructure. Congress is a weighted signal, not a requirement.
-            </div>
-          </div>
-          <div class="strategyPills" id="strategySectorPills"></div>
-        </div>
-
-        <div class="divider"></div>
-
         <div class="grid3">
           <div class="kpi" id="strategyPhilosophyBox"></div>
           <div class="kpi" id="strategyScoringBox"></div>
@@ -595,11 +542,16 @@
       <div class="panel">
         <div class="panelTitle">
           <h2>Common holdings (portfolio overlap)</h2>
-          <span class="kpiBadge badgeNeu" id="holdingsWindowBadge">365D</span>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span class="kpiBadge badgeNeu" id="holdingsWindowBadge">365D</span>
+            <button class="pillBtn" id="holdingsRetryBtn" style="padding:6px 9px; font-size:11px;">Retry</button>
+          </div>
         </div>
+
         <div class="hint" style="margin-top:6px;">
-          This ranks stocks by how many members hold them in the last 365 days. Independent of buy or sell activity.
+          This loads from the backend holdings overlap endpoint. If your backend does not provide it, this will show an actionable error.
         </div>
+
         <div class="divider"></div>
 
         <div class="grid3">
@@ -665,66 +617,20 @@
 
       <div class="hint" id="cryptoHint"></div>
     </section>
-
-    <!-- SCORE TAB -->
-    <section id="viewScore" style="display:none;">
-      <div class="sectionTitle">Score a ticker</div>
-
-      <div class="panel">
-        <div class="hint" style="margin-top:0;">
-          Enter any ticker. The same strategy scoring rules are applied. Congress can add points, but it is never required.
-        </div>
-
-        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-          <input id="scoreInput" placeholder="Ticker (example: ISRG)" autocapitalize="characters"
-                 style="flex:1; min-width:220px; padding:10px 10px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:13px;" />
-          <select id="scoreSector"
-                  style="padding:10px 10px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:13px;">
-            <option value="auto">Auto sector</option>
-            <option value="ai">AI</option>
-            <option value="chips">Chips</option>
-            <option value="medical">Medical</option>
-            <option value="robotics">Robotics</option>
-            <option value="infrastructure">Infrastructure</option>
-          </select>
-          <button class="pillBtn" id="scoreGoBtn">Score</button>
-        </div>
-
-        <div id="scoreResult" style="margin-top:12px;"></div>
-      </div>
-    </section>
-
-    <!-- SEARCH TAB -->
-    <section id="viewSearch" style="display:none;">
-      <div class="sectionTitle">Search ticker</div>
-      <div class="panel">
-        <div class="metaRow" style="margin-top:0;">
-          <div style="color:rgba(255,255,255,.9)">Type a ticker (example: NVDA)</div>
-        </div>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-          <input id="searchInput" placeholder="Ticker" autocapitalize="characters"
-                 style="flex:1; padding:10px 10px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:#fff; font-size:13px;" />
-          <button class="pillBtn" id="searchBtn">Go</button>
-        </div>
-        <div class="hint" style="margin-top:10px;">Opens the chart panel for quick trend context.</div>
-      </div>
-    </section>
   </main>
 
   <nav class="tabsBottom">
-    <div class="tabBarBottom">
+    <div class="tabBarBottom tabBarBottom3">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
       <div class="tabBottom" id="navCongress">Congress</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
-      <div class="tabBottom" id="navScore">Score</div>
-      <div class="tabBottom" id="navSearch">Search</div>
     </div>
   </nav>
 
   <script>
     const BACKEND_BASE = "https://finance-backend-dzta.onrender.com";
 
-    // Existing trade activity endpoint
+    // Existing endpoint
     const TODAY_URL = (windowDays) => `${BACKEND_BASE}/report/today?window_days=${encodeURIComponent(String(windowDays))}`;
 
     // Holdings overlap endpoint (backend must implement)
@@ -738,7 +644,7 @@
     let CACHE_MAIN = new Map();
     let CACHE_HOLDINGS = new Map();
 
-    // Crypto
+    // Crypto sets
     const CRYPTO_TICKERS = new Set([
       "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
       "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
@@ -747,52 +653,6 @@
     const DIRECT_COIN_SET = new Set([
       "BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"
     ]);
-
-    // Strategy weights
-    const STRATEGY_WEIGHTS = {
-      innovationFit: 40,
-      congressSignal: 25,
-      valueDiscipline: 20,
-      riskPenalty: 15
-    };
-
-    // Strategy sectors
-    const SECTOR_ORDER = [
-      { key:"ai", label:"AI" },
-      { key:"chips", label:"Chips" },
-      { key:"medical", label:"Medical" },
-      { key:"robotics", label:"Robotics" },
-      { key:"infrastructure", label:"Infrastructure" },
-    ];
-
-    // Sector seeds
-    const SECTOR_SEEDS = {
-      ai: ["NVDA","MSFT","GOOGL","AMZN","META","AVGO","ORCL","PLTR","SNOW","DDOG","NOW","CRM"],
-      chips: ["NVDA","AVGO","AMD","INTC","ASML","TSM","MU","QCOM","ARM","LRCX","AMAT","KLAC","ADI","MRVL"],
-      medical: ["ISRG","MDT","BSX","SYK","JNJ","ABT","TMO","DHR","IDXX","EW","ZBH","DXCM","PODD","RMD","REGN","VRTX","MRNA","BMY","LLY","NVO","HCA","UHS"],
-      robotics: ["ISRG","ROK","TER","ZBRA","SYM","ABB","FANUY","YASKY","KUKAY","HON","EMR","IR","PH","AME","RRX","CGNX","TDY","BOTZ","ROBO"],
-      infrastructure: ["ANET","CSCO","MSFT","AMZN","GOOGL","ORCL","EQIX","DLR","VRT","ETN","PWR","NVT","HUBB","AME","TT","NEE","CEG","CCJ","BEPC","ENPH"]
-    };
-
-    // Taxonomy map (tighten overlaps here)
-    const TICKER_SECTOR_MAP = {
-      "NVDA":["ai","chips"], "MSFT":["ai","infrastructure"], "GOOGL":["ai","infrastructure"], "AMZN":["ai","infrastructure"],
-      "META":["ai"], "PLTR":["ai"], "SNOW":["ai"], "DDOG":["ai"], "NOW":["ai"], "CRM":["ai"], "ORCL":["ai","infrastructure"],
-      "AVGO":["chips","ai","infrastructure"], "AMD":["chips"], "INTC":["chips"], "ASML":["chips"], "TSM":["chips"],
-      "MU":["chips"], "QCOM":["chips"], "ARM":["chips"], "LRCX":["chips"], "AMAT":["chips"], "KLAC":["chips"], "ADI":["chips"], "MRVL":["chips"],
-      "ISRG":["medical","robotics"], "MDT":["medical"], "BSX":["medical"], "SYK":["medical"], "JNJ":["medical"], "ABT":["medical"],
-      "TMO":["medical"], "DHR":["medical"], "IDXX":["medical"], "EW":["medical"], "ZBH":["medical"], "DXCM":["medical"], "PODD":["medical"],
-      "RMD":["medical"], "REGN":["medical"], "VRTX":["medical"], "MRNA":["medical"], "BMY":["medical"], "LLY":["medical"], "NVO":["medical"],
-      "HCA":["medical"], "UHS":["medical"],
-      "ROK":["robotics"], "TER":["robotics","chips"], "ZBRA":["robotics"], "SYM":["robotics"],
-      "ABB":["robotics"], "FANUY":["robotics"], "YASKY":["robotics"], "KUKAY":["robotics"],
-      "HON":["robotics","infrastructure"], "EMR":["robotics","infrastructure"], "IR":["robotics","infrastructure"], "PH":["robotics","infrastructure"],
-      "AME":["robotics","infrastructure"], "RRX":["robotics"], "CGNX":["robotics"], "TDY":["robotics"],
-      "BOTZ":["robotics"], "ROBO":["robotics"],
-      "ANET":["infrastructure"], "CSCO":["infrastructure"], "EQIX":["infrastructure"], "DLR":["infrastructure"],
-      "VRT":["infrastructure"], "ETN":["infrastructure"], "PWR":["infrastructure"], "NVT":["infrastructure"], "HUBB":["infrastructure"],
-      "TT":["infrastructure"], "NEE":["infrastructure"], "CEG":["infrastructure"], "CCJ":["infrastructure"], "BEPC":["infrastructure"], "ENPH":["infrastructure"]
-    };
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -806,9 +666,7 @@
       const map = {
         "Main":"Convergence",
         "Congress":"Congress Trading",
-        "Crypto":"Crypto",
-        "Score":"Score",
-        "Search":"Search"
+        "Crypto":"Crypto"
       };
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
@@ -820,23 +678,17 @@
       el("viewMain").style.display = tab === "Main" ? "" : "none";
       el("viewCongress").style.display = tab === "Congress" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
-      el("viewScore").style.display = tab === "Score" ? "" : "none";
-      el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
       el("tabCongressBtn").classList.toggle("tabBtnActive", tab === "Congress");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
-      el("tabScoreBtn").classList.toggle("tabBtnActive", tab === "Score");
-      el("tabSearchBtn").classList.toggle("tabBtnActive", tab === "Search");
 
       el("navMain").classList.toggle("tabBottomActive", tab === "Main");
       el("navCongress").classList.toggle("tabBottomActive", tab === "Congress");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
-      el("navScore").classList.toggle("tabBottomActive", tab === "Score");
-      el("navSearch").classList.toggle("tabBottomActive", tab === "Search");
 
-      // show window toggles on tabs that use congress window data
-      el("mainWindowTools").style.display = (tab === "Congress" || tab === "Crypto" || tab === "Score") ? "" : "none";
+      // Window toggles only matter for Congress + Crypto
+      el("windowTools").style.display = (tab === "Congress" || tab === "Crypto") ? "" : "none";
 
       if (tab === "Main"){
         loadMain(false);
@@ -847,10 +699,6 @@
       }
       if (tab === "Crypto"){
         loadMain(false);
-      }
-      if (tab === "Score"){
-        loadMain(false);
-        maybeAutoScoreFromHash();
       }
 
       handleHash();
@@ -1258,343 +1106,6 @@
         "Direct crypto items are parsed from disclosure text. Crypto-linked tickers are ETFs, miners, and exchanges from the congress feed.";
     }
 
-    // Strategy
-    const clamp01 = (x) => Math.max(0, Math.min(1, x));
-    function saturating01(x, k=6){
-      return 1 - Math.exp(-(Number(x||0) / k));
-    }
-
-    function sectorsForTicker(ticker){
-      const t = String(ticker||"").toUpperCase().trim();
-      if (!t) return [];
-      const mapped = TICKER_SECTOR_MAP[t];
-      return Array.isArray(mapped) ? mapped.slice() : [];
-    }
-
-    function inferSectorForTicker(ticker){
-      const secs = sectorsForTicker(ticker);
-      if (secs.includes("medical")) return "medical";
-      if (secs.includes("robotics")) return "robotics";
-      if (secs.includes("chips")) return "chips";
-      if (secs.includes("ai")) return "ai";
-      if (secs.includes("infrastructure")) return "infrastructure";
-      return "ai";
-    }
-
-    function buildCongressAggMap(payload){
-      const map = new Map();
-      const buys = Array.isArray(payload?.politicianBuys) ? payload.politicianBuys : [];
-      const sells = Array.isArray(payload?.politicianSells) ? payload.politicianSells : [];
-      function add(card){
-        const t = String(card?.ticker || "").toUpperCase().trim();
-        if (!t) return;
-        const cur = map.get(t) || { ticker:t, demBuyers:0, repBuyers:0, demSellers:0, repSellers:0 };
-        cur.demBuyers += Number(card.demBuyers || 0);
-        cur.repBuyers += Number(card.repBuyers || 0);
-        cur.demSellers += Number(card.demSellers || 0);
-        cur.repSellers += Number(card.repSellers || 0);
-        map.set(t, cur);
-      }
-      buys.forEach(add);
-      sells.forEach(add);
-      return map;
-    }
-
-    function congressMetrics(agg){
-      if (!agg) return { hasCongress:false, participation:0, buys:0, sells:0, net:0, bipartisanBuyOverlap:0 };
-      const buys = Number(agg.demBuyers||0) + Number(agg.repBuyers||0);
-      const sells = Number(agg.demSellers||0) + Number(agg.repSellers||0);
-      const participation = buys + sells;
-      const bipartisanBuyOverlap = Math.min(Number(agg.demBuyers||0), Number(agg.repBuyers||0));
-      return { hasCongress: participation>0, participation, buys, sells, net: buys-sells, bipartisanBuyOverlap };
-    }
-
-    function scoreCongressSignal(metrics){
-      const part01 = saturating01(metrics.participation, 5);
-      const net01 = clamp01((metrics.net + 4) / 8);
-      const overlap01 = saturating01(metrics.bipartisanBuyOverlap, 2);
-      const weighted01 = 0.55*part01 + 0.30*net01 + 0.15*overlap01;
-      return weighted01 * STRATEGY_WEIGHTS.congressSignal;
-    }
-
-    function scoreInnovationFit(sectorKey, ticker){
-      const baseBySector = { ai:0.95, chips:0.95, medical:0.92, robotics:0.92, infrastructure:0.85 };
-      const base01 = baseBySector[sectorKey] ?? 0.6;
-
-      const secs = sectorsForTicker(ticker);
-      const inSector = secs.includes(sectorKey) || (SECTOR_SEEDS[sectorKey] || []).includes(ticker);
-
-      const sectorCap = inSector ? 1.0 : 0.15;
-      return clamp01(base01 * sectorCap) * STRATEGY_WEIGHTS.innovationFit;
-    }
-
-    function scoreValueDiscipline(){
-      return 0.50 * STRATEGY_WEIGHTS.valueDiscipline;
-    }
-
-    function riskPenalty(ticker){
-      const highBetaSpec = new Set(["MARA","RIOT","GME"]);
-      const pen01 = highBetaSpec.has(String(ticker).toUpperCase()) ? 0.50 : 0.20;
-      return pen01 * STRATEGY_WEIGHTS.riskPenalty;
-    }
-
-    function scoreTicker({ sectorKey, ticker, congressAggMap }){
-      const agg = congressAggMap.get(ticker);
-      const cm = congressMetrics(agg);
-
-      const sInnovation = scoreInnovationFit(sectorKey, ticker);
-      const sCongress   = scoreCongressSignal(cm);
-      const sValue      = scoreValueDiscipline();
-      const pRisk       = riskPenalty(ticker);
-
-      const total = Math.round(sInnovation + sCongress + sValue - pRisk);
-
-      return {
-        ticker,
-        sectorKey,
-        score: Math.max(0, Math.min(100, total)),
-        breakdown: {
-          innovation: Math.round(sInnovation),
-          congress: Math.round(sCongress),
-          value: Math.round(sValue),
-          risk: Math.round(pRisk)
-        },
-        badges: {
-          horizon: "5–10Y",
-          congress: cm.hasCongress ? "Congress-confirmed" : "Research list"
-        }
-      };
-    }
-
-    function buildSectorCandidates(sectorKey, discoveredTickers){
-      const seeds = (SECTOR_SEEDS[sectorKey] || []).map(t => t.toUpperCase());
-      const disc = (Array.isArray(discoveredTickers) ? discoveredTickers : [])
-        .map(t => String(t||"").toUpperCase().trim()).filter(Boolean);
-
-      // Only allow discovered tickers if taxonomy maps them to the sector
-      const filteredDisc = disc.filter(t => sectorsForTicker(t).includes(sectorKey));
-      return Array.from(new Set([...seeds, ...filteredDisc]));
-    }
-
-    function rankSector(sectorKey, payload){
-      const congressAggMap = buildCongressAggMap(payload);
-      const discovered = Array.from(congressAggMap.keys());
-      const candidates = buildSectorCandidates(sectorKey, discovered);
-      const scored = candidates.map(ticker => scoreTicker({ sectorKey, ticker, congressAggMap }));
-      scored.sort((a,b) => (b.score - a.score) || a.ticker.localeCompare(b.ticker));
-      return scored;
-    }
-
-    let STRATEGY_ACTIVE_SECTOR = "ai";
-
-    function buildStrategyPills(){
-      const host = el("strategySectorPills");
-      host.innerHTML = SECTOR_ORDER.map(s => {
-        const on = s.key === STRATEGY_ACTIVE_SECTOR ? "on" : "";
-        return `<div class="strategyPill ${on}" data-sector="${s.key}">${s.label}</div>`;
-      }).join("");
-
-      Array.from(host.querySelectorAll(".strategyPill")).forEach(p => {
-        p.addEventListener("click", () => {
-          STRATEGY_ACTIVE_SECTOR = String(p.getAttribute("data-sector") || "ai");
-          buildStrategyPills();
-          const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
-          if (cached) renderStrategy(cached);
-        });
-      });
-    }
-
-    function strategyStockHTML(row){
-      const t = String(row.ticker || "").toUpperCase();
-      const sc = Number(row.score || 0);
-      const b = row.breakdown || {};
-      const horizon = row.badges?.horizon || "5–10Y";
-      const cBadge = row.badges?.congress || "Research list";
-      const cCls = (cBadge === "Congress-confirmed") ? "badgeBoth" : "badgeNeu";
-
-      return `
-        <div class="stockItem">
-          <div class="stockTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
-                <span class="kpiBadge badgeNeu">${horizon}</span>
-              </div>
-              <div class="stockMeta">
-                <span class="kpiBadge ${cCls}">${cBadge}</span>
-                <span class="kpiBadge badgeNeu">Score: <strong>${sc}/100</strong></span>
-              </div>
-            </div>
-
-            <div class="rowBadges">
-              <span class="kpiBadge badgeNeu">Innov ${Number(b.innovation||0)}</span>
-              <span class="kpiBadge badgeNeu">Congress ${Number(b.congress||0)}</span>
-              <span class="kpiBadge badgeNeu">Value ${Number(b.value||0)}</span>
-              <span class="kpiBadge badgeNeg">Risk -${Number(b.risk||0)}</span>
-            </div>
-          </div>
-
-          <div class="miniLinks">
-            <a class="miniLink" href="#stock=${t}">Chart</a>
-            <a class="miniLink" target="_blank" rel="noopener" href="https://finance.yahoo.com/quote/${encodeURIComponent(t)}">Yahoo</a>
-            <a class="miniLink" target="_blank" rel="noopener" href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent("NASDAQ:" + t)}">TV</a>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderStrategy(payload){
-      buildStrategyPills();
-
-      el("strategyPhilosophyBox").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Philosophy</div>
-            <div class="kpiValue">Accumulate innovation</div>
-          </div>
-          <span class="kpiBadge badgeNeu">5–10Y</span>
-        </div>
-        <div class="kpiSub">
-          Focus on durable moats in AI, chips, medical, robotics, and infrastructure.
-          Congress is weighted, not required. Accumulate gradually and hold through volatility.
-        </div>
-      `;
-
-      const w = STRATEGY_WEIGHTS;
-      el("strategyScoringBox").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Scoring rules</div>
-            <div class="kpiValue">Total score</div>
-          </div>
-          <span class="kpiBadge badgeNeu">0–100</span>
-        </div>
-        <div class="kpiSub">
-          <div class="kpiRow"><span>Innovation fit</span><span class="kpiBadge badgeNeu">${w.innovationFit} pts</span></div>
-          <div class="kpiRow"><span>Congress signal</span><span class="kpiBadge badgeNeu">${w.congressSignal} pts</span></div>
-          <div class="kpiRow"><span>Value discipline</span><span class="kpiBadge badgeNeu">${w.valueDiscipline} pts</span></div>
-          <div class="kpiRow"><span>Risk penalty</span><span class="kpiBadge badgeNeg">-${w.riskPenalty} pts</span></div>
-          <div class="scoreExplain"><strong>Total</strong> = Innovation + Congress + Value − Risk.</div>
-        </div>
-      `;
-
-      const sectorLabel = (SECTOR_ORDER.find(s => s.key === STRATEGY_ACTIVE_SECTOR)?.label) || "Strategy";
-      el("strategyListTitle").textContent = `Ranked ideas: ${sectorLabel}`;
-
-      const ranked = rankSector(STRATEGY_ACTIVE_SECTOR, payload).slice(0, 12);
-
-      el("strategyList").innerHTML = ranked.length
-        ? ranked.map(strategyStockHTML).join("")
-        : "<div class='subtle'>No strategy candidates found.</div>";
-
-      const top = ranked.slice(0, 5);
-      el("strategyTopPicksBox").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Top picks</div>
-            <div class="kpiValue">${sectorLabel}</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Top 5</span>
-        </div>
-        <div class="kpiSub">Highest total scores in this sector right now.</div>
-        <div class="kpiList">
-          ${top.map(r => {
-            const t = r.ticker;
-            const sc = r.score;
-            const badge = (r.badges?.congress === "Congress-confirmed") ? "badgeBoth" : "badgeNeu";
-            const label = r.badges?.congress || "Research list";
-            return `
-              <div class="kpiRow">
-                <a href="#stock=${encodeURIComponent(t)}"><strong>${t}</strong></a>
-                <span class="kpiBadge ${badge}">${sc}/100 · ${label}</span>
-              </div>
-            `;
-          }).join("") || `<div class="kpiRow"><span class="muted">No data</span></div>`}
-        </div>
-      `;
-
-      el("strategyHint").textContent =
-        "Discovered tickers only appear in a sector if the taxonomy maps them there. Seeds keep each sector populated.";
-    }
-
-    // Score tab
-    function scoreCardHTML(row){
-      const t = String(row.ticker || "").toUpperCase();
-      const b = row.breakdown || {};
-      const sc = Number(row.score||0);
-      const sectorLabel = (SECTOR_ORDER.find(s => s.key === row.sectorKey)?.label) || row.sectorKey;
-      const horizon = row.badges?.horizon || "5–10Y";
-      const cBadge = row.badges?.congress || "Research list";
-      const cCls = (cBadge === "Congress-confirmed") ? "badgeBoth" : "badgeNeu";
-
-      return `
-        <div class="card" style="margin-bottom:0;">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
-                <div class="who">Sector: ${sectorLabel}</div>
-              </div>
-            </div>
-            <div class="tags">
-              <span class="tag ${cCls}">${cBadge}</span>
-              <span class="tag badgeNeu">${horizon}</span>
-              <span class="tag badgeNeu">Score: ${sc}/100</span>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="kpiList">
-            <div class="kpiRow"><span class="muted">Innovation fit</span><span class="kpiBadge badgeNeu">${Number(b.innovation||0)} pts</span></div>
-            <div class="kpiRow"><span class="muted">Congress signal</span><span class="kpiBadge badgeNeu">${Number(b.congress||0)} pts</span></div>
-            <div class="kpiRow"><span class="muted">Value discipline</span><span class="kpiBadge badgeNeu">${Number(b.value||0)} pts</span></div>
-            <div class="kpiRow"><span class="muted">Risk penalty</span><span class="kpiBadge badgeNeg">-${Number(b.risk||0)} pts</span></div>
-          </div>
-
-          ${tickerLinksHTML(t)}
-        </div>
-      `;
-    }
-
-    function scoreSingleTicker(payload, ticker, sectorChoice){
-      const t = String(ticker||"").toUpperCase().trim();
-      if (!t) return null;
-      const congressAggMap = buildCongressAggMap(payload || {});
-      let sectorKey = sectorChoice && sectorChoice !== "auto" ? sectorChoice : inferSectorForTicker(t);
-      if (!sectorKey) sectorKey = "ai";
-      return scoreTicker({ sectorKey, ticker: t, congressAggMap });
-    }
-
-    function runScoreFromUI(){
-      const cached = CACHE_MAIN.get(String(WINDOW_DAYS));
-      const payload = cached || {};
-      const t = String(el("scoreInput").value || "").trim().toUpperCase();
-      const sectorChoice = String(el("scoreSector").value || "auto");
-      if (!t){
-        el("scoreResult").innerHTML = "<div class='subtle'>Enter a ticker.</div>";
-        return;
-      }
-      const row = scoreSingleTicker(payload, t, sectorChoice);
-      if (!row){
-        el("scoreResult").innerHTML = "<div class='subtle'>Could not score that ticker.</div>";
-        return;
-      }
-      el("scoreResult").innerHTML = scoreCardHTML(row);
-      window.location.hash = "#stock=" + encodeURIComponent(row.ticker);
-    }
-
-    function maybeAutoScoreFromHash(){
-      if (ACTIVE_TAB !== "Score") return;
-      const h = window.location.hash || "";
-      if (h.startsWith("#stock=")){
-        const t = decodeURIComponent(h.replace("#stock=","")).trim().toUpperCase();
-        if (t && !String(el("scoreInput").value||"").trim()){
-          el("scoreInput").value = t;
-        }
-      }
-    }
-
     // -----------------------------
     // Market Entry Index (frontend-only, congress-based)
     // -----------------------------
@@ -1609,22 +1120,20 @@
       const participation = buyCount + sellCount;
       const net = buyCount - sellCount;
       const ratio = sellCount === 0 ? (buyCount > 0 ? 2 : 1) : (buyCount / sellCount);
-
       const overlapStrength = overlap.reduce((s,x)=>s + Math.min(Number(x.demBuyers||0), Number(x.repBuyers||0)),0);
 
-      // 0–100 score
       let score = 0;
 
-      // 40% net accumulation, normalized by participation
+      // Net accumulation vs distribution
       score += Math.max(0, Math.min(40, (net / Math.max(10, participation)) * 40 + 20));
 
-      // 30% buy/sell ratio dominance
+      // Buy dominance
       score += Math.max(0, Math.min(30, ratio * 15));
 
-      // 20% participation breadth
+      // Breadth
       score += Math.min(20, participation / 10);
 
-      // 10% bipartisan overlap bonus
+      // Bipartisan overlap bonus
       score += Math.min(10, overlapStrength * 2);
 
       score = Math.round(Math.max(0, Math.min(100, score)));
@@ -1717,15 +1226,96 @@
           <span class="kpiBadge badgeNeu">Simple</span>
         </div>
         <div class="kpiSub">
-          This does not time tops or bottoms. It measures whether congress disclosures show accumulation (risk-on) or distribution (risk-off).
+          This does not time tops or bottoms. It measures whether disclosures show accumulation (risk-on) or distribution (risk-off).
         </div>
       `;
 
       el("entryHint").textContent =
-        "Use ENTER to speed up DCA into your strategy basket. Use WAIT to slow down and be selective.";
+        "Use ENTER to speed up DCA into your basket. Use WAIT to slow down and be selective.";
     }
 
+    // -----------------------------
+    // Simple Strategy (kept minimal)
+    // -----------------------------
+    function renderSimpleStrategy(payload){
+      // Keep this very simple to avoid dependence on extra backend fields.
+      el("strategyPhilosophyBox").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Philosophy</div>
+            <div class="kpiValue">Skirting DCA</div>
+          </div>
+          <span class="kpiBadge badgeNeu">5–10Y</span>
+        </div>
+        <div class="kpiSub">
+          When entry index is high, increase DCA into a small basket.
+          When low, reduce pace and hold cash for better setups.
+        </div>
+      `;
+
+      el("strategyScoringBox").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">DCA pacing</div>
+            <div class="kpiValue">Rules</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Simple</span>
+        </div>
+        <div class="kpiSub">
+          <div class="kpiList">
+            <div class="kpiRow"><span>Entry ≥ 70</span><span class="kpiBadge badgePos">2x weekly DCA</span></div>
+            <div class="kpiRow"><span>Entry 50–69</span><span class="kpiBadge badgeNeu">1x weekly DCA</span></div>
+            <div class="kpiRow"><span>Entry &lt; 50</span><span class="kpiBadge badgeNeg">0.5x weekly DCA</span></div>
+          </div>
+        </div>
+      `;
+
+      // A tiny default basket (you can swap these anytime)
+      const basket = ["SPY","QQQ","VTI","NVDA","MSFT","AVGO","ISRG","AMZN","GOOGL","META","TSM","LLY"];
+
+      el("strategyTopPicksBox").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Basket</div>
+            <div class="kpiValue">Core + innovation</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${basket.length}</span>
+        </div>
+        <div class="kpiSub">This is a starter set. Replace with your preferred holdings anytime.</div>
+        <div class="kpiList">
+          ${basket.slice(0,6).map(t => `
+            <div class="kpiRow">
+              <a href="#stock=${encodeURIComponent(t)}"><strong>${t}</strong></a>
+              <span class="kpiBadge badgeNeu">chart</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+      el("strategyListTitle").textContent = "Ranked ideas";
+      el("strategyList").innerHTML = basket.map(t => `
+        <div class="stockItem">
+          <div class="stockTop">
+            <div>
+              <div class="tickerLine">
+                <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
+                <span class="kpiBadge badgeNeu">starter</span>
+              </div>
+              <div class="stockMeta">
+                <span class="kpiBadge badgeNeu">DCA bucket</span>
+              </div>
+            </div>
+          </div>
+          ${tickerLinksHTML(t)}
+        </div>
+      `).join("");
+
+      el("strategyHint").textContent = "Basket is intentionally simple and does not rely on extra API endpoints.";
+    }
+
+    // -----------------------------
     // Holdings overlap
+    // -----------------------------
     function holdingsBadge(holders){
       const n = Number(holders || 0);
       if (n >= 40) return { label: "VERY COMMON", cls: "badgePos" };
@@ -1737,7 +1327,7 @@
     function holdingsRowHTML(item){
       const t = String(item.ticker || "").toUpperCase();
       const name = String(item.companyName || "").trim();
-      const holders = Number(item.holders || item.holderCount || 0);
+      const holders = Number(item.holders || 0);
       const b = holdingsBadge(holders);
 
       return `
@@ -1762,7 +1352,7 @@
       `;
     }
 
-    function renderHoldingsKpis(items){
+    function renderHoldingsKpis(items, win){
       const top = items[0];
       const totalTickers = items.length;
       const avg = totalTickers ? Math.round(items.reduce((s,x)=>s+Number(x.holders||0),0) / totalTickers) : 0;
@@ -1774,7 +1364,7 @@
             <div class="kpiTitle">Top holding</div>
             <div class="kpiValue">${top ? String(top.ticker).toUpperCase() : "—"}</div>
           </div>
-          <span class="kpiBadge badgeNeu">365D</span>
+          <span class="kpiBadge badgeNeu">${win}D</span>
         </div>
         <div class="kpiSub">${top ? `Holders: <strong>${Number(top.holders||0)}</strong>` : "No holdings data."}</div>
         <div class="kpiList">
@@ -1804,84 +1394,131 @@
       el("holdingsKpiRules").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Holdings score</div>
-            <div class="kpiValue">Holder count</div>
+            <div class="kpiTitle">Expected payload</div>
+            <div class="kpiValue">Backend</div>
           </div>
-          <span class="kpiBadge badgeNeu">Simple</span>
+          <span class="kpiBadge badgeNeu">Required</span>
         </div>
         <div class="kpiSub">
-          <div class="kpiRow"><span>Score</span><span class="kpiBadge badgeNeu">= # holders</span></div>
-          <div class="kpiRow"><span>Window</span><span class="kpiBadge badgeNeu">365D</span></div>
-          <div class="scoreExplain">
-            Backend must aggregate disclosures into per-ticker holder counts.
+          <div class="kpiList">
+            <div class="kpiRow"><span>Endpoint</span><span class="kpiBadge badgeNeu">/report/holdings/common</span></div>
+            <div class="kpiRow"><span>Fields</span><span class="kpiBadge badgeNeu">{ticker, companyName, holders}</span></div>
           </div>
         </div>
       `;
     }
 
-    function renderHoldingsCommon(payload){
-      const list = Array.isArray(payload?.commonHoldings) ? payload.commonHoldings : Array.isArray(payload?.holdings) ? payload.holdings : [];
-      const win = Number(payload?.windowDays || 365);
+    function parseHoldingsResponse(data){
+      // Accept multiple possible shapes to avoid brittle frontend failures.
+      // Valid forms:
+      // 1) { commonHoldings: [{ticker, companyName, holders}] }
+      // 2) { holdings: [...] }
+      // 3) { data: [...] }
+      // 4) [...] (array directly)
+      if (Array.isArray(data)) return data;
+
+      if (data && Array.isArray(data.commonHoldings)) return data.commonHoldings;
+      if (data && Array.isArray(data.holdings)) return data.holdings;
+      if (data && Array.isArray(data.data)) return data.data;
+
+      return [];
+    }
+
+    function normalizeHoldingsList(list){
+      return list.map(x => ({
+        ticker: x.ticker || x.symbol || x.tkr,
+        companyName: x.companyName || x.name || "",
+        holders: Number(x.holders ?? x.holderCount ?? x.count ?? x.n ?? 0)
+      }))
+      .filter(x => x.ticker && Number.isFinite(x.holders))
+      .map(x => ({ ...x, ticker: String(x.ticker).toUpperCase().trim() }));
+    }
+
+    function renderHoldingsError(win, url, errText, rawText){
+      el("holdingsWindowBadge").textContent = `${win}D`;
+      renderHoldingsKpis([], win);
+      el("holdingsList").innerHTML = "<div class='subtle'>No holdings overlap data returned.</div>";
+
+      const extra = rawText ? ` Raw: ${rawText.slice(0, 220)}${rawText.length > 220 ? "…" : ""}` : "";
+      el("holdingsHint").innerHTML = `
+        <span class="err">Holdings overlap failed.</span><br/>
+        <span class="mono">GET ${url}</span><br/>
+        <span class="mono">${String(errText || "Unknown error")}${extra}</span><br/>
+        <span class="muted">Most common causes: endpoint not deployed, returns non-JSON, or CORS blocked.</span>
+      `;
+    }
+
+    function renderHoldingsCommon(win, list){
       el("holdingsWindowBadge").textContent = `${win}D`;
 
-      if (!list.length){
+      const normalized = normalizeHoldingsList(list)
+        .sort((a,b) => (b.holders - a.holders) || a.ticker.localeCompare(b.ticker))
+        .slice(0, 30);
+
+      renderHoldingsKpis(normalized, win);
+
+      if (!normalized.length){
         el("holdingsList").innerHTML = "<div class='subtle'>No holdings overlap data returned.</div>";
         el("holdingsHint").textContent =
-          "If this is empty, implement /report/holdings/common to return {ticker, companyName, holders}.";
-        renderHoldingsKpis([]);
+          "Backend returned no items. Verify the endpoint returns an array of {ticker, holders}.";
         return;
       }
 
-      const sorted = list.slice().map(x => ({
-        ticker: x.ticker,
-        companyName: x.companyName,
-        holders: Number(x.holders ?? x.holderCount ?? x.count ?? 0)
-      })).filter(x => x.ticker && x.holders >= 0)
-        .sort((a,b) => (b.holders - a.holders) || String(a.ticker).localeCompare(String(b.ticker)));
-
-      const trimmed = sorted.slice(0, 30);
-      renderHoldingsKpis(trimmed);
-
-      el("holdingsList").innerHTML = trimmed.map(holdingsRowHTML).join("");
+      el("holdingsList").innerHTML = normalized.map(holdingsRowHTML).join("");
       el("holdingsHint").textContent =
         "This is popularity by holdings, not a timing signal. Combine with Market Entry Index for pacing.";
     }
 
     async function loadHoldingsCommon(windowDays, force){
-      const key = String(windowDays || 365);
+      const win = Number(windowDays || 365);
+      const key = String(win);
       const cached = CACHE_HOLDINGS.get(key);
       if (cached && !force){
-        renderHoldingsCommon(cached);
+        renderHoldingsCommon(win, cached);
         return;
       }
 
-      const url = HOLDINGS_COMMON_URL(windowDays || 365);
+      const url = HOLDINGS_COMMON_URL(win);
       el("holdingsList").innerHTML = "<div class='subtle'>Loading holdings overlap…</div>";
-      el("holdingsHint").textContent = `Loading holdings overlap from: ${url}`;
+      el("holdingsHint").textContent = `Loading: ${url}`;
 
       try{
         const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
+
+        // Try JSON first, but keep raw for diagnostics.
+        const rawText = await res.text();
+        let data = null;
+        try{
+          data = rawText ? JSON.parse(rawText) : null;
+        }catch(parseErr){
+          throw new Error("Non-JSON response (check server logs / route).");
+        }
+
         if (!res.ok) throw new Error("HTTP " + res.status);
-        if (data.error) throw new Error(data.error);
-        CACHE_HOLDINGS.set(key, data);
-        renderHoldingsCommon(data);
+
+        // Some APIs return {error:"..."}
+        if (data && typeof data === "object" && data.error){
+          throw new Error(String(data.error));
+        }
+
+        const list = parseHoldingsResponse(data);
+        CACHE_HOLDINGS.set(key, list);
+        renderHoldingsCommon(win, list);
       }catch(err){
-        renderHoldingsCommon({ windowDays: windowDays || 365, commonHoldings: [] });
-        el("holdingsHint").textContent =
-          "Holdings overlap could not load. Backend likely does not have /report/holdings/common implemented yet.";
+        // cache empty to avoid repeat hammering unless user retries
+        CACHE_HOLDINGS.set(key, []);
+        renderHoldingsError(win, url, err?.message || String(err), "");
       }
     }
 
+    // -----------------------------
     // Main loader
+    // -----------------------------
     function renderMain(payload){
       const win = Number(payload.windowDays || WINDOW_DAYS || 30);
       el("reportDate").textContent = payload.date ? `${payload.date} · window ${win}D` : `window ${win}D`;
-
-      // Market entry index is now computed from congress payload, no backend
       renderEntryIndexFromCongress(payload);
-
-      renderStrategy(payload);
+      renderSimpleStrategy(payload);
       renderCryptoFromMain(payload);
       handleHash();
     }
@@ -1895,7 +1532,6 @@
         if (ACTIVE_TAB === "Main") renderMain(cached);
         if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(cached);
         if (ACTIVE_TAB === "Congress") renderCongressTradeSections(cached);
-        if (ACTIVE_TAB === "Main") renderEntryIndexFromCongress(cached);
         return;
       }
 
@@ -1926,39 +1562,21 @@
       el("btn180").classList.toggle("on", WINDOW_DAYS === 180);
       el("btn365").classList.toggle("on", WINDOW_DAYS === 365);
 
-      if (ACTIVE_TAB === "Congress" || ACTIVE_TAB === "Crypto" || ACTIVE_TAB === "Score"){
+      if (ACTIVE_TAB === "Congress" || ACTIVE_TAB === "Crypto"){
         loadMain(false);
       }
     }
 
     function handleRefresh(){
-      if (ACTIVE_TAB === "Congress"){
-        CACHE_MAIN.delete(String(WINDOW_DAYS));
-        CACHE_HOLDINGS.delete("365");
-        loadMain(true);
-        loadHoldingsCommon(365, true);
-        return;
-      }
-      if (ACTIVE_TAB === "Main"){
-        CACHE_MAIN.delete(String(WINDOW_DAYS));
-        loadMain(true);
-        return;
-      }
       CACHE_MAIN.delete(String(WINDOW_DAYS));
+      if (ACTIVE_TAB === "Congress"){
+        CACHE_HOLDINGS.delete("365");
+        loadHoldingsCommon(365, true);
+      }
       loadMain(true);
     }
 
     // Events
-    el("searchBtn").addEventListener("click", () => {
-      const t = String(el("searchInput").value || "").trim().toUpperCase();
-      if (!t) return;
-      window.location.hash = "#stock=" + encodeURIComponent(t);
-      showTab("Search");
-      handleHash();
-    });
-
-    el("scoreGoBtn").addEventListener("click", () => runScoreFromUI());
-
     el("btn30").addEventListener("click", () => setWindow(30));
     el("btn180").addEventListener("click", () => setWindow(180));
     el("btn365").addEventListener("click", () => setWindow(365));
@@ -1966,17 +1584,17 @@
     el("tabMainBtn").addEventListener("click", () => showTab("Main"));
     el("tabCongressBtn").addEventListener("click", () => showTab("Congress"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
-    el("tabScoreBtn").addEventListener("click", () => showTab("Score"));
-    el("tabSearchBtn").addEventListener("click", () => showTab("Search"));
 
     el("navMain").addEventListener("click", () => showTab("Main"));
     el("navCongress").addEventListener("click", () => showTab("Congress"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
-    el("navScore").addEventListener("click", () => showTab("Score"));
-    el("navSearch").addEventListener("click", () => showTab("Search"));
 
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
+
+    el("holdingsRetryBtn").addEventListener("click", () => {
+      loadHoldingsCommon(365, true);
+    });
 
     // Start
     showTab("Main");
