@@ -370,7 +370,6 @@
       color:var(--muted);
       font-size:12px;
       margin:6px 0 0;
-      line-height:1.35;
     }
 
     .tabsBottom{
@@ -397,6 +396,19 @@
       cursor:pointer;
     }
     .tabBottomActive{color:#fff}
+
+    .eventList{
+      margin-top:8px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .eventRow{
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:8px;
+    }
   </style>
 </head>
 
@@ -433,7 +445,6 @@
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <!-- KPI STRIP -->
     <section id="kpiStrip">
       <div class="sectionTitle" id="kpiTitle">Signal dashboard (top 4, rolling 30 days)</div>
       <div class="grid4">
@@ -444,7 +455,6 @@
       </div>
     </section>
 
-    <!-- MAIN VIEW -->
     <section id="viewMain">
       <div class="sectionTitle" id="convTitle">Convergence 🔥 (bipartisan overlap on BUY, rolling 30 days)</div>
       <div id="convergenceList"></div>
@@ -467,11 +477,11 @@
 
     <!-- PERFORMANCE VIEW -->
     <section id="viewPerf" style="display:none;">
-      <div class="sectionTitle" id="perfTitle">Best performers (rolling 2 years)</div>
+      <div class="sectionTitle">Congress trading performance (last 2 years)</div>
       <div class="hint" id="perfHint">
-        Uses backend endpoint <span class="mono">/report/performance-2y?horizon_days=WINDOW</span>.
-        If the backend is asleep, the first request may take 15 to 60 seconds.
+        This tab is independent of the 30D/180D/365D window. It always looks back 2 years and scores trades.
       </div>
+
       <div id="perfBox" class="panel" style="margin-top:10px;">
         <div class="subtle" id="perfStatus">Loading…</div>
       </div>
@@ -487,6 +497,7 @@
     <!-- CRYPTO VIEW -->
     <section id="viewCrypto" style="display:none;">
       <div class="sectionTitle" id="cryptoTitle">Crypto congress disclosures (rolling 30 days)</div>
+
       <div class="grid2">
         <div>
           <div class="sectionTitle">Buys</div>
@@ -495,6 +506,7 @@
           <div class="sectionTitle" style="margin-top:14px;">Crypto-linked tickers (ETFs, miners, exchanges)</div>
           <div id="cryptoLinkedBuys"></div>
         </div>
+
         <div>
           <div class="sectionTitle">Sells</div>
           <div class="sectionTitle" style="margin-top:8px;">Direct crypto disclosures</div>
@@ -503,6 +515,7 @@
           <div id="cryptoLinkedSells"></div>
         </div>
       </div>
+
       <div class="hint" id="cryptoHint">
         Direct crypto items come from disclosure descriptions (BTC, ETH, SOL, LINK, etc). Crypto-linked tickers are ETFs, miners, and exchanges pulled from the same congress feed.
       </div>
@@ -525,7 +538,6 @@
     </section>
   </main>
 
-  <!-- Bottom nav -->
   <nav class="tabsBottom">
     <div class="tabBarBottom">
       <div class="tabBottom tabBottomActive" id="navMain">Main</div>
@@ -537,7 +549,6 @@
   </nav>
 
   <script>
-    // Backend endpoints
     const BACKEND_BASE = "https://finance-backend-dzta.onrender.com";
     const LEADERS_URL = BACKEND_BASE + "/report/public-leaders";
     const PERF_URL = BACKEND_BASE + "/report/performance-2y";
@@ -545,14 +556,11 @@
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "Main";
-    let WINDOW_DAYS = 30;          // 30 / 180 / 365
-    let CACHE_MAIN = new Map();    // key: windowDays
+    let WINDOW_DAYS = 30;
+    let CACHE_MAIN = new Map();
     let CACHE_LEADERS = null;
+    let CACHE_PERF = null;
 
-    // New: cache performance by horizon_days
-    let CACHE_PERF = new Map();    // key: horizonDays -> payload
-
-    // Crypto-linked stock tickers (ETFs, miners, exchanges)
     const CRYPTO_TICKERS = new Set([
       "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
       "IBIT","FBTC","GBTC","BITO","ARKB","BTCO","HODL","BITB",
@@ -578,55 +586,6 @@
       el("pageTitle").textContent = map[tab] || "Convergence";
     }
 
-    // -----------------------
-    // Resilient fetch helpers
-    // -----------------------
-    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-    async function fetchJsonWithTimeout(url, timeoutMs){
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), Math.max(1, timeoutMs || 15000));
-      try{
-        const res = await fetch(url, { cache: "no-store", signal: controller.signal });
-        const data = await res.json().catch(() => ({}));
-        return { ok: res.ok, status: res.status, data };
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-
-    async function fetchJsonWithRetry(url, opts){
-      const attempts = Math.max(1, (opts && opts.attempts) || 3);
-      const timeoutMs = Math.max(3000, (opts && opts.timeoutMs) || 15000);
-      const backoffMs = Math.max(500, (opts && opts.backoffMs) || 1500);
-
-      let lastErr = null;
-      for (let i = 1; i <= attempts; i++){
-        try{
-          const r = await fetchJsonWithTimeout(url, timeoutMs);
-          // Treat 503/502 as retryable (Render cold start)
-          if (r.ok && !r.data?.error) return r;
-
-          const retryable = (r.status === 502 || r.status === 503 || r.status === 504);
-          if (!retryable){
-            return r;
-          }
-
-          lastErr = new Error("HTTP " + r.status);
-        } catch(e){
-          lastErr = e;
-        }
-
-        // Progressive message
-        setStatus("", "Warming up backend…", `Attempt ${i}/${attempts} · ${url}`);
-        if (i < attempts){
-          await sleep(backoffMs * i);
-        }
-      }
-
-      throw lastErr || new Error("Request failed");
-    }
-
     function showTab(tab){
       ACTIVE_TAB = tab;
       setTitleForTab(tab);
@@ -638,8 +597,9 @@
       el("viewSearch").style.display = tab === "Search" ? "" : "none";
 
       el("kpiStrip").style.display = (tab === "Main") ? "" : "none";
-      // keep window toggle visible for Main, Crypto, Performance
-      el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto" || tab === "Performance") ? "" : "none";
+
+      // Only Main/Crypto show the 30/180/365 window toggles
+      el("mainWindowTools").style.display = (tab === "Main" || tab === "Crypto") ? "" : "none";
 
       el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
       el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
@@ -725,7 +685,6 @@
 
       const dem = mode === "BUY" ? Number(x.demBuyers || 0) : Number(x.demSellers || 0);
       const rep = mode === "BUY" ? Number(x.repBuyers || 0) : Number(x.repSellers || 0);
-
       const conf = confidenceLabel(x);
 
       return `
@@ -976,9 +935,21 @@
       el("sellList").innerHTML =
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sell trades found.</div>";
 
-      // Crypto uses same payload, render if your backend provides data.crypto
-      // If not, nothing breaks.
       handleHash();
+    }
+
+    async function fetchJsonWithTimeout(url, ms){
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), ms);
+      try{
+        const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
+        const txt = await res.text();
+        let data = {};
+        try{ data = JSON.parse(txt || "{}"); } catch(e){ data = { _raw: txt || "" }; }
+        return { res, data };
+      } finally {
+        clearTimeout(t);
+      }
     }
 
     async function loadMain(force){
@@ -997,15 +968,16 @@
       setStatus("", `Loading congress (rolling ${WINDOW_DAYS}D)…`, url);
 
       try{
-        const r = await fetchJsonWithRetry(url, { attempts: 3, timeoutMs: 20000, backoffMs: 1500 });
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        if (r.data && r.data.error) throw new Error(r.data.error);
+        const { res, data } = await fetchJsonWithTimeout(url, 20000);
 
-        CACHE_MAIN.set(key, r.data);
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        if (data && data.error) throw new Error(String(data.error));
+
+        CACHE_MAIN.set(key, data);
 
         setStatus("ok", "Live congress data loaded ✅", "");
         if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
-          renderMain(r.data);
+          renderMain(data);
         }
       }catch(err){
         setStatus("err", "Could not load congress data", String(err));
@@ -1019,7 +991,7 @@
       if (ACTIVE_TAB !== "Leaders") return;
       if (CACHE_LEADERS && !force){
         setStatus("ok", "Using cached SEC leaders ✅", "");
-        el("leadersList").innerHTML = "<div class='subtle'>Cached leaders loaded.</div>";
+        el("leadersList").innerHTML = CACHE_LEADERS.html || "<div class='subtle'>No cached leaders HTML.</div>";
         return;
       }
 
@@ -1027,50 +999,87 @@
       el("leadersList").innerHTML = "<div class='subtle'>Loading SEC filings…</div>";
 
       try{
-        const r = await fetchJsonWithRetry(LEADERS_URL, { attempts: 3, timeoutMs: 20000, backoffMs: 1500 });
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        if (r.data && r.data.error) throw new Error(r.data.error);
+        const { res, data } = await fetchJsonWithTimeout(LEADERS_URL, 20000);
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        if (data && data.error) throw new Error(String(data.error));
 
-        CACHE_LEADERS = r.data;
+        // Minimal render to keep this file focused on Performance fix
+        const leaders = (data && Array.isArray(data.leaders)) ? data.leaders : [];
+        const html = leaders.length ? leaders.map(x => `
+          <div class="card">
+            <div class="cardTop">
+              <div>
+                <div class="tickerLine">
+                  <div class="ticker">${String(x.name||"")}</div>
+                  <div class="who">CIK: <span class="mono">${String(x.cik||"")}</span></div>
+                </div>
+              </div>
+              <div class="tags"><span class="tag tagSEC">SEC</span></div>
+            </div>
+          </div>
+        `).join("") : "<div class='subtle'>No leaders data returned yet.</div>";
+
+        CACHE_LEADERS = { raw:data, html };
         setStatus("ok", "SEC leaders loaded ✅", "");
-        el("leadersList").innerHTML = "<div class='subtle'>Leaders loaded. (Rendering unchanged in this reset build.)</div>";
+        el("leadersList").innerHTML = html;
       }catch(err){
         setStatus("err", "Could not load SEC leaders", String(err));
         el("leadersList").innerHTML = "<div class='subtle'>No SEC leaders data displayed.</div>";
       }
     }
 
-    // -----------------------
-    // Performance (2Y) tab
-    // Key change: use WINDOW_DAYS as horizon_days and add retries + cache.
-    // -----------------------
-    function renderPerf(payload, horizonDays){
-      const leaders = Array.isArray(payload?.leaders) ? payload.leaders : (Array.isArray(payload?.top) ? payload.top : []);
-      const date = payload?.date ? String(payload.date) : "";
-      el("reportDate").textContent = date ? `${date} · perf horizon ${horizonDays}D` : `perf horizon ${horizonDays}D`;
+    function partyPill(p){
+      const s = String(p||"").toUpperCase();
+      if (s === "D") return `<span class="tag tagDem">DEM</span>`;
+      if (s === "R") return `<span class="tag tagRep">GOP</span>`;
+      return `<span class="tag badgeNeu">?</span>`;
+    }
 
-      if (!leaders.length){
-        el("perfBox").innerHTML = `<div class="subtle">No performance rows returned.</div>`;
-        return;
-      }
+    function perfRowHTML(r){
+      const name = String(r.name || r.politician || "Unknown");
+      const party = String(r.party || "");
+      const chamber = String(r.chamber || "");
+      const tradeCount = (r.tradeCount != null) ? Number(r.tradeCount) : 0;
+      const avg = (r.avgReturnPct != null) ? Number(r.avgReturnPct) : null;
 
-      el("perfBox").innerHTML = `
-        <div class="sectionTitle" style="margin-top:0;">Top 15 (avg forward return, scored)</div>
-        ${leaders.slice(0,15).map(r => {
-          const name = String(r.name || r.politician || "Unknown");
-          const party = String(r.party || "");
-          const chamber = String(r.chamber || "");
-          const score = (r.avgReturnPct != null) ? `${Number(r.avgReturnPct).toFixed(2)}%` : (r.score != null ? Number(r.score).toFixed(3) : "—");
-          const n = (r.tradeCount != null) ? Number(r.tradeCount) : "";
-          return `
-            <div class="kpiRow">
-              <span><strong>${name}</strong> <span class="subtle">${party}${chamber ? " · " + chamber : ""}${n ? " · " + n + " trades" : ""}</span></span>
-              <span class="kpiBadge badgeNeu">${score}</span>
+      const cls = (avg != null && avg > 0) ? "badgePos" : (avg != null && avg < 0) ? "badgeNeg" : "badgeNeu";
+      const avgTxt = (avg != null) ? `${avg.toFixed(2)}%` : "—";
+
+      const sample = Array.isArray(r.sample) ? r.sample : [];
+      const sampleHtml = sample.length ? `
+        <div class="divider"></div>
+        <div class="kpiRow"><span class="muted">Sample trades</span><span class="kpiBadge badgeNeu">${Math.min(sample.length, 5)}</span></div>
+        <div class="kpiList">
+          ${sample.slice(0,5).map(s => {
+            const t = String(s.ticker||"").toUpperCase();
+            const k = String(s.kind||"").toUpperCase();
+            const sc = (s.scorePct != null) ? Number(s.scorePct) : null;
+            const scCls = (sc != null && sc > 0) ? "badgePos" : (sc != null && sc < 0) ? "badgeNeg" : "badgeNeu";
+            return `
+              <div class="kpiRow">
+                <span><a href="#stock=${t}"><strong>${t}</strong></a> <span class="subtle">${k}${s.traded ? " · traded " + s.traded : ""}${s.filed ? " · filed " + s.filed : ""}</span></span>
+                <span class="kpiBadge ${scCls}">${sc != null ? sc.toFixed(2) + "%" : "—"}</span>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      ` : "";
+
+      return `
+        <div class="card">
+          <div class="cardTop">
+            <div>
+              <div class="tickerLine">
+                <div class="ticker">${name}</div>
+                <div class="who">${party}${chamber ? " · " + chamber : ""} · ${tradeCount} trades</div>
+              </div>
             </div>
-          `;
-        }).join("")}
-        <div class="hint" style="margin-top:10px;">
-          Note: SELL trades are treated as negative exposure in the backend scoring.
+            <div class="tags">
+              ${partyPill(party)}
+              <span class="tag ${cls}">${avgTxt}</span>
+            </div>
+          </div>
+          ${sampleHtml}
         </div>
       `;
     }
@@ -1078,50 +1087,85 @@
     async function loadPerf(force){
       if (ACTIVE_TAB !== "Performance") return;
 
-      const horizonDays = WINDOW_DAYS; // Use the same toggle for horizon
-      el("perfTitle").textContent = `Best performers (rolling 2 years) · horizon ${horizonDays}D`;
-
-      const cached = CACHE_PERF.get(String(horizonDays));
-      if (cached && !force){
+      if (CACHE_PERF && !force){
         setStatus("ok", "Using cached performance ✅", "");
-        renderPerf(cached, horizonDays);
+        el("perfBox").innerHTML = CACHE_PERF.html || "<div class='subtle'>No cached performance HTML.</div>";
         return;
       }
 
-      const url = PERF_URL + `?horizon_days=${encodeURIComponent(String(horizonDays))}`;
-      setStatus("", `Loading performance (2Y, horizon ${horizonDays}D)…`, url);
+      // Fixed: Performance tab is independent of 30/180/365
+      // Keep horizon_days fixed here for now (this is the forward return window in your backend).
+      const horizonDays = 30;
+      const url = `${PERF_URL}?horizon_days=${encodeURIComponent(String(horizonDays))}`;
 
-      el("perfBox").innerHTML = `
-        <div class="subtle" id="perfStatus">Loading…</div>
-        <div class="hint" style="margin-top:10px;">
-          If this is the first hit in a while, the backend may be waking up.
-        </div>
-      `;
+      setStatus("", "Loading 2Y performance…", url);
+      el("perfBox").innerHTML = `<div class="subtle" id="perfStatus">Loading performance…</div>`;
 
       try{
-        // More retries and a longer timeout because this endpoint can be heavy.
-        const r = await fetchJsonWithRetry(url, { attempts: 4, timeoutMs: 30000, backoffMs: 2000 });
+        const { res, data } = await fetchJsonWithTimeout(url, 25000);
 
-        if (!r.ok) {
-          const msg = r.data?.detail || r.data?.error || "";
-          throw new Error(`HTTP ${r.status}${msg ? " · " + msg : ""}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        if (data && data.error) throw new Error(String(data.error));
+
+        const leaders = Array.isArray(data.leaders) ? data.leaders : [];
+        const date = String(data.date || "");
+        const windowStart = String(data.windowStart || "");
+        const windowEnd = String(data.windowEnd || "");
+        const note = String(data.note || "");
+
+        el("reportDate").textContent = date ? `${date} · performance` : "performance";
+
+        if (!leaders.length){
+          const diag = `
+            <div class="subtle">
+              No performance rows returned.<br/><br/>
+              Debug details:<br/>
+              <span class="mono">leaders.length = 0</span><br/>
+              <span class="mono">windowStart=${windowStart || "—"}</span><br/>
+              <span class="mono">windowEnd=${windowEnd || "—"}</span><br/>
+              <span class="mono">horizon_days=${horizonDays}</span><br/>
+              ${note ? `<br/>Backend note: <span class="mono">${note}</span>` : ""}
+              <br/><br/>
+              If you expected rows, this usually means the backend filtered everything out or the price lookup returned no matches.
+            </div>
+          `;
+          el("perfBox").innerHTML = diag;
+          setStatus("ok", "Performance loaded (empty) ⚠️", "Endpoint returned zero rows");
+          CACHE_PERF = { raw:data, html: diag };
+          return;
         }
-        if (r.data && r.data.error) throw new Error(r.data.error);
 
-        CACHE_PERF.set(String(horizonDays), r.data);
+        const top = leaders.slice(0, 40);
+        const html = `
+          <div class="sectionTitle" style="margin-top:0;">Top performers (2Y lookback, ${horizonDays}D forward scoring)</div>
+          <div class="hint" style="margin-top:6px;">
+            Lookback: <span class="mono">${windowStart || "—"}</span> to <span class="mono">${windowEnd || "—"}</span>.
+            ${note ? ` Note: <span class="mono">${note}</span>` : ""}
+          </div>
+          <div style="margin-top:10px;">
+            ${top.map(perfRowHTML).join("")}
+          </div>
+          <div class="hint" style="margin-top:10px;">
+            If you want “portfolio performance” (not per-trade scoring), that is a backend metric and will require a different endpoint.
+          </div>
+        `;
 
+        el("perfBox").innerHTML = html;
+        CACHE_PERF = { raw:data, html };
         setStatus("ok", "Performance loaded ✅", "");
-        renderPerf(r.data, horizonDays);
       }catch(err){
-        setStatus("err", "Performance endpoint error", String(err));
+        const msg = String(err && err.name === "AbortError" ? "Request timed out (frontend abort)" : err);
+        setStatus("err", "Performance endpoint error", msg);
         el("perfBox").innerHTML = `
           <div class="subtle">
             Could not load performance.<br/>
-            Error: <span class="mono">${String(err)}</span><br/><br/>
-            Try again after 20 to 60 seconds if the backend is waking up.<br/>
-            <div class="miniLinks" style="margin-top:10px;">
-              <a class="miniLink" href="${url}" target="_blank" rel="noopener">Open endpoint</a>
-            </div>
+            Error: <span class="mono">${msg}</span><br/><br/>
+            Diagnostics to check:
+            <ul style="margin:8px 0 0 18px; color:rgba(255,255,255,.82);">
+              <li>Browser console for CORS errors</li>
+              <li>Backend logs for timeouts</li>
+              <li>Try refreshing, or lowering leader count in backend (if applicable)</li>
+            </ul>
           </div>
         `;
       }
@@ -1129,16 +1173,11 @@
 
     function setWindow(days){
       WINDOW_DAYS = days;
-
       el("btn30").classList.toggle("on", WINDOW_DAYS === 30);
       el("btn180").classList.toggle("on", WINDOW_DAYS === 180);
       el("btn365").classList.toggle("on", WINDOW_DAYS === 365);
-
       if (ACTIVE_TAB === "Main" || ACTIVE_TAB === "Crypto"){
         loadMain(false);
-      }
-      if (ACTIVE_TAB === "Performance"){
-        loadPerf(false);
       }
     }
 
@@ -1149,7 +1188,7 @@
         return;
       }
       if (ACTIVE_TAB === "Performance"){
-        CACHE_PERF.delete(String(WINDOW_DAYS));
+        CACHE_PERF = null;
         loadPerf(true);
         return;
       }
