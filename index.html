@@ -464,6 +464,25 @@
       gap:8px;
       flex-wrap:wrap;
     }
+
+    /* Crypto briefing details */
+    details.cryptoDetails{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:9px;
+      margin-top:10px;
+    }
+    details.cryptoDetails > summary{
+      cursor:pointer;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      user-select:none;
+    }
+    details.cryptoDetails > summary::-webkit-details-marker{display:none}
   </style>
 </head>
 
@@ -512,20 +531,6 @@
         <div class="subtle" id="entryHint" style="margin-top:10px;"></div>
       </div>
 
-      <div class="sectionTitle">Signals</div>
-      <div class="panel">
-        <div class="panelTitle">
-          <h2>Scored ideas</h2>
-          <span class="kpiBadge badgeNeu" id="ideasWindowBadge">30D</span>
-        </div>
-        <div class="subtle" style="margin-top:6px;">
-          Score blends congress activity with relevance from your watchlist and sector headlines.
-        </div>
-        <div class="divider"></div>
-        <div id="ideasList"></div>
-        <div class="subtle" id="ideasHint" style="margin-top:10px;"></div>
-      </div>
-
       <div class="sectionTitle">What this app is for</div>
       <div class="panel">
         <div class="kpiSub">
@@ -540,36 +545,35 @@
     <section id="viewNews" style="display:none;">
       <div class="sectionTitle">Market snapshot</div>
       <div class="grid3">
-        <div class="kpi" id="snapKpiSp"></div>
-        <div class="kpi" id="snapKpiFearGreed"></div>
+        <div class="kpi" id="snapKpiSPY"></div>
+        <div class="kpi" id="snapKpiVIX"></div>
+        <div class="kpi" id="snapKpiFG"></div>
+      </div>
+      <div class="subtle" id="snapHint" style="margin-top:10px;"></div>
+
+      <div class="sectionTitle">Daily briefing</div>
+      <div class="grid3">
         <div class="kpi" id="briefKpiSentiment"></div>
+        <div class="kpi" id="briefKpiScope"></div>
+        <div class="kpi" id="briefKpiNotes"></div>
       </div>
 
       <div class="sectionTitle">Your watchlist</div>
       <div class="panel">
         <div class="kpiSub">
           Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL
-          This watchlist influences the briefing and scoring.
+          This watchlist influences the briefing and pulls ticker RSS into the same sector view.
         </div>
         <div style="margin-top:10px;">
           <input class="input" id="watchInput" value="SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B" />
         </div>
         <div class="miniLinks" style="margin-top:10px;">
           <button class="pillBtn" id="watchApplyBtn">Refresh briefing</button>
+          <button class="pillBtn" id="snapRefreshBtn">Refresh snapshot</button>
         </div>
       </div>
 
       <div class="sectionTitle">Sectors</div>
-      <div class="panel">
-        <div class="kpiSub">
-          Comma-separated sectors. Example: AI,Medical,Energy,Semiconductors
-        </div>
-        <div style="margin-top:10px;">
-          <input class="input" id="sectorInput" value="AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer" />
-        </div>
-      </div>
-
-      <div class="sectionTitle">Daily briefing</div>
       <div id="briefingSectors"></div>
 
       <div class="subtle" id="briefHint" style="margin-top:12px;"></div>
@@ -636,6 +640,45 @@
 
     <!-- CRYPTO TAB -->
     <section id="viewCrypto" style="display:none;">
+      <div class="sectionTitle">Crypto news briefing</div>
+
+      <div class="panel">
+        <div class="kpiSub">
+          This is headline context and upcoming catalysts. It is meant to flag what could move price.
+          Use Refresh sparingly to reduce rate-limits.
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid3">
+          <div class="kpi" id="cryptoNewsKpiOverall"></div>
+          <div class="kpi" id="cryptoNewsKpiScope"></div>
+          <div class="kpi" id="cryptoNewsKpiNotes"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="kpiSub"><strong>Coins</strong></div>
+        <div style="margin-top:8px;">
+          <input class="input" id="cryptoCoinsInput" value="BTC,ETH,LINK,SHIB" />
+        </div>
+        <div class="miniLinks" style="margin-top:10px;">
+          <button class="pillBtn" id="cryptoNewsRefreshBtn">Refresh crypto news</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="kpiSub"><strong>Major upcoming catalysts (next days to weeks)</strong></div>
+        <ul class="bulletList" id="cryptoCatalystsList"></ul>
+
+        <div class="divider"></div>
+
+        <div class="kpiSub"><strong>Coins and headlines</strong></div>
+        <div id="cryptoNewsCoins"></div>
+
+        <div class="subtle" id="cryptoNewsHint" style="margin-top:10px;"></div>
+      </div>
+
       <div class="sectionTitle" id="cryptoTitle">Crypto disclosures</div>
 
       <div class="panel">
@@ -714,19 +757,16 @@
     const ENTRY_URL = (windowDays) =>
       `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
 
-    const SNAPSHOT_URL = () =>
+    const MARKET_SNAPSHOT_URL = () =>
       `${BACKEND_BASE}/market/snapshot`;
 
-    const IDEAS_URL = (windowDays, watchlist, sectors, limit) =>
-      `${BACKEND_BASE}/signals/ideas?window_days=${encodeURIComponent(String(windowDays||30))}`
-      + `&watchlist=${encodeURIComponent(String(watchlist||""))}`
-      + `&sectors=${encodeURIComponent(String(sectors||""))}`
-      + `&limit=${encodeURIComponent(String(limit||25))}`;
+    const NEWS_BRIEF_URL = (tickers) =>
+      `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(String(tickers||""))}&max_general=55&max_per_ticker=6`;
 
-    const NEWS_BRIEF_URL = (watchlist, sectors) =>
-      `${BACKEND_BASE}/news/briefing?watchlist=${encodeURIComponent(String(watchlist||""))}`
-      + `&sectors=${encodeURIComponent(String(sectors||""))}`
-      + `&max_items_per_sector=12`;
+    // New endpoint we are rendering in the Crypto tab.
+    // Your backend should expose this endpoint.
+    const CRYPTO_NEWS_URL = (coins, includeTopN) =>
+      `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent(String(coins||""))}&include_top_n=${encodeURIComponent(String(includeTopN||15))}`;
 
     const el = (id) => document.getElementById(id);
 
@@ -739,7 +779,13 @@
     let CACHE_DAILY = new Map();
     let CACHE_BRIEFING = new Map();
     let CACHE_SNAPSHOT = null;
-    let CACHE_IDEAS = new Map();
+    let CACHE_SNAPSHOT_TS = 0;
+
+    let CACHE_CRYPTO_NEWS = new Map();
+
+    // Refresh throttling to avoid rate-limits
+    let LAST_HARD_REFRESH_MS = 0;
+    const HARD_REFRESH_COOLDOWN_MS = 25000; // 25s
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -942,101 +988,110 @@
         CACHE_ENTRY.set(key, data);
         renderEntryIndex(data);
       }catch(err){
-        renderEntryIndex(null);
+        // Keep last good if available
+        if (CACHE_ENTRY.has(key)){
+          renderEntryIndex(CACHE_ENTRY.get(key));
+          el("entryHint").textContent = "Using cached market entry index to avoid rate-limits.";
+        } else {
+          renderEntryIndex(null);
+        }
       }
     }
 
-    // ----------- Signals ideas (scored list) ----------
-    function scoreBadge(score){
-      const s = Number(score || 0);
-      if (s >= 75) return { cls:"badgePos", label:`${s}` };
-      if (s >= 55) return { cls:"badgeNeu", label:`${s}` };
-      return { cls:"badgeNeg", label:`${s}` };
-    }
+    // ----------- Market snapshot render ----------
+    function renderSnapshot(payload){
+      const sp = payload?.sp500 || {};
+      const vix = payload?.vix || {};
+      const fg = payload?.fearGreed || {};
+      const errs = Array.isArray(payload?.errors) ? payload.errors : [];
 
-    function ideaCardHTML(x){
-      const t = String(x?.ticker || "").toUpperCase();
-      const sc = scoreBadge(x?.score);
-      const c = x?.congress || {};
-      const n = x?.news || {};
-      const drivers = Array.isArray(x?.drivers) ? x.drivers : [];
+      const fmtPct = (x) => {
+        if (x === null || x === undefined || isNaN(Number(x))) return "—";
+        const n = Number(x);
+        const s = n > 0 ? "+" : "";
+        return `${s}${n.toFixed(2)}%`;
+      };
 
-      const buys = Number(c?.buys || 0);
-      const sells = Number(c?.sells || 0);
-      const net = Number(c?.net || 0);
-      const bi = Number(c?.bipartisan || 0);
-      const last = String(c?.lastFiledAt || "");
+      const fgScore = fg?.score;
+      const fgRating = fg?.rating;
 
-      const wMent = Number(n?.watchlistMentions || 0);
-      const sMent = Number(n?.sectorMentions || 0);
-
-      const netCls = net > 0 ? "badgePos" : net < 0 ? "badgeNeg" : "badgeNeu";
-      const netSign = net > 0 ? "+" : "";
-
-      return `
-        <div class="card">
-          <div class="cardTop">
-            <div>
-              <div class="tickerLine">
-                <a class="ticker" href="#stock=${encodeURIComponent(t)}">${t}</a>
-                <div class="who">${drivers.length ? drivers.join(" · ") : "Scored idea"}</div>
-              </div>
-            </div>
-            <div class="tags">
-              <span class="kpiBadge ${sc.cls}">Score ${sc.label}</span>
-              ${bi >= 2 ? `<span class="tag tagBoth">BIPARTISAN</span>` : ``}
-            </div>
+      el("snapKpiSPY").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">S&P proxy</div>
+            <div class="kpiValue">${sp?.last ? sp.last : "—"}</div>
           </div>
-
-          <div class="divider"></div>
-
-          <div class="metaRow">
-            <div class="counts">
-              <div class="countItem">Buys: <strong>${buys}</strong></div>
-              <div class="countItem">Sells: <strong>${sells}</strong></div>
-              <div class="countItem">Net: <span class="kpiBadge ${netCls}">${netSign}${net}</span></div>
-              <div class="countItem">Overlap: <strong>${bi}</strong></div>
-              <div class="countItem">News: <strong>${wMent + sMent}</strong></div>
-            </div>
-            <div>${last ? `Last filed: ${last}` : ""}</div>
-          </div>
-
-          ${tickerLinksHTML(t)}
+          <span class="kpiBadge badgeNeu">${sp?.symbol || "SPY"}</span>
+        </div>
+        <div class="kpiSub">
+          1D: <strong>${fmtPct(sp?.ret1dPct)}</strong> · 5D: <strong>${fmtPct(sp?.ret5dPct)}</strong> · 1M: <strong>${fmtPct(sp?.ret1mPct)}</strong>
         </div>
       `;
+
+      el("snapKpiVIX").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Volatility</div>
+            <div class="kpiValue">${vix?.last ? vix.last : "—"}</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${vix?.symbol || "^VIX"}</span>
+        </div>
+        <div class="kpiSub">
+          1D change: <strong>${(vix?.chg1d !== null && vix?.chg1d !== undefined) ? (Number(vix.chg1d) > 0 ? "+" : "") + Number(vix.chg1d).toFixed(2) : "—"}</strong>
+        </div>
+      `;
+
+      const fgBadge = (typeof fgScore === "number")
+        ? (fgScore >= 60 ? "badgePos" : fgScore <= 40 ? "badgeNeg" : "badgeNeu")
+        : "badgeNeu";
+
+      el("snapKpiFG").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Fear & greed</div>
+            <div class="kpiValue">${(typeof fgScore === "number") ? fgScore : "—"}</div>
+          </div>
+          <span class="kpiBadge ${fgBadge}">${fgRating || "External index"}</span>
+        </div>
+        <div class="kpiSub">
+          Best effort fetch. If blank, provider may be blocked.
+        </div>
+      `;
+
+      el("snapHint").textContent = errs.length ? ("Snapshot issues: " + errs.slice(0,2).join(" | ")) : "Market snapshot loaded.";
     }
 
-    async function loadIdeas(force){
-      const watch = String(el("watchInput")?.value || "SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B");
-      const sectors = String(el("sectorInput")?.value || "AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer");
-      const key = `${WINDOW_DAYS}|${watch}|${sectors}`;
-
-      el("ideasWindowBadge").textContent = `${WINDOW_DAYS}D`;
-
-      if (CACHE_IDEAS.has(key) && !force){
-        const cached = CACHE_IDEAS.get(key);
-        const ideas = Array.isArray(cached?.ideas) ? cached.ideas : [];
-        el("ideasList").innerHTML = ideas.length ? ideas.map(ideaCardHTML).join("") : "<div class='subtle'>No ideas returned.</div>";
-        el("ideasHint").textContent = "Loaded from cache.";
+    async function loadMarketSnapshot(force){
+      // Cache snapshot in memory with timestamp
+      const now = Date.now();
+      if (CACHE_SNAPSHOT && !force){
+        renderSnapshot(CACHE_SNAPSHOT);
+        return;
+      }
+      // If forcing but we are within cooldown, do not hammer the backend
+      if (force && (now - CACHE_SNAPSHOT_TS) < HARD_REFRESH_COOLDOWN_MS && CACHE_SNAPSHOT){
+        renderSnapshot(CACHE_SNAPSHOT);
+        el("snapHint").textContent = "Using cached snapshot to avoid rate-limits.";
         return;
       }
 
-      const url = IDEAS_URL(WINDOW_DAYS, watch, sectors, 25);
-      el("ideasList").innerHTML = "<div class='subtle'>Loading scored ideas…</div>";
-      el("ideasHint").textContent = `Loading from: ${url}`;
+      const url = MARKET_SNAPSHOT_URL();
+      el("snapHint").textContent = `Loading from: ${url}`;
 
       try{
         const res = await fetch(url, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error("HTTP " + res.status);
-        CACHE_IDEAS.set(key, data);
-
-        const ideas = Array.isArray(data?.ideas) ? data.ideas : [];
-        el("ideasList").innerHTML = ideas.length ? ideas.map(ideaCardHTML).join("") : "<div class='subtle'>No ideas returned.</div>";
-        el("ideasHint").textContent = data?.note || "Scored list loaded.";
+        CACHE_SNAPSHOT = data;
+        CACHE_SNAPSHOT_TS = Date.now();
+        renderSnapshot(data);
       }catch(err){
-        el("ideasList").innerHTML = "<div class='subtle'>Could not load scored ideas.</div>";
-        el("ideasHint").textContent = "Backend must expose /signals/ideas and allow CORS.";
+        if (CACHE_SNAPSHOT){
+          renderSnapshot(CACHE_SNAPSHOT);
+          el("snapHint").textContent = "Snapshot fetch failed. Showing cached snapshot.";
+        } else {
+          el("snapHint").textContent = "Could not load market snapshot. Confirm backend has /market/snapshot and CORS allows this origin.";
+        }
       }
     }
 
@@ -1463,7 +1518,7 @@
       }
     }
 
-    // ----------- Crypto rendering ----------
+    // ----------- Crypto rendering (existing disclosures) ----------
     const DIRECT_COIN_SET = new Set(["BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"]);
     const CRYPTO_LINKED_TICKERS = new Set([
       "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
@@ -1582,6 +1637,155 @@
         `Showing direct, hint-only, and crypto-linked. If 30D looks empty, switch to 180D or 365D.`;
     }
 
+    // ----------- Crypto news briefing (NEW) ----------
+    function cryptoHeadlineHTML(h){
+      const title = String(h?.title || "").trim();
+      const link = String(h?.link || "").trim();
+      const pub = String(h?.published || "").trim();
+      const src = String(h?.source || h?.bucket || "").trim();
+
+      return `
+        <div class="headlineItem">
+          <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
+          <div class="headlineMeta">
+            ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
+            ${src ? `<span>Source: <strong>${src}</strong></span>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCryptoNews(data, coinsStr){
+      const date = String(data?.date || "");
+      const note = String(data?.note || "");
+      const errors = Array.isArray(data?.errors) ? data.errors : [];
+      const sources = (data?.sources && Array.isArray(data.sources.outlets)) ? data.sources.outlets : [];
+
+      const overall = data?.overallSentiment || { label: "NEUTRAL", score: 50 };
+      const cls = (overall.score >= 60) ? "badgePos" : (overall.score <= 40) ? "badgeNeg" : "badgeNeu";
+
+      const coins = Array.isArray(data?.coins) ? data.coins : [];
+      const catalysts = Array.isArray(data?.catalysts) ? data.catalysts : [];
+
+      el("cryptoNewsKpiOverall").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Overall crypto tone</div>
+            <div class="kpiValue">${Number(overall.score || 50)}/100</div>
+          </div>
+          <span class="kpiBadge ${cls}">${String(overall.label || "NEUTRAL")}</span>
+        </div>
+        <div class="kpiSub">Headline-based gauge for context.</div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Date</span><span class="kpiBadge badgeNeu">${date || "—"}</span></div>
+        </div>
+      `;
+
+      el("cryptoNewsKpiScope").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Scope</div>
+            <div class="kpiValue">${coins.length} coins</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Top list</span>
+        </div>
+        <div class="kpiSub">Requested: ${String(coinsStr || "").toUpperCase()}</div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Sources</span><span class="kpiBadge badgeNeu">${sources.length ? sources.length : "RSS"}</span></div>
+        </div>
+      `;
+
+      el("cryptoNewsKpiNotes").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Notes</div>
+            <div class="kpiValue">Catalysts</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Briefing</span>
+        </div>
+        <div class="kpiSub">
+          ${note ? note : "Crypto news briefing."}
+        </div>
+      `;
+
+      el("cryptoCatalystsList").innerHTML = catalysts.length
+        ? catalysts.map(x => `<li>${String(x||"")}</li>`).join("")
+        : "<li>No catalysts returned.</li>";
+
+      el("cryptoNewsCoins").innerHTML = coins.length
+        ? coins.map(c => {
+            const sym = String(c?.symbol || c?.coin || "").toUpperCase();
+            const s = c?.sentiment || { label: "NEUTRAL", score: 50 };
+            const scls = (s.score >= 60) ? "badgePos" : (s.score <= 40) ? "badgeNeg" : "badgeNeu";
+            const summary = String(c?.summary || "").trim();
+            const heads = Array.isArray(c?.headlines) ? c.headlines : [];
+
+            const meta = [];
+            meta.push(`${heads.length} headlines`);
+            meta.push(`Sentiment ${Number(s.score || 50)}/100`);
+            const metaLine = meta.join(" · ");
+
+            return `
+              <details class="cryptoDetails">
+                <summary>
+                  <div class="summaryLeft">
+                    <div class="summaryTitle">${sym || "COIN"}</div>
+                    <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
+                  </div>
+                  <div class="tags">
+                    <span class="kpiBadge badgeNeu">${heads.length}</span>
+                    <span class="kpiBadge ${scls}">${String(s.label || "NEUTRAL")} · ${Number(s.score || 50)}</span>
+                  </div>
+                </summary>
+
+                <div class="divider"></div>
+                <div class="kpiSub">
+                  <strong>Today’s read:</strong> ${summary || "No summary available."}
+                </div>
+
+                <div class="divider"></div>
+                <div class="kpiSub"><strong>Headlines:</strong></div>
+                <div class="headlineList">
+                  ${heads.length ? heads.map(cryptoHeadlineHTML).join("") : "<div class='subtle'>No headlines returned.</div>"}
+                </div>
+              </details>
+            `;
+          }).join("")
+        : "<div class='subtle'>No coins returned.</div>";
+
+      el("cryptoNewsHint").textContent = errors.length
+        ? ("Some crypto feeds failed: " + errors.slice(0, 3).join(" | "))
+        : "Crypto news briefing loaded.";
+    }
+
+    async function loadCryptoNews(coinsStr, force){
+      const key = String(coinsStr || "").trim().toUpperCase() || "BTC,ETH,LINK,SHIB";
+      if (CACHE_CRYPTO_NEWS.has(key) && !force){
+        renderCryptoNews(CACHE_CRYPTO_NEWS.get(key), key);
+        return;
+      }
+
+      const url = CRYPTO_NEWS_URL(key, 15);
+      el("cryptoNewsHint").textContent = `Loading from: ${url}`;
+      el("cryptoNewsCoins").innerHTML = "<div class='subtle'>Loading crypto news briefing…</div>";
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_CRYPTO_NEWS.set(key, data);
+        renderCryptoNews(data, key);
+      }catch(err){
+        if (CACHE_CRYPTO_NEWS.has(key)){
+          renderCryptoNews(CACHE_CRYPTO_NEWS.get(key), key);
+          el("cryptoNewsHint").textContent = "Crypto news fetch failed. Showing cached briefing.";
+        } else {
+          el("cryptoNewsCoins").innerHTML = "<div class='subtle'>Could not load crypto briefing.</div>";
+          el("cryptoNewsHint").textContent = "Backend must expose /crypto/news/briefing and allow CORS.";
+        }
+      }
+    }
+
     // ----------- Main loader ----------
     function renderMain(payload){
       const win = Number(payload.windowDays || WINDOW_DAYS || 30);
@@ -1620,76 +1824,6 @@
       }
     }
 
-    // ----------- Market snapshot (News top) ----------
-    function renderSnapshot(s){
-      const sp = s?.sp500 || {};
-      const vix = s?.vix || {};
-      const fg = s?.fearGreed || {};
-
-      const last = sp?.last != null ? Number(sp.last).toFixed(2) : "—";
-      const r1 = sp?.ret1dPct != null ? Number(sp.ret1dPct).toFixed(2) : null;
-      const r5 = sp?.ret5dPct != null ? Number(sp.ret5dPct).toFixed(2) : null;
-      const rM = sp?.ret1mPct != null ? Number(sp.ret1mPct).toFixed(2) : null;
-
-      const cls1 = r1 == null ? "badgeNeu" : (Number(r1) >= 0 ? "badgePos" : "badgeNeg");
-      const cls5 = r5 == null ? "badgeNeu" : (Number(r5) >= 0 ? "badgePos" : "badgeNeg");
-      const clsM = rM == null ? "badgeNeu" : (Number(rM) >= 0 ? "badgePos" : "badgeNeg");
-
-      const vixLast = vix?.last != null ? Number(vix.last).toFixed(2) : "—";
-      const vixChg = vix?.chg1d != null ? Number(vix.chg1d).toFixed(2) : null;
-      const vixCls = vixChg == null ? "badgeNeu" : (Number(vixChg) <= 0 ? "badgePos" : "badgeNeg"); // lower VIX is "good"
-
-      el("snapKpiSp").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">S&P proxy (SPY)</div>
-            <div class="kpiValue">${last}</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${s?.date || ""}</span>
-        </div>
-        <div class="kpiSub">Quick performance context + volatility.</div>
-        <div class="kpiList">
-          <div class="kpiRow"><span>1D</span><span class="kpiBadge ${cls1}">${r1 == null ? "—" : (r1 >= 0 ? "+" : "") + r1 + "%"}</span></div>
-          <div class="kpiRow"><span>5D</span><span class="kpiBadge ${cls5}">${r5 == null ? "—" : (r5 >= 0 ? "+" : "") + r5 + "%"}</span></div>
-          <div class="kpiRow"><span>1M</span><span class="kpiBadge ${clsM}">${rM == null ? "—" : (rM >= 0 ? "+" : "") + rM + "%"}</span></div>
-          <div class="kpiRow"><span>VIX</span><span class="kpiBadge ${vixCls}">${vixLast}${vixChg == null ? "" : " (" + (vixChg >= 0 ? "+" : "") + vixChg + ")"}</span></div>
-        </div>
-      `;
-
-      const fgScore = fg?.score != null ? Number(fg.score) : null;
-      const fgRating = String(fg?.rating || "—");
-      const fgCls = fgScore == null ? "badgeNeu" : (fgScore >= 60 ? "badgePos" : fgScore <= 40 ? "badgeNeg" : "badgeNeu");
-
-      el("snapKpiFearGreed").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Fear & greed</div>
-            <div class="kpiValue">${fgScore == null ? "—" : fgScore}</div>
-          </div>
-          <span class="kpiBadge ${fgCls}">${fgRating}</span>
-        </div>
-        <div class="kpiSub">
-          External index, best-effort fetch. If blank, CNN endpoint may be blocked.
-        </div>
-      `;
-    }
-
-    async function loadSnapshot(force){
-      if (CACHE_SNAPSHOT && !force){
-        renderSnapshot(CACHE_SNAPSHOT);
-        return;
-      }
-      try{
-        const res = await fetch(SNAPSHOT_URL(), { cache:"no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        CACHE_SNAPSHOT = data;
-        renderSnapshot(data);
-      }catch(err){
-        renderSnapshot({});
-      }
-    }
-
     // ----------- News briefing ----------
     function sentimentBadge(s){
       const score = Number(s?.score ?? 50);
@@ -1703,13 +1837,16 @@
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
-      const sec = String(h?.sector || "").trim();
+      const bucket = String(h?.bucket || h?.sourceFeed || "").trim();
+      const sectors = Array.isArray(h?.sectors) ? h.sectors.join(", ") : "";
+
       return `
         <div class="headlineItem">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
-            ${sec ? `<span>Sector: <strong>${sec}</strong></span>` : ""}
+            ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
+            ${sectors ? `<span>Sectors: <strong>${sectors}</strong></span>` : ""}
           </div>
         </div>
       `;
@@ -1717,19 +1854,15 @@
 
     function sectorPanelHTML(s){
       const sector = String(s?.sector || "General");
+      const count = Number(s?.count || 0);
       const sent = sentimentBadge(s?.sentiment);
       const summary = String(s?.summary || "").trim();
-      const impl = String(s?.implications || "").trim();
-      const headlines = Array.isArray(s?.topHeadlines) ? s.topHeadlines : [];
-      const mentions = Array.isArray(s?.watchlistMentions) ? s.watchlistMentions : [];
+      const impl = Array.isArray(s?.implications_2_12_weeks) ? s.implications_2_12_weeks : (Array.isArray(s?.implications) ? [s.implications] : []);
+      const headlines = Array.isArray(s?.headlines) ? s.headlines : (Array.isArray(s?.topHeadlines) ? s.topHeadlines : []);
 
       const meta = [];
-      meta.push(`${headlines.length} headlines`);
+      meta.push(`${count || headlines.length} headlines`);
       meta.push(`Sentiment ${sent.score}/100`);
-      if (mentions.length){
-        const top = mentions.slice(0,4).map(m => `${String(m.ticker||"").toUpperCase()}(${Number(m.count||0)})`).join(" · ");
-        meta.push(`Mentions: ${top}`);
-      }
       const metaLine = meta.join(" · ");
 
       return `
@@ -1740,7 +1873,7 @@
               <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
             </div>
             <div class="tags">
-              <span class="kpiBadge badgeNeu">${headlines.length}</span>
+              <span class="kpiBadge badgeNeu">${count || headlines.length}</span>
               <span class="kpiBadge ${sent.cls}">${sent.label} · ${sent.score}</span>
             </div>
           </summary>
@@ -1755,16 +1888,8 @@
 
           <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
           <ul class="bulletList">
-            ${impl ? `<li>${impl}</li>` : "<li>No implications generated.</li>"}
+            ${impl.length ? impl.map(x => `<li>${String(x||"")}</li>`).join("") : "<li>No implications generated.</li>"}
           </ul>
-
-          ${mentions.length ? `
-            <div class="divider"></div>
-            <div class="kpiSub"><strong>Watchlist mentions:</strong></div>
-            <ul class="bulletList">
-              ${mentions.slice(0,10).map(m => `<li><strong>${String(m.ticker||"").toUpperCase()}</strong>: ${Number(m.count||0)} headline(s)</li>`).join("")}
-            </ul>
-          ` : ""}
 
           <div class="divider"></div>
 
@@ -1776,10 +1901,13 @@
       `;
     }
 
-    function renderBriefing(data, watchlist, sectors){
+    function renderBriefing(data, tickers){
       const overall = sentimentBadge(data?.overallSentiment);
-      const sectorTiles = Array.isArray(data?.sectors) ? data.sectors : [];
+      const sectors = Array.isArray(data?.sectors) ? data.sectors : [];
       const date = String(data?.date || "");
+      const total = sectors.reduce((a, s) => a + Number(s?.count || 0), 0);
+      const srcGeneral = String(data?.sources?.general || "");
+      const srcWatch = String(data?.sources?.watchlist || "");
 
       el("briefKpiSentiment").innerHTML = `
         <div class="kpiTop">
@@ -1794,32 +1922,60 @@
         </div>
         <div class="kpiList">
           <div class="kpiRow"><span>Date</span><span class="kpiBadge badgeNeu">${date || "—"}</span></div>
-          <div class="kpiRow"><span>Watchlist</span><span class="kpiBadge badgeNeu">${String(watchlist||"").split(",").filter(x => x.trim()).length} tickers</span></div>
-          <div class="kpiRow"><span>Sectors</span><span class="kpiBadge badgeNeu">${String(sectors||"").split(",").filter(x => x.trim()).length}</span></div>
         </div>
       `;
 
-      el("briefingSectors").innerHTML = sectorTiles.length
-        ? sectorTiles.map(sectorPanelHTML).join("")
+      el("briefKpiScope").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Briefing scope</div>
+            <div class="kpiValue">${total} headlines</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Sectors</span>
+        </div>
+        <div class="kpiSub">
+          Grouped into AI, Medical, Energy, Robotics, Infrastructure, General.
+        </div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Watchlist</span><span class="kpiBadge badgeNeu">${String(tickers||"").split(",").filter(x => x.trim()).length} tickers</span></div>
+        </div>
+      `;
+
+      el("briefKpiNotes").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Sources</div>
+            <div class="kpiValue">RSS</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Backend</span>
+        </div>
+        <div class="kpiSub">
+          ${srcGeneral ? `<div>${srcGeneral}</div>` : ""}
+          ${srcWatch ? `<div style="margin-top:4px;">${srcWatch}</div>` : ""}
+        </div>
+      `;
+
+      el("briefingSectors").innerHTML = sectors.length
+        ? sectors.map(sectorPanelHTML).join("")
         : "<div class='subtle'>No sectors returned.</div>";
 
-      const errAll = Array.isArray(data?.errors) ? data.errors : [];
+      const errG = Array.isArray(data?.errors?.general) ? data.errors.general : [];
+      const errW = Array.isArray(data?.errors?.watchlist) ? data.errors.watchlist : [];
+      const errAll = errG.concat(errW).filter(Boolean);
+
       el("briefHint").textContent = errAll.length
         ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
-        : (data?.note || "Daily briefing loaded.");
+        : "Daily briefing loaded.";
     }
 
-    async function loadBriefing(watchlist, sectors, force){
-      const w = String(watchlist || "").trim();
-      const s = String(sectors || "").trim();
-      const key = `${w}|${s}`;
-
+    async function loadBriefing(tickers, force){
+      const key = String(tickers || "").trim();
       if (CACHE_BRIEFING.has(key) && !force){
-        renderBriefing(CACHE_BRIEFING.get(key), w, s);
+        renderBriefing(CACHE_BRIEFING.get(key), key);
         return;
       }
 
-      const url = NEWS_BRIEF_URL(w, s);
+      const url = NEWS_BRIEF_URL(key);
       el("briefingSectors").innerHTML = "<div class='subtle'>Loading daily briefing…</div>";
       el("briefHint").textContent = `Loading from: ${url}`;
 
@@ -1828,11 +1984,18 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error("HTTP " + res.status);
         CACHE_BRIEFING.set(key, data);
-        renderBriefing(data, w, s);
+        renderBriefing(data, key);
       }catch(err){
-        el("briefingSectors").innerHTML = "<div class='subtle'>Could not load briefing.</div>";
-        el("briefHint").textContent = "Backend must expose /news/briefing and allow CORS.";
-        el("briefKpiSentiment").innerHTML = "";
+        if (CACHE_BRIEFING.has(key)){
+          renderBriefing(CACHE_BRIEFING.get(key), key);
+          el("briefHint").textContent = "Briefing fetch failed. Showing cached briefing.";
+        } else {
+          el("briefingSectors").innerHTML = "<div class='subtle'>Could not load briefing.</div>";
+          el("briefHint").textContent = "Backend must expose /news/briefing and allow CORS.";
+          el("briefKpiSentiment").innerHTML = "";
+          el("briefKpiScope").innerHTML = "";
+          el("briefKpiNotes").innerHTML = "";
+        }
       }
     }
 
@@ -1864,11 +2027,10 @@
       if (tab === "Main"){
         loadMain(false);
         loadEntryIndex(365, false);
-        loadIdeas(false);
       }
       if (tab === "News"){
-        loadSnapshot(false);
-        loadBriefing(el("watchInput").value, el("sectorInput").value, false);
+        loadMarketSnapshot(false);
+        loadBriefing(el("watchInput").value, false);
       }
       if (tab === "Congress"){
         loadMain(false);
@@ -1877,6 +2039,7 @@
       }
       if (tab === "Crypto"){
         loadMain(false);
+        loadCryptoNews(el("cryptoCoinsInput").value, false);
       }
 
       handleHash();
@@ -1895,29 +2058,40 @@
       if (ACTIVE_TAB === "Congress"){
         loadDaily(WINDOW_DAYS, false);
       }
-      if (ACTIVE_TAB === "Main"){
-        loadIdeas(false);
-      }
     }
 
     function handleRefresh(){
+      const now = Date.now();
+      const inCooldown = (now - LAST_HARD_REFRESH_MS) < HARD_REFRESH_COOLDOWN_MS;
+
+      // Do not wipe market caches on refresh because it causes repeated Yahoo fetches.
+      // Only clear congress related caches to keep the app feeling responsive.
       CACHE_MAIN.delete(String(WINDOW_DAYS));
-      CACHE_ENTRY.delete("365");
-      CACHE_HOLDINGS.delete("365");
       CACHE_DAILY.delete(String(WINDOW_DAYS));
-      CACHE_BRIEFING.clear();
-      CACHE_SNAPSHOT = null;
-      CACHE_IDEAS.clear();
+
+      // Briefing and crypto news can be refreshed, but do not force hard refresh too frequently.
+      if (!inCooldown){
+        CACHE_BRIEFING.clear();
+        CACHE_CRYPTO_NEWS.clear();
+        // Do not delete CACHE_ENTRY or snapshot cache by default.
+        LAST_HARD_REFRESH_MS = now;
+      }
+
+      if (inCooldown){
+        setStatus("ok", "Using cached market data to avoid rate-limits ✅", `Cooldown ${Math.ceil((HARD_REFRESH_COOLDOWN_MS - (now - LAST_HARD_REFRESH_MS))/1000)}s`);
+      } else {
+        setStatus("", "Refreshing (rate-limit safe)…", "");
+      }
 
       if (ACTIVE_TAB === "Main"){
         loadMain(true);
-        loadEntryIndex(365, true);
-        loadIdeas(true);
+        // Do not force market entry if in cooldown
+        loadEntryIndex(365, !inCooldown);
         return;
       }
       if (ACTIVE_TAB === "News"){
-        loadSnapshot(true);
-        loadBriefing(el("watchInput").value, el("sectorInput").value, true);
+        loadMarketSnapshot(!inCooldown);
+        loadBriefing(el("watchInput").value, !inCooldown);
         return;
       }
       if (ACTIVE_TAB === "Congress"){
@@ -1926,6 +2100,12 @@
         loadDaily(WINDOW_DAYS, true);
         return;
       }
+      if (ACTIVE_TAB === "Crypto"){
+        loadMain(true);
+        loadCryptoNews(el("cryptoCoinsInput").value, !inCooldown);
+        return;
+      }
+
       loadMain(true);
     }
 
@@ -1950,16 +2130,21 @@
     window.addEventListener("hashchange", handleHash);
 
     el("watchApplyBtn").addEventListener("click", () => {
-      loadSnapshot(true);
-      loadBriefing(el("watchInput").value, el("sectorInput").value, true);
-      if (ACTIVE_TAB === "Main") loadIdeas(true);
+      loadBriefing(el("watchInput").value, true);
+    });
+
+    el("snapRefreshBtn").addEventListener("click", () => {
+      loadMarketSnapshot(true);
+    });
+
+    el("cryptoNewsRefreshBtn").addEventListener("click", () => {
+      loadCryptoNews(el("cryptoCoinsInput").value, true);
     });
 
     // Start
     showTab("Main");
     loadMain(false);
     loadEntryIndex(365, false);
-    loadIdeas(false);
   </script>
 </body>
 </html>
