@@ -396,7 +396,6 @@
       outline:none;
     }
 
-    /* News briefing details */
     details.briefingDetails{
       border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.02);
@@ -465,7 +464,6 @@
       flex-wrap:wrap;
     }
 
-    /* Crypto briefing details */
     details.cryptoDetails{
       border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.02);
@@ -760,8 +758,6 @@
     const MARKET_SNAPSHOT_URL = () =>
       `${BACKEND_BASE}/market/snapshot`;
 
-    // FIXED: match your backend signature:
-    // /news/briefing?sectors=...&watchlist=...&max_items_per_sector=...
     const NEWS_BRIEF_URL = (watchlist) => {
       const sectors = "AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer";
       const wl = String(watchlist || "");
@@ -1098,8 +1094,8 @@
       return Number(x.demBuyers||0)+Number(x.repBuyers||0)+Number(x.demSellers||0)+Number(x.repSellers||0);
     }
     function bipartisanScore(x){
-      const dem = Number(x.demBuyers||0)+Number(x.demSellers||0);
-      const rep = Number(x.repBuyers||0)+Number(x.repSellers||0);
+      const dem = Number(x.demBuyers||0)+Number(x.repBuyers||0);
+      const rep = Number(x.demSellers||0)+Number(x.repSellers||0);
       return Math.min(dem, rep);
     }
     function sortByCongressStrength(a,b){
@@ -1823,12 +1819,41 @@
       return { cls: "badgeNeu", label: label, score };
     }
 
+    function normalizeNewsErrors(err){
+      if (!err) return [];
+      if (Array.isArray(err)) return err.filter(Boolean).map(String);
+      if (typeof err === "object"){
+        const out = [];
+        for (const k of Object.keys(err)){
+          const v = err[k];
+          if (Array.isArray(v)) out.push(...v.filter(Boolean).map(String));
+          else if (v) out.push(String(v));
+        }
+        return out;
+      }
+      return [String(err)];
+    }
+
+    function normalizeSectorHeadlines(s){
+      if (!s || typeof s !== "object") return [];
+      if (Array.isArray(s.headlines)) return s.headlines;
+      if (Array.isArray(s.topHeadlines)) return s.topHeadlines;
+      return [];
+    }
+
+    function normalizeImplications(s){
+      if (!s || typeof s !== "object") return [];
+      if (Array.isArray(s.implications_2_12_weeks)) return s.implications_2_12_weeks.filter(Boolean).map(String);
+      if (Array.isArray(s.implications)) return s.implications.filter(Boolean).map(String);
+      if (typeof s.implications === "string" && s.implications.trim()) return [s.implications.trim()];
+      return [];
+    }
+
     function headlineHTML(h){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
-      const bucket = String(h?.sourceFeed || h?.bucket || "").trim();
-      const sector = String(h?.sector || "").trim();
+      const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
 
       return `
         <div class="headlineItem">
@@ -1836,24 +1861,22 @@
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
-            ${sector ? `<span>Sector: <strong>${sector}</strong></span>` : ""}
           </div>
         </div>
       `;
     }
 
-    // FIXED: matches your backend sector object:
-    // { sector, sentiment, summary, implications, topHeadlines, watchlistMentions }
     function sectorPanelHTML(s){
       const sector = String(s?.sector || "General");
       const sent = sentimentBadge(s?.sentiment);
       const summary = String(s?.summary || "").trim();
-      const implStr = String(s?.implications || "").trim();
-      const headlines = Array.isArray(s?.topHeadlines) ? s.topHeadlines : [];
+
+      const headlines = normalizeSectorHeadlines(s);
+      const implications = normalizeImplications(s);
 
       const meta = [];
       meta.push(`${headlines.length} headlines`);
-      meta.push(`Sentiment ${sent.score}/100`);
+      if (typeof sent.score === "number") meta.push(`Sentiment ${sent.score}/100`);
       const metaLine = meta.join(" · ");
 
       return `
@@ -1879,7 +1902,7 @@
 
           <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
           <ul class="bulletList">
-            ${implStr ? `<li>${implStr}</li>` : "<li>No implications generated.</li>"}
+            ${implications.length ? implications.map(x => `<li>${x}</li>`).join("") : "<li>No implications generated.</li>"}
           </ul>
 
           <div class="divider"></div>
@@ -1892,14 +1915,13 @@
       `;
     }
 
-    // FIXED: matches your backend response:
-    // { date, market, overallSentiment, sectors, errors, note }
     function renderBriefing(data, watchlist){
       const overall = sentimentBadge(data?.overallSentiment);
       const sectors = Array.isArray(data?.sectors) ? data.sectors : [];
       const date = String(data?.date || "");
-      const total = sectors.reduce((a, s) => a + (Array.isArray(s?.topHeadlines) ? s.topHeadlines.length : 0), 0);
       const note = String(data?.note || "");
+
+      const total = sectors.reduce((a, s) => a + normalizeSectorHeadlines(s).length, 0);
 
       el("briefKpiSentiment").innerHTML = `
         <div class="kpiTop">
@@ -1950,7 +1972,7 @@
         ? sectors.map(sectorPanelHTML).join("")
         : "<div class='subtle'>No sectors returned.</div>";
 
-      const errAll = Array.isArray(data?.errors) ? data.errors.filter(Boolean) : [];
+      const errAll = normalizeNewsErrors(data?.errors);
       el("briefHint").textContent = errAll.length
         ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
         : "Daily briefing loaded.";
