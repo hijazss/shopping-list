@@ -396,7 +396,6 @@
       outline:none;
     }
 
-    /* News briefing details */
     details.briefingDetails{
       border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.02);
@@ -465,7 +464,6 @@
       flex-wrap:wrap;
     }
 
-    /* Crypto briefing details */
     details.cryptoDetails{
       border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.02);
@@ -760,11 +758,13 @@
     const MARKET_SNAPSHOT_URL = () =>
       `${BACKEND_BASE}/market/snapshot`;
 
-    const NEWS_BRIEF_URL = (tickers) =>
-      `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(String(tickers||""))}&max_general=55&max_per_ticker=6`;
+    // Matches backend: /news/briefing(sectors, watchlist, max_items_per_sector)
+    const NEWS_BRIEF_URL = (watchlist) => {
+      const sectors = "AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer";
+      return `${BACKEND_BASE}/news/briefing?sectors=${encodeURIComponent(sectors)}&watchlist=${encodeURIComponent(String(watchlist||""))}&max_items_per_sector=12`;
+    };
 
-    // New endpoint we are rendering in the Crypto tab.
-    // Your backend should expose this endpoint.
+    // Crypto news endpoint (backend must expose this)
     const CRYPTO_NEWS_URL = (coins, includeTopN) =>
       `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent(String(coins||""))}&include_top_n=${encodeURIComponent(String(includeTopN||15))}`;
 
@@ -782,6 +782,24 @@
     let CACHE_SNAPSHOT_TS = 0;
 
     let CACHE_CRYPTO_NEWS = new Map();
+
+    // In-flight de-dupe
+    const INFLIGHT = new Map();
+    async function fetchJsonDedup(key, url){
+      if (INFLIGHT.has(key)) return INFLIGHT.get(key);
+      const p = (async () => {
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return data;
+      })();
+      INFLIGHT.set(key, p);
+      try{
+        return await p;
+      } finally {
+        INFLIGHT.delete(key);
+      }
+    }
 
     // Refresh throttling to avoid rate-limits
     let LAST_HARD_REFRESH_MS = 0;
@@ -982,13 +1000,10 @@
       }
       try{
         const url = ENTRY_URL(windowDays || 365);
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await fetchJsonDedup("entry:" + key, url);
         CACHE_ENTRY.set(key, data);
         renderEntryIndex(data);
       }catch(err){
-        // Keep last good if available
         if (CACHE_ENTRY.has(key)){
           renderEntryIndex(CACHE_ENTRY.get(key));
           el("entryHint").textContent = "Using cached market entry index to avoid rate-limits.";
@@ -1062,13 +1077,11 @@
     }
 
     async function loadMarketSnapshot(force){
-      // Cache snapshot in memory with timestamp
       const now = Date.now();
       if (CACHE_SNAPSHOT && !force){
         renderSnapshot(CACHE_SNAPSHOT);
         return;
       }
-      // If forcing but we are within cooldown, do not hammer the backend
       if (force && (now - CACHE_SNAPSHOT_TS) < HARD_REFRESH_COOLDOWN_MS && CACHE_SNAPSHOT){
         renderSnapshot(CACHE_SNAPSHOT);
         el("snapHint").textContent = "Using cached snapshot to avoid rate-limits.";
@@ -1079,9 +1092,7 @@
       el("snapHint").textContent = `Loading from: ${url}`;
 
       try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await fetchJsonDedup("snapshot", url);
         CACHE_SNAPSHOT = data;
         CACHE_SNAPSHOT_TS = Date.now();
         renderSnapshot(data);
@@ -1398,9 +1409,7 @@
       el("holdingsHint").textContent = `Loading from: ${url}`;
 
       try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await fetchJsonDedup("holdings:" + key, url);
         CACHE_HOLDINGS.set(key, data);
         renderHoldingsCommon(data);
       }catch(err){
@@ -1507,9 +1516,7 @@
       el("dailyHint").textContent = `Loading from: ${url}`;
 
       try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await fetchJsonDedup("daily:" + key, url);
         CACHE_DAILY.set(key, data);
         renderDaily(data);
       }catch(err){
@@ -1518,7 +1525,7 @@
       }
     }
 
-    // ----------- Crypto rendering (existing disclosures) ----------
+    // ----------- Crypto disclosures ----------
     const DIRECT_COIN_SET = new Set(["BTC","ETH","SOL","LINK","XRP","ADA","DOGE","AVAX","MATIC","BNB"]);
     const CRYPTO_LINKED_TICKERS = new Set([
       "COIN","MSTR","RIOT","MARA","HUT","CLSK","SQ","PYPL",
@@ -1637,7 +1644,7 @@
         `Showing direct, hint-only, and crypto-linked. If 30D looks empty, switch to 180D or 365D.`;
     }
 
-    // ----------- Crypto news briefing (NEW) ----------
+    // ----------- Crypto news briefing ----------
     function cryptoHeadlineHTML(h){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
@@ -1770,9 +1777,7 @@
       el("cryptoNewsCoins").innerHTML = "<div class='subtle'>Loading crypto news briefing…</div>";
 
       try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await fetchJsonDedup("cryptonews:" + key, url);
         CACHE_CRYPTO_NEWS.set(key, data);
         renderCryptoNews(data, key);
       }catch(err){
@@ -1809,10 +1814,7 @@
       setStatus("", `Loading congress (rolling ${WINDOW_DAYS}D)…`, url);
 
       try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-
+        const data = await fetchJsonDedup("main:" + key, url);
         CACHE_MAIN.set(key, data);
         setStatus("ok", "Live congress data loaded ✅", "");
 
@@ -1838,7 +1840,6 @@
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
       const bucket = String(h?.bucket || h?.sourceFeed || "").trim();
-      const sectors = Array.isArray(h?.sectors) ? h.sectors.join(", ") : "";
 
       return `
         <div class="headlineItem">
@@ -1846,7 +1847,6 @@
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
-            ${sectors ? `<span>Sectors: <strong>${sectors}</strong></span>` : ""}
           </div>
         </div>
       `;
@@ -1854,14 +1854,13 @@
 
     function sectorPanelHTML(s){
       const sector = String(s?.sector || "General");
-      const count = Number(s?.count || 0);
       const sent = sentimentBadge(s?.sentiment);
       const summary = String(s?.summary || "").trim();
-      const impl = Array.isArray(s?.implications_2_12_weeks) ? s.implications_2_12_weeks : (Array.isArray(s?.implications) ? [s.implications] : []);
-      const headlines = Array.isArray(s?.headlines) ? s.headlines : (Array.isArray(s?.topHeadlines) ? s.topHeadlines : []);
+      const impl = Array.isArray(s?.implications) ? s.implications : (s?.implications ? [s.implications] : []);
+      const headlines = Array.isArray(s?.topHeadlines) ? s.topHeadlines : [];
 
       const meta = [];
-      meta.push(`${count || headlines.length} headlines`);
+      meta.push(`${headlines.length} headlines`);
       meta.push(`Sentiment ${sent.score}/100`);
       const metaLine = meta.join(" · ");
 
@@ -1873,7 +1872,7 @@
               <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
             </div>
             <div class="tags">
-              <span class="kpiBadge badgeNeu">${count || headlines.length}</span>
+              <span class="kpiBadge badgeNeu">${headlines.length}</span>
               <span class="kpiBadge ${sent.cls}">${sent.label} · ${sent.score}</span>
             </div>
           </summary>
@@ -1886,7 +1885,7 @@
 
           <div class="divider"></div>
 
-          <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
+          <div class="kpiSub"><strong>Implications:</strong></div>
           <ul class="bulletList">
             ${impl.length ? impl.map(x => `<li>${String(x||"")}</li>`).join("") : "<li>No implications generated.</li>"}
           </ul>
@@ -1905,9 +1904,8 @@
       const overall = sentimentBadge(data?.overallSentiment);
       const sectors = Array.isArray(data?.sectors) ? data.sectors : [];
       const date = String(data?.date || "");
-      const total = sectors.reduce((a, s) => a + Number(s?.count || 0), 0);
-      const srcGeneral = String(data?.sources?.general || "");
-      const srcWatch = String(data?.sources?.watchlist || "");
+
+      const total = sectors.reduce((a, s) => a + Number((s?.topHeadlines||[]).length), 0);
 
       el("briefKpiSentiment").innerHTML = `
         <div class="kpiTop">
@@ -1934,7 +1932,7 @@
           <span class="kpiBadge badgeNeu">Sectors</span>
         </div>
         <div class="kpiSub">
-          Grouped into AI, Medical, Energy, Robotics, Infrastructure, General.
+          Uses Google News RSS grouped by sectors.
         </div>
         <div class="kpiList">
           <div class="kpiRow"><span>Watchlist</span><span class="kpiBadge badgeNeu">${String(tickers||"").split(",").filter(x => x.trim()).length} tickers</span></div>
@@ -1944,14 +1942,13 @@
       el("briefKpiNotes").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Sources</div>
+            <div class="kpiTitle">Notes</div>
             <div class="kpiValue">RSS</div>
           </div>
           <span class="kpiBadge badgeNeu">Backend</span>
         </div>
         <div class="kpiSub">
-          ${srcGeneral ? `<div>${srcGeneral}</div>` : ""}
-          ${srcWatch ? `<div style="margin-top:4px;">${srcWatch}</div>` : ""}
+          Briefing is cached server-side. Refresh sparingly.
         </div>
       `;
 
@@ -1959,10 +1956,7 @@
         ? sectors.map(sectorPanelHTML).join("")
         : "<div class='subtle'>No sectors returned.</div>";
 
-      const errG = Array.isArray(data?.errors?.general) ? data.errors.general : [];
-      const errW = Array.isArray(data?.errors?.watchlist) ? data.errors.watchlist : [];
-      const errAll = errG.concat(errW).filter(Boolean);
-
+      const errAll = Array.isArray(data?.errors) ? data.errors : [];
       el("briefHint").textContent = errAll.length
         ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
         : "Daily briefing loaded.";
@@ -1980,9 +1974,7 @@
       el("briefHint").textContent = `Loading from: ${url}`;
 
       try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await fetchJsonDedup("brief:" + key, url);
         CACHE_BRIEFING.set(key, data);
         renderBriefing(data, key);
       }catch(err){
@@ -2064,16 +2056,13 @@
       const now = Date.now();
       const inCooldown = (now - LAST_HARD_REFRESH_MS) < HARD_REFRESH_COOLDOWN_MS;
 
-      // Do not wipe market caches on refresh because it causes repeated Yahoo fetches.
-      // Only clear congress related caches to keep the app feeling responsive.
+      // Do not wipe market caches on refresh.
       CACHE_MAIN.delete(String(WINDOW_DAYS));
       CACHE_DAILY.delete(String(WINDOW_DAYS));
 
-      // Briefing and crypto news can be refreshed, but do not force hard refresh too frequently.
       if (!inCooldown){
         CACHE_BRIEFING.clear();
         CACHE_CRYPTO_NEWS.clear();
-        // Do not delete CACHE_ENTRY or snapshot cache by default.
         LAST_HARD_REFRESH_MS = now;
       }
 
@@ -2085,7 +2074,6 @@
 
       if (ACTIVE_TAB === "Main"){
         loadMain(true);
-        // Do not force market entry if in cooldown
         loadEntryIndex(365, !inCooldown);
         return;
       }
@@ -2141,10 +2129,8 @@
       loadCryptoNews(el("cryptoCoinsInput").value, true);
     });
 
-    // Start
+    // Start (single entry point, no double calls)
     showTab("Main");
-    loadMain(false);
-    loadEntryIndex(365, false);
   </script>
 </body>
 </html>
