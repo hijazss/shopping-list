@@ -759,10 +759,8 @@
       `${BACKEND_BASE}/market/snapshot`;
 
     const NEWS_BRIEF_URL = (watchlist) => {
-      const sectors = "AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer";
-      const wl = String(watchlist || "");
-      const maxItemsPerSector = 12;
-      return `${BACKEND_BASE}/news/briefing?sectors=${encodeURIComponent(sectors)}&watchlist=${encodeURIComponent(wl)}&max_items_per_sector=${encodeURIComponent(String(maxItemsPerSector))}`;
+    const wl = String(watchlist || "");
+    return `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(wl)}&max_general=60&max_per_ticker=6`;
     };
 
     const CRYPTO_NEWS_URL = (coins, includeTopN) =>
