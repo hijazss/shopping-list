@@ -621,6 +621,9 @@
       return `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent(c)}&include_top_n=15`;
     };
 
+    const NEWS_SUMMARY_URL = (url) => `${BACKEND_BASE}/news/article/summary?url=${encodeURIComponent(String(url||""))}`;
+    const CRYPTO_SUMMARY_URL = (url) => `${BACKEND_BASE}/crypto/article/summary?url=${encodeURIComponent(String(url||""))}`;
+
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "News";
@@ -631,6 +634,9 @@
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
     let CACHE_CRYPTO = new Map();
+
+    // per-URL summary cache: key = prefix + normalized URL
+    const SUMMARY_CACHE = new Map();
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -655,6 +661,77 @@
         throw err;
       }
       return data;
+    }
+
+    function normalizeTitleKey(t){
+      return String(t||"").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function normalizeUrlKey(u){
+      const s = String(u||"").trim();
+      if (!s) return "";
+      try{
+        const url = new URL(s);
+        url.search = "";
+        url.hash = "";
+        return url.toString();
+      }catch(e){
+        return s;
+      }
+    }
+
+    async function getHeadlineSummary(kind, url){
+      const ukey = normalizeUrlKey(url);
+      const cacheKey = `${kind}:${ukey}`;
+      if (SUMMARY_CACHE.has(cacheKey)){
+        return SUMMARY_CACHE.get(cacheKey);
+      }
+      if (!ukey){
+        SUMMARY_CACHE.set(cacheKey, "");
+        return "";
+      }
+      try{
+        const endpoint = (kind === "crypto") ? CRYPTO_SUMMARY_URL(ukey) : NEWS_SUMMARY_URL(ukey);
+        const data = await fetchJson(endpoint);
+        const txt = String(data?.summary || "").trim();
+        SUMMARY_CACHE.set(cacheKey, txt);
+        return txt;
+      }catch(err){
+        SUMMARY_CACHE.set(cacheKey, "");
+        return "";
+      }
+    }
+
+    async function hydrateSummariesForContainer(containerEl, kind){
+      if (!containerEl) return;
+      const nodes = Array.from(containerEl.querySelectorAll("[data-sum-kind][data-url][data-sum-target]"));
+      if (!nodes.length) return;
+
+      // small concurrency
+      const queue = nodes.slice(0, 18);
+
+      await Promise.all(queue.map(async (node) => {
+        const url = node.getAttribute("data-url") || "";
+        const tgtId = node.getAttribute("data-sum-target") || "";
+        if (!tgtId) return;
+        const tgt = document.getElementById(tgtId);
+        if (!tgt) return;
+
+        // if backend already provided a summary, do nothing
+        if (String(tgt.textContent || "").trim() && String(tgt.textContent).trim() !== "Loading summary…"){
+          return;
+        }
+
+        const sum = await getHeadlineSummary(kind, url);
+        if (sum){
+          tgt.textContent = sum;
+          tgt.style.display = "";
+        } else {
+          // hide placeholder if no summary found
+          tgt.textContent = "";
+          tgt.style.display = "none";
+        }
+      }));
     }
 
     function setStockPanel(ticker){
@@ -833,17 +910,41 @@
       return [];
     }
 
-    function headlineHTML(h){
+    function dedupHeadlinesByTitle(headlines){
+      const seen = new Set();
+      const out = [];
+      for (const h of (headlines || [])){
+        const k = normalizeTitleKey(h?.title || "");
+        if (!k || seen.has(k)) continue;
+        seen.add(k);
+        out.push(h);
+      }
+      return out;
+    }
+
+    let _headlineIdSeq = 1;
+
+    function headlineHTML(h, kind){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
       const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
       const summary = String(h?.summary || "").trim();
 
+      const sumId = `sum_${kind}_${_headlineIdSeq++}`;
+
+      // If summary not provided by backend, show placeholder that will be hydrated on expand
+      const sumBlock = summary
+        ? `<div class="headlineSummary" id="${sumId}">${summary}</div>`
+        : `<div class="headlineSummary" id="${sumId}">Loading summary…</div>`;
+
       return `
-        <div class="headlineItem">
+        <div class="headlineItem"
+             data-sum-kind="${kind}"
+             data-url="${link}"
+             data-sum-target="${sumId}">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
-          ${summary ? `<div class="headlineSummary">${summary}</div>` : ""}
+          ${link ? sumBlock : ""}
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
@@ -857,7 +958,9 @@
       const sent = sentimentBadge(s?.sentiment);
       const summary = String(s?.summary || "").trim();
 
-      const headlines = normalizeSectorHeadlines(s);
+      let headlines = normalizeSectorHeadlines(s);
+      headlines = dedupHeadlinesByTitle(headlines);
+
       const implications = normalizeImplications(s);
 
       const meta = [];
@@ -866,7 +969,7 @@
       const metaLine = meta.join(" · ");
 
       return `
-        <details class="briefingDetails">
+        <details class="briefingDetails" data-panel-kind="news">
           <summary>
             <div class="summaryLeft">
               <div class="summaryTitle">${sector}</div>
@@ -895,7 +998,7 @@
 
           <div class="kpiSub"><strong>Headlines:</strong></div>
           <div class="headlineList">
-            ${headlines.length ? headlines.map(headlineHTML).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
+            ${headlines.length ? headlines.map(h => headlineHTML(h, "news")).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
           </div>
         </details>
       `;
@@ -907,7 +1010,7 @@
       const date = String(data?.date || "");
       const note = String(data?.note || "");
 
-      const total = sectors.reduce((a, s) => a + normalizeSectorHeadlines(s).length, 0);
+      const total = sectors.reduce((a, s) => a + dedupHeadlinesByTitle(normalizeSectorHeadlines(s)).length, 0);
 
       el("briefKpiSentiment").innerHTML = `
         <div class="kpiTop">
@@ -953,6 +1056,16 @@
       el("briefingSectors").innerHTML = sectors.length
         ? sectors.map(sectorPanelHTML).join("")
         : "<div class='subtle'>No sectors returned.</div>";
+
+      // hydrate summaries when a panel is expanded
+      const panels = Array.from(el("briefingSectors").querySelectorAll("details.briefingDetails"));
+      panels.forEach((p) => {
+        p.addEventListener("toggle", async () => {
+          if (p.open){
+            await hydrateSummariesForContainer(p, "news");
+          }
+        });
+      });
 
       const errAll = normalizeNewsErrors(data?.errors);
       el("briefHint").textContent = errAll.length
@@ -1193,10 +1306,12 @@
           const sym = String(c?.symbol || "").toUpperCase();
           const sent = sentimentBadge(c?.sentiment);
           const sum = String(c?.summary || "").trim();
-          const heads = Array.isArray(c?.headlines) ? c.headlines : [];
+
+          let heads = Array.isArray(c?.headlines) ? c.headlines : [];
+          heads = dedupHeadlinesByTitle(heads);
 
           return `
-            <details class="briefingDetails">
+            <details class="briefingDetails" data-panel-kind="crypto">
               <summary>
                 <div class="summaryLeft">
                   <div class="summaryTitle">${sym}</div>
@@ -1220,14 +1335,24 @@
                   title: h.title,
                   link: h.link,
                   published: h.published,
-                  sourceFeed: h.source,
+                  source: h.source,
                   summary: h.summary
-                })).join("") : "<div class='subtle'>No headlines.</div>"}
+                }, "crypto")).join("") : "<div class='subtle'>No headlines.</div>"}
               </div>
             </details>
           `;
         }).join("");
       }
+
+      // hydrate on expand
+      const panels = Array.from(el("cryptoCoins").querySelectorAll("details.briefingDetails"));
+      panels.forEach((p) => {
+        p.addEventListener("toggle", async () => {
+          if (p.open){
+            await hydrateSummariesForContainer(p, "crypto");
+          }
+        });
+      });
 
       el("cryptoHint").textContent = errs.length
         ? ("Some feeds failed: " + errs.slice(0, 3).join(" | "))
@@ -1282,7 +1407,6 @@
         loadBriefing(el("watchInput").value, false);
       }
       if (tab === "Congress"){
-        // Fix: holdings should follow the same WINDOW_DAYS the user selected
         loadHoldingsCommon(WINDOW_DAYS, false);
         loadDaily(WINDOW_DAYS, false);
       }
@@ -1311,6 +1435,7 @@
       CACHE_HOLDINGS.clear();
       CACHE_DAILY.clear();
       CACHE_CRYPTO.clear();
+      SUMMARY_CACHE.clear();
 
       setStatus("", "Refreshing…", "");
       if (ACTIVE_TAB === "News"){
