@@ -262,9 +262,6 @@
       background:rgba(255,255,255,.04);
       white-space:nowrap;
     }
-    .tagDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
-    .tagRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
-    .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
     .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
@@ -279,24 +276,6 @@
       flex-wrap:wrap;
       line-height:1.25;
     }
-
-    .counts{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .countItem{
-      display:flex;
-      gap:6px;
-      align-items:center;
-      font-size:12px;
-      color:rgba(255,255,255,.88);
-    }
-
-    .dot{width:8px;height:8px;border-radius:999px;display:inline-block}
-    .dotDem{background:var(--dem)}
-    .dotRep{background:var(--rep)}
 
     .divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0 7px}
 
@@ -560,12 +539,20 @@
 
     <!-- CRYPTO TAB -->
     <section id="viewCrypto" style="display:none;">
-      <div class="panel">
-        <div class="kpiSub">
-          Crypto UI left as-is. (If your backend doesn’t have /crypto/news/briefing yet, this tab will show a backend warning.)
-        </div>
+      <div class="sectionTitle">Crypto briefing</div>
+      <div class="grid3">
+        <div class="kpi" id="cryptoKpiSentiment"></div>
+        <div class="kpi" id="cryptoKpiScope"></div>
+        <div class="kpi" id="cryptoKpiNotes"></div>
       </div>
+
+      <div class="sectionTitle">Coins</div>
+      <div id="cryptoCoins"></div>
       <div class="subtle" id="cryptoHint" style="margin-top:12px;"></div>
+
+      <div class="miniLinks" style="margin-top:10px;">
+        <button class="pillBtn" id="cryptoRefreshBtn">Refresh crypto</button>
+      </div>
     </section>
 
     <!-- PERFORMANCE TAB -->
@@ -611,6 +598,9 @@
     const DAILY_URL = (windowDays) =>
       `${BACKEND_BASE}/report/congress/daily?window_days=${encodeURIComponent(String(windowDays))}&limit=250`;
 
+    const CRYPTO_URL = () =>
+      `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent("BTC,ETH,LINK,SHIB")}&include_top_n=12`;
+
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "News";
@@ -620,6 +610,7 @@
     let CACHE_BRIEFING = new Map();
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
+    let CACHE_CRYPTO = null;
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -1159,6 +1150,114 @@
       }
     }
 
+    function cryptoCoinHTML(c){
+      const sym = String(c?.symbol || "").toUpperCase();
+      const sent = sentimentBadge(c?.sentiment);
+      const summary = String(c?.summary || "").trim();
+      const headlines = Array.isArray(c?.headlines) ? c.headlines : [];
+      const meta = `${headlines.length} headlines · ${sent.score}/100`;
+
+      return `
+        <details class="briefingDetails">
+          <summary>
+            <div class="summaryLeft">
+              <div class="summaryTitle">${sym}</div>
+              <div class="summaryMeta">${meta}${summary ? " · " + summary : ""}</div>
+            </div>
+            <div class="tags">
+              <span class="kpiBadge badgeNeu">${headlines.length}</span>
+              <span class="kpiBadge ${sent.cls}">${sent.label} · ${sent.score}</span>
+            </div>
+          </summary>
+          <div class="divider"></div>
+          <div class="kpiSub"><strong>Today’s read:</strong> ${summary || "No summary available."}</div>
+          <div class="divider"></div>
+          <div class="kpiSub"><strong>Headlines:</strong></div>
+          <div class="headlineList">
+            ${headlines.length ? headlines.map(headlineHTML).join("") : "<div class='subtle'>No headlines for this coin.</div>"}
+          </div>
+        </details>
+      `;
+    }
+
+    function renderCrypto(data){
+      const overall = sentimentBadge(data?.overallSentiment);
+      const coins = Array.isArray(data?.coins) ? data.coins : [];
+      const date = String(data?.date || "");
+      const note = String(data?.note || "");
+      const errs = normalizeNewsErrors(data?.errors);
+
+      const total = coins.reduce((a, c) => a + (Array.isArray(c?.headlines) ? c.headlines.length : 0), 0);
+
+      el("cryptoKpiSentiment").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Overall sentiment</div>
+            <div class="kpiValue">${overall.score}/100</div>
+          </div>
+          <span class="kpiBadge ${overall.cls}">${overall.label}</span>
+        </div>
+        <div class="kpiSub">Headline-based context gauge.</div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Date</span><span class="kpiBadge badgeNeu">${date || "—"}</span></div>
+        </div>
+      `;
+
+      el("cryptoKpiScope").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Scope</div>
+            <div class="kpiValue">${total} headlines</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Coins</span>
+        </div>
+        <div class="kpiSub">${coins.length} symbols</div>
+      `;
+
+      el("cryptoKpiNotes").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Notes</div>
+            <div class="kpiValue">RSS</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Backend</span>
+        </div>
+        <div class="kpiSub">${note || "Crypto briefing."}</div>
+      `;
+
+      el("cryptoCoins").innerHTML = coins.length
+        ? coins.map(cryptoCoinHTML).join("")
+        : "<div class='subtle'>No coins returned.</div>";
+
+      el("cryptoHint").textContent = errs.length
+        ? ("Some feeds failed: " + errs.slice(0, 3).join(" | "))
+        : "Crypto briefing loaded.";
+    }
+
+    async function loadCrypto(force){
+      if (CACHE_CRYPTO && !force){
+        renderCrypto(CACHE_CRYPTO);
+        return;
+      }
+      const url = CRYPTO_URL();
+      el("cryptoCoins").innerHTML = "<div class='subtle'>Loading crypto briefing…</div>";
+      el("cryptoHint").textContent = `Loading from: ${url}`;
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_CRYPTO = data;
+        renderCrypto(data);
+      }catch(err){
+        el("cryptoCoins").innerHTML = "<div class='subtle'>Could not load crypto briefing.</div>";
+        el("cryptoHint").textContent = "Backend must expose /crypto/news/briefing and allow CORS.";
+        el("cryptoKpiSentiment").innerHTML = "";
+        el("cryptoKpiScope").innerHTML = "";
+        el("cryptoKpiNotes").innerHTML = "";
+      }
+    }
+
     function showTab(tab){
       ACTIVE_TAB = tab;
       setTitleForTab(tab);
@@ -1188,6 +1287,9 @@
         loadHoldingsCommon(365, false);
         loadDaily(WINDOW_DAYS, false);
       }
+      if (tab === "Crypto"){
+        loadCrypto(false);
+      }
 
       handleHash();
     }
@@ -1208,6 +1310,7 @@
       CACHE_BRIEFING.clear();
       CACHE_HOLDINGS.clear();
       CACHE_DAILY.clear();
+      CACHE_CRYPTO = null;
 
       setStatus("", "Refreshing…", "");
       if (ACTIVE_TAB === "News"){
@@ -1216,6 +1319,8 @@
       } else if (ACTIVE_TAB === "Congress"){
         loadHoldingsCommon(365, true);
         loadDaily(WINDOW_DAYS, true);
+      } else if (ACTIVE_TAB === "Crypto"){
+        loadCrypto(true);
       }
     }
 
@@ -1242,6 +1347,10 @@
 
     el("readRefreshBtn").addEventListener("click", () => {
       loadMarketRead(true);
+    });
+
+    el("cryptoRefreshBtn").addEventListener("click", () => {
+      loadCrypto(true);
     });
 
     showTab("News");
