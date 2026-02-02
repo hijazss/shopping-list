@@ -357,7 +357,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(5,1fr);
+      grid-template-columns:repeat(4,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -481,78 +481,13 @@
       user-select:none;
     }
     details.cryptoDetails > summary::-webkit-details-marker{display:none}
-
-    /* News knobs */
-    .knobGrid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-    @media (min-width: 820px){
-      .knobGrid{grid-template-columns:1fr 1fr;}
-    }
-    .knob{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.02);
-      border-radius:12px;
-      padding:9px;
-    }
-    .knobTop{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      margin-bottom:8px;
-    }
-    .knobTitle{
-      font-size:11px;
-      color:var(--muted);
-      letter-spacing:.08em;
-      text-transform:uppercase;
-    }
-    .select{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.03);
-      color:#fff;
-      border-radius:999px;
-      padding:7px 10px;
-      font-size:12px;
-      outline:none;
-      cursor:pointer;
-    }
-    .toggleRow{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-top:8px;
-    }
-    .toggleBtn{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.03);
-      color:#fff;
-      border-radius:999px;
-      padding:7px 10px;
-      font-size:12px;
-      cursor:pointer;
-    }
-    .toggleOn{
-      background:rgba(255,255,255,.12);
-    }
-    .rangeRow{
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-    input[type="range"]{width:100%}
   </style>
 </head>
 
 <body>
   <header class="header">
     <div>
-      <div class="h1" id="pageTitle">Convergence</div>
+      <div class="h1" id="pageTitle">News</div>
       <div class="subtle" id="reportDate"></div>
     </div>
     <button class="pillBtn" id="refreshBtn">Refresh</button>
@@ -565,8 +500,7 @@
     </div>
 
     <div class="tabRow">
-      <button class="tabBtn tabBtnActive" id="tabMainBtn">Main</button>
-      <button class="tabBtn" id="tabNewsBtn">News</button>
+      <button class="tabBtn tabBtnActive" id="tabNewsBtn">News</button>
       <button class="tabBtn" id="tabCongressBtn">Congress</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
       <button class="tabBtn" id="tabPerfBtn">Performance</button>
@@ -582,30 +516,8 @@
 
     <div id="stockPanel" style="display:none;"></div>
 
-    <!-- MAIN TAB -->
-    <section id="viewMain">
-      <div class="sectionTitle">Market entry</div>
-      <div class="panel">
-        <div class="grid3">
-          <div class="kpi" id="entryKpiScore"></div>
-          <div class="kpi" id="entryKpiRules"></div>
-          <div class="kpi" id="entryKpiNotes"></div>
-        </div>
-        <div class="subtle" id="entryHint" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="sectionTitle">What this app is for</div>
-      <div class="panel">
-        <div class="kpiSub">
-          This is a pacing dashboard, not a prediction engine.
-          Use Market Entry to decide how aggressive to DCA. Use News for sentiment context.
-          Use Congress and Crypto for idea discovery.
-        </div>
-      </div>
-    </section>
-
     <!-- NEWS TAB -->
-    <section id="viewNews" style="display:none;">
+    <section id="viewNews">
       <div class="sectionTitle">Market snapshot</div>
       <div class="grid3">
         <div class="kpi" id="snapKpiSPY"></div>
@@ -621,70 +533,11 @@
         <div class="kpi" id="briefKpiNotes"></div>
       </div>
 
-      <div class="panel" style="margin-top:10px;">
-        <div class="panelTitle">
-          <h2>Briefing controls</h2>
-          <span class="kpiBadge badgeNeu" id="newsKnobBadge">Brief</span>
-        </div>
-        <div class="subtle" style="margin-top:6px;">
-          These knobs change how much you see and what we ask the backend for.
-        </div>
-
-        <div class="knobGrid">
-          <div class="knob">
-            <div class="knobTop">
-              <div class="knobTitle">Read depth</div>
-              <select class="select" id="newsModeSelect" aria-label="news mode">
-                <option value="brief">Brief</option>
-                <option value="normal" selected>Normal</option>
-                <option value="deep">Deep</option>
-              </select>
-            </div>
-            <div class="kpiSub">
-              Brief hides most headlines. Deep shows full implications plus more headlines.
-            </div>
-
-            <div class="toggleRow">
-              <button class="toggleBtn toggleOn" id="toggleImpBtn" type="button">Show implications</button>
-              <button class="toggleBtn" id="toggleHeadsBtn" type="button">Show headlines</button>
-              <button class="toggleBtn" id="toggleAutoExpandBtn" type="button">Auto expand</button>
-            </div>
-          </div>
-
-          <div class="knob">
-            <div class="knobTop">
-              <div class="knobTitle">Headlines shown</div>
-              <span class="kpiBadge badgeNeu" id="newsHeadsCountBadge">8 / sector</span>
-            </div>
-            <div class="rangeRow">
-              <input id="newsHeadsRange" type="range" min="3" max="20" step="1" value="8" />
-            </div>
-            <div class="kpiSub">
-              This controls how many headlines you see per sector in the UI. It also sets the backend request.
-            </div>
-          </div>
-
-          <div class="knob" style="grid-column:1/-1;">
-            <div class="knobTop">
-              <div class="knobTitle">Sectors</div>
-              <button class="pillBtn" id="newsApplyKnobsBtn" type="button">Apply</button>
-            </div>
-            <div class="kpiSub">
-              Comma-separated. Example: AI,Medical,Semiconductors,Cybersecurity
-            </div>
-            <div style="margin-top:10px;">
-              <input class="input" id="newsSectorsInput"
-                     value="AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="sectionTitle">Your watchlist</div>
       <div class="panel">
         <div class="kpiSub">
           Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL
-          This may be used by the backend if supported. The UI always uses it for quick access to charts.
+          This watchlist influences the briefing and pulls ticker RSS into the same sector view.
         </div>
         <div style="margin-top:10px;">
           <input class="input" id="watchInput" value="SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B" />
@@ -856,8 +709,7 @@
 
   <nav class="tabsBottom">
     <div class="tabBarBottom">
-      <div class="tabBottom tabBottomActive" id="navMain">Main</div>
-      <div class="tabBottom" id="navNews">News</div>
+      <div class="tabBottom tabBottomActive" id="navNews">News</div>
       <div class="tabBottom" id="navCongress">Congress</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
       <div class="tabBottom" id="navPerf">Performance</div>
@@ -876,31 +728,12 @@
     const DAILY_URL = (windowDays) =>
       `${BACKEND_BASE}/report/congress/daily?window_days=${encodeURIComponent(String(windowDays))}&limit=250`;
 
-    const ENTRY_URL = (windowDays) =>
-      `${BACKEND_BASE}/market/entry?window_days=${encodeURIComponent(String(windowDays))}`;
-
     const MARKET_SNAPSHOT_URL = () =>
       `${BACKEND_BASE}/market/snapshot`;
 
-    /* News briefing:
-       Backend you pasted expects:
-         /news/briefing?sectors=AI,Medical,...&max_items_per_sector=12
-       We also include tickers/mode parameters as best-effort. If backend ignores them, no harm.
-    */
-    const NEWS_BRIEF_URL = ({ watchlist, sectors, maxPerSector, mode }) => {
+    const NEWS_BRIEF_URL = (watchlist) => {
       const wl = String(watchlist || "");
-      const secs = String(sectors || "");
-      const m = String(mode || "normal");
-      const n = Number(maxPerSector || 12);
-
-      const qp = new URLSearchParams();
-      if (secs.trim()) qp.set("sectors", secs);
-      if (Number.isFinite(n) && n > 0) qp.set("max_items_per_sector", String(n));
-
-      if (wl.trim()) qp.set("tickers", wl);   // optional, if backend supports it
-      qp.set("mode", m);                      // optional, if backend supports it
-
-      return `${BACKEND_BASE}/news/briefing?${qp.toString()}`;
+      return `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(wl)}&max_general=60&max_per_ticker=6`;
     };
 
     const CRYPTO_NEWS_URL = (coins, includeTopN) =>
@@ -908,30 +741,19 @@
 
     const el = (id) => document.getElementById(id);
 
-    let ACTIVE_TAB = "Main";
+    let ACTIVE_TAB = "News";
     let WINDOW_DAYS = 30;
 
     let CACHE_MAIN = new Map();
-    let CACHE_ENTRY = new Map();
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
     let CACHE_BRIEFING = new Map();
     let CACHE_SNAPSHOT = null;
     let CACHE_SNAPSHOT_TS = 0;
-
     let CACHE_CRYPTO_NEWS = new Map();
 
     let LAST_HARD_REFRESH_MS = 0;
     const HARD_REFRESH_COOLDOWN_MS = 25000;
-
-    /* News knob state */
-    let NEWS_MODE = "normal";                 // brief | normal | deep
-    let NEWS_SHOW_IMPLICATIONS = true;
-    let NEWS_SHOW_HEADLINES = false;
-    let NEWS_AUTO_EXPAND = false;
-    let NEWS_HEADLINES_SHOWN = 8;             // UI limit
-    let NEWS_MAX_ITEMS_PER_SECTOR = 12;       // backend request
-    let NEWS_SECTORS = "AI,Medical,Energy,Robotics,Infrastructure,Semiconductors,Cloud,Cybersecurity,Defense,Financials,Consumer";
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -943,13 +765,12 @@
 
     function setTitleForTab(tab){
       const map = {
-        "Main":"Convergence",
         "News":"News",
         "Congress":"Congress",
         "Crypto":"Crypto",
         "Performance":"Performance",
       };
-      el("pageTitle").textContent = map[tab] || "Convergence";
+      el("pageTitle").textContent = map[tab] || "News";
     }
 
     function setStockPanel(ticker){
@@ -1011,133 +832,32 @@
       `;
     }
 
-    function entryBadge(score){
-      const s = Number(score || 0);
-      if (s >= 75) return {label:"RISK-ON", cls:"badgePos"};
-      if (s >= 55) return {label:"NEUTRAL", cls:"badgeNeu"};
-      return {label:"RISK-OFF", cls:"badgeNeg"};
-    }
+    async function loadMain(force){
+      const key = String(WINDOW_DAYS);
+      const cached = CACHE_MAIN.get(key);
 
-    function renderEntryIndex(payload){
-      if (!payload || typeof payload.score !== "number"){
-        el("entryKpiScore").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">Market entry index</div>
-              <div class="kpiValue">Unavailable</div>
-            </div>
-            <span class="kpiBadge badgeNeu">Backend</span>
-          </div>
-          <div class="kpiSub">
-            Backend must expose <span class="mono">/market/entry</span>.
-          </div>
-        `;
-        el("entryKpiRules").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">Simple strategy</div>
-              <div class="kpiValue">Pacing DCA</div>
-            </div>
-            <span class="kpiBadge badgeNeu">Rules</span>
-          </div>
-          <div class="kpiSub">
-            <div class="kpiList">
-              <div class="kpiRow"><span>75–100</span><span class="kpiBadge badgePos">Aggressive buys</span></div>
-              <div class="kpiRow"><span>55–74</span><span class="kpiBadge badgeNeu">Normal DCA</span></div>
-              <div class="kpiRow"><span>0–54</span><span class="kpiBadge badgeNeg">Small DCA only</span></div>
-            </div>
-          </div>
-        `;
-        el("entryKpiNotes").innerHTML = `
-          <div class="kpiTop">
-            <div>
-              <div class="kpiTitle">What it means</div>
-              <div class="kpiValue">One number</div>
-            </div>
-            <span class="kpiBadge badgeNeu">0–100</span>
-          </div>
-          <div class="kpiSub">Risk temperature, not prediction.</div>
-        `;
-        el("entryHint").textContent = "Once /market/entry returns data, this is your pacing meter.";
+      if (cached && !force){
+        setStatus("ok", "Using cached congress data ✅", "");
+        if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(cached);
+        if (ACTIVE_TAB === "Congress") renderCongressTradeSections(cached);
         return;
       }
 
-      const b = entryBadge(payload.score);
-      const regime = payload.regime || b.label;
-      const signal = payload.signal || (payload.score >= 70 ? "ACCUMULATE" : payload.score >= 55 ? "ACCUMULATE SLOWLY" : "WAIT / SMALL DCA");
-      const notes = payload.notes || "";
-      const c = payload.components || {};
-      const pct01 = (x) => `${Math.round(100 * Number(x || 0))}%`;
+      const url = TODAY_URL(WINDOW_DAYS);
+      setStatus("", `Loading congress (rolling ${WINDOW_DAYS}D)…`, url);
 
-      el("entryKpiScore").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Market entry index</div>
-            <div class="kpiValue">${Math.round(payload.score)}/100</div>
-          </div>
-          <span class="kpiBadge ${b.cls}">${regime}</span>
-        </div>
-        <div class="kpiSub">
-          Suggested action: <strong>${signal}</strong><br/>
-          ${notes ? `<span class="subtle">${notes}</span>` : ""}
-        </div>
-      `;
-
-      el("entryKpiRules").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Drivers</div>
-            <div class="kpiValue">What moved it</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${payload.date || ""}</span>
-        </div>
-        <div class="kpiSub">
-          <div class="kpiList">
-            <div class="kpiRow"><span>SPX trend</span><span class="kpiBadge badgeNeu">${pct01(c.spxTrend)}</span></div>
-            <div class="kpiRow"><span>Volatility</span><span class="kpiBadge badgeNeu">${pct01(c.vix)}</span></div>
-            <div class="kpiRow"><span>Breadth</span><span class="kpiBadge badgeNeu">${pct01(c.breadth)}</span></div>
-            <div class="kpiRow"><span>Credit</span><span class="kpiBadge badgeNeu">${pct01(c.credit)}</span></div>
-            <div class="kpiRow"><span>Rates</span><span class="kpiBadge badgeNeu">${pct01(c.rates)}</span></div>
-          </div>
-        </div>
-      `;
-
-      el("entryKpiNotes").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">How to use it</div>
-            <div class="kpiValue">Pacing</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Simple</span>
-        </div>
-        <div class="kpiSub">
-          Increase buys when score is high. Slow down when low. Combine with watchlist quality.
-        </div>
-      `;
-
-      el("entryHint").textContent = "High score: faster DCA. Low score: smaller buys and patience.";
-    }
-
-    async function loadEntryIndex(windowDays, force){
-      const key = String(windowDays || 365);
-      if (CACHE_ENTRY.has(key) && !force){
-        renderEntryIndex(CACHE_ENTRY.get(key));
-        return;
-      }
       try{
-        const url = ENTRY_URL(windowDays || 365);
         const res = await fetch(url, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error("HTTP " + res.status);
-        CACHE_ENTRY.set(key, data);
-        renderEntryIndex(data);
+
+        CACHE_MAIN.set(key, data);
+        setStatus("ok", "Live congress data loaded ✅", "");
+
+        if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(data);
+        if (ACTIVE_TAB === "Congress") renderCongressTradeSections(data);
       }catch(err){
-        if (CACHE_ENTRY.has(key)){
-          renderEntryIndex(CACHE_ENTRY.get(key));
-          el("entryHint").textContent = "Using cached market entry index to avoid rate-limits.";
-        } else {
-          renderEntryIndex(null);
-        }
+        setStatus("err", "Could not load congress data", String(err));
       }
     }
 
@@ -1161,15 +881,12 @@
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">S&P proxy</div>
-            <div class="kpiValue">${(sp?.last !== null && sp?.last !== undefined) ? sp.last : "—"}</div>
+            <div class="kpiValue">${sp?.last ? sp.last : "—"}</div>
           </div>
           <span class="kpiBadge badgeNeu">${sp?.symbol || "SPY"}</span>
         </div>
         <div class="kpiSub">
           1D: <strong>${fmtPct(sp?.ret1dPct)}</strong> · 5D: <strong>${fmtPct(sp?.ret5dPct)}</strong> · 1M: <strong>${fmtPct(sp?.ret1mPct)}</strong>
-          <div class="subtle" style="margin-top:6px;">
-            If 5D/1M are blank, backend is returning null for those fields.
-          </div>
         </div>
       `;
 
@@ -1177,12 +894,12 @@
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Volatility</div>
-            <div class="kpiValue">${(vix?.last !== null && vix?.last !== undefined) ? vix.last : "—"}</div>
+            <div class="kpiValue">${vix?.last ? vix.last : "—"}</div>
           </div>
           <span class="kpiBadge badgeNeu">${vix?.symbol || "^VIX"}</span>
         </div>
         <div class="kpiSub">
-          1D change: <strong>${(vix?.chg1d !== null && vix?.chg1d !== undefined && !isNaN(Number(vix.chg1d))) ? (Number(vix.chg1d) > 0 ? "+" : "") + Number(vix.chg1d).toFixed(2) : "—"}</strong>
+          1D change: <strong>${(vix?.chg1d !== null && vix?.chg1d !== undefined) ? (Number(vix.chg1d) > 0 ? "+" : "") + Number(vix.chg1d).toFixed(2) : "—"}</strong>
         </div>
       `;
 
@@ -1234,6 +951,289 @@
           el("snapHint").textContent = "Snapshot fetch failed. Showing cached snapshot.";
         } else {
           el("snapHint").textContent = "Could not load market snapshot. Confirm backend has /market/snapshot and CORS allows this origin.";
+        }
+      }
+    }
+
+    function sentimentBadge(s){
+      const score = Number(s?.score ?? 50);
+      const label = String(s?.label ?? "NEUTRAL");
+      if (score >= 60) return { cls: "badgePos", label: label, score };
+      if (score <= 40) return { cls: "badgeNeg", label: label, score };
+      return { cls: "badgeNeu", label: label, score };
+    }
+
+    function normalizeNewsErrors(err){
+      if (!err) return [];
+      if (Array.isArray(err)) return err.filter(Boolean).map(String);
+      if (typeof err === "object"){
+        const out = [];
+        for (const k of Object.keys(err)){
+          const v = err[k];
+          if (Array.isArray(v)) out.push(...v.filter(Boolean).map(String));
+          else if (v) out.push(String(v));
+        }
+        return out;
+      }
+      return [String(err)];
+    }
+
+    function normalizeSectorHeadlines(s){
+      if (!s || typeof s !== "object") return [];
+      if (Array.isArray(s.headlines)) return s.headlines;
+      if (Array.isArray(s.topHeadlines)) return s.topHeadlines;
+      if (Array.isArray(s.items)) return s.items;
+      return [];
+    }
+
+    function pickFirstNonEmptyStr(obj, keys){
+      for (const k of keys){
+        const v = obj?.[k];
+        if (typeof v === "string" && v.trim()) return v.trim();
+      }
+      return "";
+    }
+
+    function normalizeImplications(s){
+      if (!s || typeof s !== "object") return [];
+
+      const arrCandidates = [
+        "implications_2_12_weeks",
+        "implications_2_to_12_weeks",
+        "implications_2to12",
+        "implications",
+        "outlook_2_12_weeks",
+        "outlook",
+        "risks",
+        "catalysts",
+        "themes"
+      ];
+
+      for (const k of arrCandidates){
+        const v = s[k];
+        if (Array.isArray(v)) return v.filter(Boolean).map(x => String(x).trim()).filter(Boolean);
+        if (typeof v === "string" && v.trim()) return [v.trim()];
+      }
+      return [];
+    }
+
+    function safeHeadlineTitle(h){
+      const t = String(h?.title || "").trim();
+      if (!t) return "";
+      return t.replace(/\s+/g, " ").slice(0, 140);
+    }
+
+    function synthSectorSummary(sector, sent, headlines){
+      const top = headlines.map(safeHeadlineTitle).filter(Boolean).slice(0, 3);
+      if (!top.length){
+        return `No summary returned. Tone is ${sent.label.toLowerCase()} (${sent.score}/100).`;
+      }
+
+      const tone =
+        sent.score >= 62 ? "constructive" :
+        sent.score <= 38 ? "risk-focused" :
+        "mixed";
+
+      const lead = top[0];
+      const extra = top.length >= 2 ? ` Also watch: ${top[1]}.` : "";
+      return `${sector} is ${tone} today. Lead story: ${lead}.${extra}`;
+    }
+
+    function synthImplications(sector, sent, headlines){
+      const out = [];
+      const top = headlines.map(safeHeadlineTitle).filter(Boolean).slice(0, 4);
+
+      const hasRates = top.some(t => /fed|rates|yield|inflation|cpi|powell/i.test(t));
+      const hasEarnings = top.some(t => /earnings|guidance|revenue|margin/i.test(t));
+      const hasReg = top.some(t => /sec|doj|antitrust|regulat|ban|lawsuit/i.test(t));
+      const hasAI = top.some(t => /ai|gpu|chip|nvidia|model|cloud/i.test(t));
+      const hasOil = top.some(t => /oil|opec|crude|energy|gas/i.test(t));
+
+      if (sent.score >= 60){
+        out.push("If follow-through continues, leaders tend to keep momentum for 2 to 6 weeks, especially on strong guidance.");
+      } else if (sent.score <= 40){
+        out.push("If negative headlines persist, expect tighter risk appetite and wider dispersion for 2 to 8 weeks.");
+      } else {
+        out.push("Mixed tape usually means range-bound price action and headline-driven rotations for 2 to 12 weeks.");
+      }
+
+      if (hasEarnings) out.push("Earnings and guidance will likely dominate positioning and sector leadership over the next few weeks.");
+      if (hasRates) out.push("Rates sensitivity is elevated. Watch inflation prints and Fed communication as the primary volatility drivers.");
+      if (hasReg) out.push("Regulatory overhang can cap multiples short term. Expect headline risk and sudden repricing on updates.");
+      if (hasAI) out.push("AI infrastructure demand can keep bid under semis and cloud names, but any slowdown can re-rate quickly.");
+      if (hasOil) out.push("Energy could stay volatile. Track crude trends and geopolitical headlines as near-term catalysts.");
+
+      const uniq = [];
+      const seen = new Set();
+      for (const x of out){
+        const key = x.toLowerCase();
+        if (!seen.has(key)){
+          seen.add(key);
+          uniq.push(x);
+        }
+      }
+      return uniq.slice(0, 6);
+    }
+
+    function headlineHTML(h){
+      const title = String(h?.title || "").trim();
+      const link = String(h?.link || "").trim();
+      const pub = String(h?.published || "").trim();
+      const bucket = String(h?.bucket || h?.sourceFeed || h?.source || h?.outlet || "").trim();
+
+      return `
+        <div class="headlineItem">
+          <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
+          <div class="headlineMeta">
+            ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
+            ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function sectorPanelHTML(s){
+      const sector = String(s?.sector || s?.name || "General");
+      const sent = sentimentBadge(s?.sentiment);
+      const headlines = normalizeSectorHeadlines(s);
+
+      const summaryRaw = pickFirstNonEmptyStr(s, ["summary","sectorSummary","sector_summary","brief","overview","synopsis","analysis"]);
+      const implicationsRaw = normalizeImplications(s);
+
+      const summary = summaryRaw || synthSectorSummary(sector, sent, headlines);
+      const implications = implicationsRaw.length ? implicationsRaw : synthImplications(sector, sent, headlines);
+
+      const meta = [];
+      meta.push(`${headlines.length} headlines`);
+      meta.push(`Sentiment ${sent.score}/100`);
+      const metaLine = meta.join(" · ");
+
+      return `
+        <details class="briefingDetails">
+          <summary>
+            <div class="summaryLeft">
+              <div class="summaryTitle">${sector}</div>
+              <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
+            </div>
+            <div class="tags">
+              <span class="kpiBadge badgeNeu">${headlines.length}</span>
+              <span class="kpiBadge ${sent.cls}">${sent.label} · ${sent.score}</span>
+            </div>
+          </summary>
+
+          <div class="divider"></div>
+
+          <div class="kpiSub">
+            <strong>Today’s read:</strong> ${summary || "No summary available."}
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
+          <ul class="bulletList">
+            ${implications.length ? implications.map(x => `<li>${String(x||"")}</li>`).join("") : "<li>No implications generated.</li>"}
+          </ul>
+
+          <div class="divider"></div>
+
+          <div class="kpiSub"><strong>Headlines:</strong></div>
+          <div class="headlineList">
+            ${headlines.length ? headlines.map(headlineHTML).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
+          </div>
+        </details>
+      `;
+    }
+
+    function renderBriefing(data, watchlist){
+      const overall = sentimentBadge(data?.overallSentiment);
+      const sectors = Array.isArray(data?.sectors) ? data.sectors : [];
+      const date = String(data?.date || "");
+      const note = String(data?.note || "");
+
+      const total = sectors.reduce((a, s) => a + normalizeSectorHeadlines(s).length, 0);
+
+      el("briefKpiSentiment").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Overall sentiment</div>
+            <div class="kpiValue">${overall.score}/100</div>
+          </div>
+          <span class="kpiBadge ${overall.cls}">${overall.label}</span>
+        </div>
+        <div class="kpiSub">
+          Headline-based gauge. Use for context, not timing.
+        </div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Date</span><span class="kpiBadge badgeNeu">${date || "—"}</span></div>
+        </div>
+      `;
+
+      el("briefKpiScope").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Briefing scope</div>
+            <div class="kpiValue">${total} headlines</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Sectors</span>
+        </div>
+        <div class="kpiSub">
+          Watchlist: ${String(watchlist||"").split(",").filter(x => x.trim()).length} tickers
+        </div>
+        <div class="kpiList">
+          <div class="kpiRow"><span>Sectors</span><span class="kpiBadge badgeNeu">${sectors.length}</span></div>
+        </div>
+      `;
+
+      el("briefKpiNotes").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Notes</div>
+            <div class="kpiValue">RSS</div>
+          </div>
+          <span class="kpiBadge badgeNeu">Backend</span>
+        </div>
+        <div class="kpiSub">
+          ${note ? note : "Daily briefing."}
+        </div>
+      `;
+
+      el("briefingSectors").innerHTML = sectors.length
+        ? sectors.map(sectorPanelHTML).join("")
+        : "<div class='subtle'>No sectors returned.</div>";
+
+      const errAll = normalizeNewsErrors(data?.errors);
+      el("briefHint").textContent = errAll.length
+        ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
+        : "Daily briefing loaded.";
+    }
+
+    async function loadBriefing(watchlist, force){
+      const key = String(watchlist || "").trim();
+      if (CACHE_BRIEFING.has(key) && !force){
+        renderBriefing(CACHE_BRIEFING.get(key), key);
+        return;
+      }
+
+      const url = NEWS_BRIEF_URL(key);
+      el("briefingSectors").innerHTML = "<div class='subtle'>Loading daily briefing…</div>";
+      el("briefHint").textContent = `Loading from: ${url}`;
+
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        CACHE_BRIEFING.set(key, data);
+        renderBriefing(data, key);
+      }catch(err){
+        if (CACHE_BRIEFING.has(key)){
+          renderBriefing(CACHE_BRIEFING.get(key), key);
+          el("briefHint").textContent = "Briefing fetch failed. Showing cached briefing.";
+        } else {
+          el("briefingSectors").innerHTML = "<div class='subtle'>Could not load briefing.</div>";
+          el("briefHint").textContent = "Backend must expose /news/briefing and allow CORS.";
+          el("briefKpiSentiment").innerHTML = "";
+          el("briefKpiScope").innerHTML = "";
+          el("briefKpiNotes").innerHTML = "";
         }
       }
     }
@@ -1924,353 +1924,20 @@
       }
     }
 
-    function renderMain(payload){
-      const win = Number(payload.windowDays || WINDOW_DAYS || 30);
-      el("reportDate").textContent = payload.date ? `${payload.date} · window ${win}D` : `window ${win}D`;
-      handleHash();
-    }
-
-    async function loadMain(force){
-      const key = String(WINDOW_DAYS);
-      const cached = CACHE_MAIN.get(key);
-
-      if (cached && !force){
-        setStatus("ok", "Using cached congress data ✅", "");
-        if (ACTIVE_TAB === "Main") renderMain(cached);
-        if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(cached);
-        if (ACTIVE_TAB === "Congress") renderCongressTradeSections(cached);
-        return;
-      }
-
-      const url = TODAY_URL(WINDOW_DAYS);
-      setStatus("", `Loading congress (rolling ${WINDOW_DAYS}D)…`, url);
-
-      try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-
-        CACHE_MAIN.set(key, data);
-        setStatus("ok", "Live congress data loaded ✅", "");
-
-        if (ACTIVE_TAB === "Main") renderMain(data);
-        if (ACTIVE_TAB === "Crypto") renderCryptoFromMain(data);
-        if (ACTIVE_TAB === "Congress") renderCongressTradeSections(data);
-      }catch(err){
-        setStatus("err", "Could not load congress data", String(err));
-      }
-    }
-
-    function sentimentBadge(s){
-      const score = Number(s?.score ?? 50);
-      const label = String(s?.label ?? "NEUTRAL");
-      if (score >= 60) return { cls: "badgePos", label: label, score };
-      if (score <= 40) return { cls: "badgeNeg", label: label, score };
-      return { cls: "badgeNeu", label: label, score };
-    }
-
-    function normalizeNewsErrors(err){
-      if (!err) return [];
-      if (Array.isArray(err)) return err.filter(Boolean).map(String);
-      if (typeof err === "object"){
-        const out = [];
-        for (const k of Object.keys(err)){
-          const v = err[k];
-          if (Array.isArray(v)) out.push(...v.filter(Boolean).map(String));
-          else if (v) out.push(String(v));
-        }
-        return out;
-      }
-      return [String(err)];
-    }
-
-    function dedupHeadlines(items){
-      const out = [];
-      const seen = new Set();
-      for (const h of (Array.isArray(items) ? items : [])){
-        const title = String(h?.title || "").trim();
-        const link = String(h?.link || "").trim();
-        const k = (link || title).toLowerCase();
-        if (!k || seen.has(k)) continue;
-        seen.add(k);
-        out.push(h);
-      }
-      return out;
-    }
-
-    function normalizeSectorHeadlines(s){
-      if (!s || typeof s !== "object") return [];
-      const raw = Array.isArray(s.headlines) ? s.headlines
-                : Array.isArray(s.topHeadlines) ? s.topHeadlines
-                : [];
-      return dedupHeadlines(raw);
-    }
-
-    function normalizeImplications(s){
-      if (!s || typeof s !== "object") return [];
-      if (Array.isArray(s.implications_2_12_weeks)) return s.implications_2_12_weeks.filter(Boolean).map(String);
-      if (Array.isArray(s.implications)) return s.implications.filter(Boolean).map(String);
-      if (typeof s.implications === "string" && s.implications.trim()) return [s.implications.trim()];
-      return [];
-    }
-
-    function headlineHTML(h){
-      const title = String(h?.title || "").trim();
-      const link = String(h?.link || "").trim();
-      const pub = String(h?.published || "").trim();
-      const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
-
-      return `
-        <div class="headlineItem">
-          <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
-          <div class="headlineMeta">
-            ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
-            ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
-          </div>
-        </div>
-      `;
-    }
-
-    function clampText(s, maxChars){
-      const t = String(s || "").trim();
-      if (!t) return "";
-      if (t.length <= maxChars) return t;
-      return t.slice(0, Math.max(0, maxChars - 1)).trim() + "…";
-    }
-
-    function sectorPanelHTML(s){
-      const sector = String(s?.sector || "General");
-      const sent = sentimentBadge(s?.sentiment);
-      const summaryRaw = String(s?.summary || "").trim();
-      const summary = (NEWS_MODE === "brief")
-        ? clampText(summaryRaw, 220)
-        : (NEWS_MODE === "normal")
-          ? clampText(summaryRaw, 420)
-          : summaryRaw;
-
-      const headlinesAll = normalizeSectorHeadlines(s);
-      const implicationsAll = normalizeImplications(s);
-
-      const implicationsLimit = (NEWS_MODE === "brief") ? 3 : (NEWS_MODE === "normal") ? 6 : 12;
-      const implications = implicationsAll.slice(0, implicationsLimit);
-
-      const showHeads = (NEWS_MODE === "deep") ? true : NEWS_SHOW_HEADLINES;
-      const showImpl = (NEWS_MODE === "brief") ? true : NEWS_SHOW_IMPLICATIONS;
-
-      const headsLimit = (NEWS_MODE === "brief") ? Math.min(3, NEWS_HEADLINES_SHOWN) : NEWS_HEADLINES_SHOWN;
-      const headlines = headlinesAll.slice(0, Math.max(0, Number(headsLimit || 0)));
-
-      const meta = [];
-      meta.push(`${headlinesAll.length} headlines`);
-      if (typeof sent.score === "number") meta.push(`Sentiment ${sent.score}/100`);
-      const metaLine = meta.join(" · ");
-
-      const openAttr = (NEWS_AUTO_EXPAND || NEWS_MODE === "deep") ? "open" : "";
-
-      return `
-        <details class="briefingDetails" ${openAttr}>
-          <summary>
-            <div class="summaryLeft">
-              <div class="summaryTitle">${sector}</div>
-              <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
-            </div>
-            <div class="tags">
-              <span class="kpiBadge badgeNeu">${headlinesAll.length}</span>
-              <span class="kpiBadge ${sent.cls}">${sent.label} · ${sent.score}</span>
-            </div>
-          </summary>
-
-          <div class="divider"></div>
-
-          <div class="kpiSub">
-            <strong>Today’s read:</strong> ${summary || "No summary available."}
-          </div>
-
-          ${showImpl ? `
-            <div class="divider"></div>
-            <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
-            <ul class="bulletList">
-              ${implications.length ? implications.map(x => `<li>${x}</li>`).join("") : "<li>No implications generated.</li>"}
-            </ul>
-          ` : ""}
-
-          ${showHeads ? `
-            <div class="divider"></div>
-            <div class="kpiSub"><strong>Headlines:</strong></div>
-            <div class="headlineList">
-              ${headlines.length ? headlines.map(headlineHTML).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
-              ${(headlinesAll.length > headlines.length) ? `<div class="subtle" style="margin-top:8px;">Showing ${headlines.length} of ${headlinesAll.length}. Increase “Headlines shown” to see more.</div>` : ""}
-            </div>
-          ` : `
-            <div class="divider"></div>
-            <div class="subtle">Headlines hidden. Toggle “Show headlines” or switch mode to Deep.</div>
-          `}
-        </details>
-      `;
-    }
-
-    function renderBriefing(data, watchlist){
-      const overall = sentimentBadge(data?.overallSentiment);
-      const sectors = Array.isArray(data?.sectors) ? data.sectors : [];
-      const date = String(data?.date || "");
-      const note = String(data?.note || "");
-
-      const total = sectors.reduce((a, s) => a + normalizeSectorHeadlines(s).length, 0);
-
-      el("briefKpiSentiment").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Overall sentiment</div>
-            <div class="kpiValue">${overall.score}/100</div>
-          </div>
-          <span class="kpiBadge ${overall.cls}">${overall.label}</span>
-        </div>
-        <div class="kpiSub">
-          Headline-based gauge. Use for context, not timing.
-        </div>
-        <div class="kpiList">
-          <div class="kpiRow"><span>Date</span><span class="kpiBadge badgeNeu">${date || "—"}</span></div>
-        </div>
-      `;
-
-      el("briefKpiScope").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Briefing scope</div>
-            <div class="kpiValue">${total} headlines</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Sectors</span>
-        </div>
-        <div class="kpiSub">
-          Watchlist: ${String(watchlist||"").split(",").filter(x => x.trim()).length} tickers
-        </div>
-        <div class="kpiList">
-          <div class="kpiRow"><span>Sectors</span><span class="kpiBadge badgeNeu">${sectors.length}</span></div>
-        </div>
-      `;
-
-      el("briefKpiNotes").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Notes</div>
-            <div class="kpiValue">RSS</div>
-          </div>
-          <span class="kpiBadge badgeNeu">Backend</span>
-        </div>
-        <div class="kpiSub">
-          ${note ? note : "Daily briefing."}
-        </div>
-      `;
-
-      el("briefingSectors").innerHTML = sectors.length
-        ? sectors.map(sectorPanelHTML).join("")
-        : "<div class='subtle'>No sectors returned.</div>";
-
-      const errAll = normalizeNewsErrors(data?.errors);
-      el("briefHint").textContent = errAll.length
-        ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
-        : "Daily briefing loaded.";
-    }
-
-    async function loadBriefing(watchlist, force){
-      const key = JSON.stringify({
-        wl: String(watchlist || "").trim(),
-        mode: NEWS_MODE,
-        showI: NEWS_SHOW_IMPLICATIONS,
-        showH: NEWS_SHOW_HEADLINES,
-        auto: NEWS_AUTO_EXPAND,
-        heads: NEWS_HEADLINES_SHOWN,
-        maxPer: NEWS_MAX_ITEMS_PER_SECTOR,
-        sectors: NEWS_SECTORS
-      });
-
-      if (CACHE_BRIEFING.has(key) && !force){
-        renderBriefing(CACHE_BRIEFING.get(key), String(watchlist||"").trim());
-        return;
-      }
-
-      const url = NEWS_BRIEF_URL({
-        watchlist: String(watchlist || "").trim(),
-        sectors: NEWS_SECTORS,
-        maxPerSector: NEWS_MAX_ITEMS_PER_SECTOR,
-        mode: NEWS_MODE
-      });
-
-      el("briefingSectors").innerHTML = "<div class='subtle'>Loading daily briefing…</div>";
-      el("briefHint").textContent = `Loading from: ${url}`;
-
-      try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        CACHE_BRIEFING.set(key, data);
-        renderBriefing(data, String(watchlist||"").trim());
-      }catch(err){
-        if (CACHE_BRIEFING.has(key)){
-          renderBriefing(CACHE_BRIEFING.get(key), String(watchlist||"").trim());
-          el("briefHint").textContent = "Briefing fetch failed. Showing cached briefing.";
-        } else {
-          el("briefingSectors").innerHTML = "<div class='subtle'>Could not load briefing.</div>";
-          el("briefHint").textContent = "Backend must expose /news/briefing and allow CORS.";
-          el("briefKpiSentiment").innerHTML = "";
-          el("briefKpiScope").innerHTML = "";
-          el("briefKpiNotes").innerHTML = "";
-        }
-      }
-    }
-
-    function syncNewsKnobUI(){
-      const sel = el("newsModeSelect");
-      if (sel) sel.value = NEWS_MODE;
-
-      el("toggleImpBtn").classList.toggle("toggleOn", !!NEWS_SHOW_IMPLICATIONS);
-      el("toggleHeadsBtn").classList.toggle("toggleOn", !!NEWS_SHOW_HEADLINES);
-      el("toggleAutoExpandBtn").classList.toggle("toggleOn", !!NEWS_AUTO_EXPAND);
-
-      el("newsHeadsRange").value = String(NEWS_HEADLINES_SHOWN);
-      el("newsHeadsCountBadge").textContent = `${NEWS_HEADLINES_SHOWN} / sector`;
-
-      el("newsSectorsInput").value = NEWS_SECTORS;
-
-      el("newsKnobBadge").textContent = (NEWS_MODE || "Normal").toUpperCase();
-    }
-
-    function applyNewsKnobsFromUI(){
-      const mode = String(el("newsModeSelect")?.value || "normal");
-      NEWS_MODE = (mode === "brief" || mode === "deep" || mode === "normal") ? mode : "normal";
-
-      const rangeVal = Number(el("newsHeadsRange")?.value || 8);
-      NEWS_HEADLINES_SHOWN = Math.max(3, Math.min(20, rangeVal));
-
-      const sectorsVal = String(el("newsSectorsInput")?.value || "").trim();
-      NEWS_SECTORS = sectorsVal || NEWS_SECTORS;
-
-      // Backend request: ask for a bit more than we display so summaries can be better
-      NEWS_MAX_ITEMS_PER_SECTOR =
-        (NEWS_MODE === "brief") ? Math.max(8, NEWS_HEADLINES_SHOWN)
-        : (NEWS_MODE === "normal") ? Math.max(12, NEWS_HEADLINES_SHOWN + 2)
-        : Math.max(18, NEWS_HEADLINES_SHOWN + 4);
-
-      syncNewsKnobUI();
-    }
-
     function showTab(tab){
       ACTIVE_TAB = tab;
       setTitleForTab(tab);
 
-      el("viewMain").style.display = tab === "Main" ? "" : "none";
       el("viewNews").style.display = tab === "News" ? "" : "none";
       el("viewCongress").style.display = tab === "Congress" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
       el("viewPerf").style.display = tab === "Performance" ? "" : "none";
 
-      el("tabMainBtn").classList.toggle("tabBtnActive", tab === "Main");
       el("tabNewsBtn").classList.toggle("tabBtnActive", tab === "News");
       el("tabCongressBtn").classList.toggle("tabBtnActive", tab === "Congress");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
       el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
 
-      el("navMain").classList.toggle("tabBottomActive", tab === "Main");
       el("navNews").classList.toggle("tabBottomActive", tab === "News");
       el("navCongress").classList.toggle("tabBottomActive", tab === "Congress");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
@@ -2278,12 +1945,7 @@
 
       el("mainWindowTools").style.display = (tab === "Congress" || tab === "Crypto") ? "" : "none";
 
-      if (tab === "Main"){
-        loadMain(false);
-        loadEntryIndex(365, false);
-      }
       if (tab === "News"){
-        syncNewsKnobUI();
         loadMarketSnapshot(false);
         loadBriefing(el("watchInput").value, false);
       }
@@ -2333,11 +1995,6 @@
         setStatus("", "Refreshing (rate-limit safe)…", "");
       }
 
-      if (ACTIVE_TAB === "Main"){
-        loadMain(true);
-        loadEntryIndex(365, !inCooldown);
-        return;
-      }
       if (ACTIVE_TAB === "News"){
         loadMarketSnapshot(!inCooldown);
         loadBriefing(el("watchInput").value, !inCooldown);
@@ -2354,22 +2011,17 @@
         loadCryptoNews(el("cryptoCoinsInput").value, !inCooldown);
         return;
       }
-
-      loadMain(true);
     }
 
-    /* Wire up */
     el("btn30").addEventListener("click", () => setWindow(30));
     el("btn180").addEventListener("click", () => setWindow(180));
     el("btn365").addEventListener("click", () => setWindow(365));
 
-    el("tabMainBtn").addEventListener("click", () => showTab("Main"));
     el("tabNewsBtn").addEventListener("click", () => showTab("News"));
     el("tabCongressBtn").addEventListener("click", () => showTab("Congress"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
     el("tabPerfBtn").addEventListener("click", () => showTab("Performance"));
 
-    el("navMain").addEventListener("click", () => showTab("Main"));
     el("navNews").addEventListener("click", () => showTab("News"));
     el("navCongress").addEventListener("click", () => showTab("Congress"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
@@ -2379,7 +2031,6 @@
     window.addEventListener("hashchange", handleHash);
 
     el("watchApplyBtn").addEventListener("click", () => {
-      applyNewsKnobsFromUI();
       loadBriefing(el("watchInput").value, true);
     });
 
@@ -2391,52 +2042,10 @@
       loadCryptoNews(el("cryptoCoinsInput").value, true);
     });
 
-    /* News knobs */
-    el("newsModeSelect").addEventListener("change", () => {
-      applyNewsKnobsFromUI();
-      if (ACTIVE_TAB === "News") loadBriefing(el("watchInput").value, true);
-    });
-
-    el("newsHeadsRange").addEventListener("input", () => {
-      const v = Number(el("newsHeadsRange").value || 8);
-      NEWS_HEADLINES_SHOWN = Math.max(3, Math.min(20, v));
-      el("newsHeadsCountBadge").textContent = `${NEWS_HEADLINES_SHOWN} / sector`;
-    });
-
-    el("newsHeadsRange").addEventListener("change", () => {
-      applyNewsKnobsFromUI();
-      if (ACTIVE_TAB === "News") loadBriefing(el("watchInput").value, true);
-    });
-
-    el("toggleImpBtn").addEventListener("click", () => {
-      NEWS_SHOW_IMPLICATIONS = !NEWS_SHOW_IMPLICATIONS;
-      syncNewsKnobUI();
-      if (ACTIVE_TAB === "News") loadBriefing(el("watchInput").value, false);
-    });
-
-    el("toggleHeadsBtn").addEventListener("click", () => {
-      NEWS_SHOW_HEADLINES = !NEWS_SHOW_HEADLINES;
-      syncNewsKnobUI();
-      if (ACTIVE_TAB === "News") loadBriefing(el("watchInput").value, false);
-    });
-
-    el("toggleAutoExpandBtn").addEventListener("click", () => {
-      NEWS_AUTO_EXPAND = !NEWS_AUTO_EXPAND;
-      syncNewsKnobUI();
-      if (ACTIVE_TAB === "News") loadBriefing(el("watchInput").value, false);
-    });
-
-    el("newsApplyKnobsBtn").addEventListener("click", () => {
-      applyNewsKnobsFromUI();
-      CACHE_BRIEFING.clear();
-      if (ACTIVE_TAB === "News") loadBriefing(el("watchInput").value, true);
-    });
-
-    /* Init */
-    applyNewsKnobsFromUI();
-    showTab("Main");
-    loadMain(false);
-    loadEntryIndex(365, false);
+    // Default landing tab: News
+    showTab("News");
+    loadMarketSnapshot(false);
+    loadBriefing(el("watchInput").value, false);
   </script>
 </body>
 </html>
