@@ -518,13 +518,13 @@
 
     <!-- NEWS TAB -->
     <section id="viewNews">
-      <div class="sectionTitle">Market snapshot</div>
+      <div class="sectionTitle">Daily market read</div>
       <div class="grid3">
-        <div class="kpi" id="snapKpiSPY"></div>
-        <div class="kpi" id="snapKpiVIX"></div>
-        <div class="kpi" id="snapKpiFG"></div>
+        <div class="kpi" id="mktKpiSP"></div>
+        <div class="kpi" id="mktKpiNasdaq"></div>
+        <div class="kpi" id="mktKpiFG"></div>
       </div>
-      <div class="subtle" id="snapHint" style="margin-top:10px;"></div>
+      <div class="subtle" id="mktHint" style="margin-top:10px;"></div>
 
       <div class="sectionTitle">Daily briefing</div>
       <div class="grid3">
@@ -544,7 +544,7 @@
         </div>
         <div class="miniLinks" style="margin-top:10px;">
           <button class="pillBtn" id="watchApplyBtn">Refresh briefing</button>
-          <button class="pillBtn" id="snapRefreshBtn">Refresh snapshot</button>
+          <button class="pillBtn" id="mktRefreshBtn">Refresh market read</button>
         </div>
       </div>
 
@@ -728,13 +728,17 @@
     const DAILY_URL = (windowDays) =>
       `${BACKEND_BASE}/report/congress/daily?window_days=${encodeURIComponent(String(windowDays))}&limit=250`;
 
-    const MARKET_SNAPSHOT_URL = () =>
-      `${BACKEND_BASE}/market/snapshot`;
-
     const NEWS_BRIEF_URL = (watchlist) => {
       const wl = String(watchlist || "");
       return `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(wl)}&max_general=60&max_per_ticker=6`;
     };
+
+    // Market daily read endpoints (tries in order, then falls back)
+    const MARKET_SUMMARY_URLS = () => ([
+      `${BACKEND_BASE}/market/daily`,          // preferred new endpoint if you add it
+      `${BACKEND_BASE}/market/summary`,        // common naming
+      `${BACKEND_BASE}/market/snapshot`,       // existing legacy (best-effort)
+    ]);
 
     const CRYPTO_NEWS_URL = (coins, includeTopN) =>
       `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent(String(coins||""))}&include_top_n=${encodeURIComponent(String(includeTopN||15))}`;
@@ -748,8 +752,8 @@
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
     let CACHE_BRIEFING = new Map();
-    let CACHE_SNAPSHOT = null;
-    let CACHE_SNAPSHOT_TS = 0;
+    let CACHE_MARKET_READ = null;
+    let CACHE_MARKET_READ_TS = 0;
     let CACHE_CRYPTO_NEWS = new Map();
 
     let LAST_HARD_REFRESH_MS = 0;
@@ -832,6 +836,189 @@
       `;
     }
 
+    async function fetchFirstOkJson(urls){
+      let lastErr = "";
+      for (const url of urls){
+        try{
+          const res = await fetch(url, { cache: "no-store" });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return { ok:true, url, data };
+        }catch(err){
+          lastErr = `${url} -> ${String(err)}`;
+        }
+      }
+      return { ok:false, url: urls[urls.length-1] || "", data:null, err:lastErr };
+    }
+
+    function fmtPct(n){
+      if (n === null || n === undefined || isNaN(Number(n))) return "—";
+      const v = Number(n);
+      const s = v > 0 ? "+" : "";
+      return `${s}${v.toFixed(2)}%`;
+    }
+
+    function fmtNum(n, digits){
+      if (n === null || n === undefined || isNaN(Number(n))) return "—";
+      return Number(n).toFixed(digits ?? 2);
+    }
+
+    function fgBadge(score){
+      if (typeof score !== "number" || isNaN(score)) return "badgeNeu";
+      if (score >= 60) return "badgePos";
+      if (score <= 40) return "badgeNeg";
+      return "badgeNeu";
+    }
+
+    function pick(obj, keys){
+      for (const k of keys){
+        const v = obj?.[k];
+        if (v !== undefined && v !== null) return v;
+      }
+      return undefined;
+    }
+
+    function normalizeIndexBlock(payload, which){
+      // Accept many possible shapes from backend
+      const p = payload || {};
+      const block =
+        p?.[which] ||
+        p?.indexes?.[which] ||
+        p?.market?.[which] ||
+        p?.data?.[which] ||
+        null;
+
+      if (block && typeof block === "object") return block;
+
+      // Heuristics from legacy /market/snapshot naming
+      if (which === "sp500"){
+        return p?.sp500 || p?.spy || p?.spx || p?.sp || null;
+      }
+      if (which === "nasdaq"){
+        return p?.nasdaq || p?.qqq || p?.ixic || p?.ndx || null;
+      }
+      return null;
+    }
+
+    function normalizeFearGreed(payload){
+      const p = payload || {};
+      return (
+        p?.fearGreed ||
+        p?.fear_greed ||
+        p?.fearAndGreed ||
+        p?.fear_and_greed ||
+        p?.fgi ||
+        p?.cnnFearGreed ||
+        p?.indexes?.fearGreed ||
+        p?.market?.fearGreed ||
+        null
+      );
+    }
+
+    function renderMarketRead(payload, sourceUrl){
+      const sp = normalizeIndexBlock(payload, "sp500") || {};
+      const na = normalizeIndexBlock(payload, "nasdaq") || {};
+      const fg = normalizeFearGreed(payload) || {};
+      const errs = Array.isArray(payload?.errors) ? payload.errors : [];
+
+      // S&P proxy
+      const spSymbol = String(pick(sp, ["symbol","ticker"]) ?? "SPY");
+      const spLast = pick(sp, ["last","price","value"]);
+      const sp1d = pick(sp, ["ret1dPct","pct1d","changePct1d","changePct","pctChange"]);
+      const spChg = pick(sp, ["chg1d","change1d","change"]);
+
+      el("mktKpiSP").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">S&P daily</div>
+            <div class="kpiValue">${spLast !== undefined ? fmtNum(spLast, 2) : "—"}</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${spSymbol}</span>
+        </div>
+        <div class="kpiSub">
+          1D: <strong>${sp1d !== undefined ? fmtPct(sp1d) : (spChg !== undefined ? fmtNum(spChg, 2) : "—")}</strong>
+        </div>
+      `;
+
+      // NASDAQ proxy
+      const naSymbol = String(pick(na, ["symbol","ticker"]) ?? "QQQ");
+      const naLast = pick(na, ["last","price","value"]);
+      const na1d = pick(na, ["ret1dPct","pct1d","changePct1d","changePct","pctChange"]);
+      const naChg = pick(na, ["chg1d","change1d","change"]);
+
+      el("mktKpiNasdaq").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">NASDAQ daily</div>
+            <div class="kpiValue">${naLast !== undefined ? fmtNum(naLast, 2) : "—"}</div>
+          </div>
+          <span class="kpiBadge badgeNeu">${naSymbol}</span>
+        </div>
+        <div class="kpiSub">
+          1D: <strong>${na1d !== undefined ? fmtPct(na1d) : (naChg !== undefined ? fmtNum(naChg, 2) : "—")}</strong>
+        </div>
+      `;
+
+      // Fear and Greed
+      const fgScoreRaw = pick(fg, ["score","value","index"]);
+      const fgScore = (fgScoreRaw === undefined || fgScoreRaw === null) ? null : Number(fgScoreRaw);
+      const fgRating = String(pick(fg, ["rating","label","state"]) ?? "").trim();
+
+      el("mktKpiFG").innerHTML = `
+        <div class="kpiTop">
+          <div>
+            <div class="kpiTitle">Fear & greed</div>
+            <div class="kpiValue">${(fgScore !== null && !isNaN(fgScore)) ? Math.round(fgScore) : "—"}</div>
+          </div>
+          <span class="kpiBadge ${fgBadge((fgScore !== null && !isNaN(fgScore)) ? fgScore : null)}">${fgRating || "Index"}</span>
+        </div>
+        <div class="kpiSub">
+          If blank, backend provider fetch may be blocked.
+        </div>
+      `;
+
+      const src = sourceUrl ? `Source: ${sourceUrl}` : "";
+      const e = errs.length ? ` Issues: ${errs.slice(0,2).join(" | ")}` : "";
+      el("mktHint").textContent = (src || e) ? `${src}${e}` : "Market read loaded.";
+    }
+
+    async function loadMarketRead(force){
+      const now = Date.now();
+      if (CACHE_MARKET_READ && !force){
+        renderMarketRead(CACHE_MARKET_READ, CACHE_MARKET_READ._sourceUrl || "");
+        return;
+      }
+
+      if (force && (now - CACHE_MARKET_READ_TS) < HARD_REFRESH_COOLDOWN_MS && CACHE_MARKET_READ){
+        renderMarketRead(CACHE_MARKET_READ, CACHE_MARKET_READ._sourceUrl || "");
+        el("mktHint").textContent = "Using cached market read to avoid rate-limits.";
+        return;
+      }
+
+      const urls = MARKET_SUMMARY_URLS();
+      el("mktHint").textContent = `Loading market read…`;
+
+      const r = await fetchFirstOkJson(urls);
+      if (!r.ok){
+        if (CACHE_MARKET_READ){
+          renderMarketRead(CACHE_MARKET_READ, CACHE_MARKET_READ._sourceUrl || "");
+          el("mktHint").textContent = "Market read fetch failed. Showing cached data.";
+        } else {
+          el("mktHint").textContent = "Could not load daily market read. Backend should provide /market/daily or /market/summary, or fix /market/snapshot.";
+          el("mktKpiSP").innerHTML = "";
+          el("mktKpiNasdaq").innerHTML = "";
+          el("mktKpiFG").innerHTML = "";
+        }
+        return;
+      }
+
+      const data = r.data || {};
+      data._sourceUrl = r.url;
+      CACHE_MARKET_READ = data;
+      CACHE_MARKET_READ_TS = Date.now();
+      renderMarketRead(data, r.url);
+    }
+
     async function loadMain(force){
       const key = String(WINDOW_DAYS);
       const cached = CACHE_MAIN.get(key);
@@ -858,100 +1045,6 @@
         if (ACTIVE_TAB === "Congress") renderCongressTradeSections(data);
       }catch(err){
         setStatus("err", "Could not load congress data", String(err));
-      }
-    }
-
-    function renderSnapshot(payload){
-      const sp = payload?.sp500 || {};
-      const vix = payload?.vix || {};
-      const fg = payload?.fearGreed || {};
-      const errs = Array.isArray(payload?.errors) ? payload.errors : [];
-
-      const fmtPct = (x) => {
-        if (x === null || x === undefined || isNaN(Number(x))) return "—";
-        const n = Number(x);
-        const s = n > 0 ? "+" : "";
-        return `${s}${n.toFixed(2)}%`;
-      };
-
-      const fgScore = fg?.score;
-      const fgRating = fg?.rating;
-
-      el("snapKpiSPY").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">S&P proxy</div>
-            <div class="kpiValue">${sp?.last ? sp.last : "—"}</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${sp?.symbol || "SPY"}</span>
-        </div>
-        <div class="kpiSub">
-          1D: <strong>${fmtPct(sp?.ret1dPct)}</strong> · 5D: <strong>${fmtPct(sp?.ret5dPct)}</strong> · 1M: <strong>${fmtPct(sp?.ret1mPct)}</strong>
-        </div>
-      `;
-
-      el("snapKpiVIX").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Volatility</div>
-            <div class="kpiValue">${vix?.last ? vix.last : "—"}</div>
-          </div>
-          <span class="kpiBadge badgeNeu">${vix?.symbol || "^VIX"}</span>
-        </div>
-        <div class="kpiSub">
-          1D change: <strong>${(vix?.chg1d !== null && vix?.chg1d !== undefined) ? (Number(vix.chg1d) > 0 ? "+" : "") + Number(vix.chg1d).toFixed(2) : "—"}</strong>
-        </div>
-      `;
-
-      const fgBadge = (typeof fgScore === "number")
-        ? (fgScore >= 60 ? "badgePos" : fgScore <= 40 ? "badgeNeg" : "badgeNeu")
-        : "badgeNeu";
-
-      el("snapKpiFG").innerHTML = `
-        <div class="kpiTop">
-          <div>
-            <div class="kpiTitle">Fear & greed</div>
-            <div class="kpiValue">${(typeof fgScore === "number") ? fgScore : "—"}</div>
-          </div>
-          <span class="kpiBadge ${fgBadge}">${fgRating || "External index"}</span>
-        </div>
-        <div class="kpiSub">
-          Best effort fetch. If blank, provider may be blocked.
-        </div>
-      `;
-
-      el("snapHint").textContent = errs.length ? ("Snapshot issues: " + errs.slice(0,2).join(" | ")) : "Market snapshot loaded.";
-    }
-
-    async function loadMarketSnapshot(force){
-      const now = Date.now();
-      if (CACHE_SNAPSHOT && !force){
-        renderSnapshot(CACHE_SNAPSHOT);
-        return;
-      }
-      if (force && (now - CACHE_SNAPSHOT_TS) < HARD_REFRESH_COOLDOWN_MS && CACHE_SNAPSHOT){
-        renderSnapshot(CACHE_SNAPSHOT);
-        el("snapHint").textContent = "Using cached snapshot to avoid rate-limits.";
-        return;
-      }
-
-      const url = MARKET_SNAPSHOT_URL();
-      el("snapHint").textContent = `Loading from: ${url}`;
-
-      try{
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        CACHE_SNAPSHOT = data;
-        CACHE_SNAPSHOT_TS = Date.now();
-        renderSnapshot(data);
-      }catch(err){
-        if (CACHE_SNAPSHOT){
-          renderSnapshot(CACHE_SNAPSHOT);
-          el("snapHint").textContent = "Snapshot fetch failed. Showing cached snapshot.";
-        } else {
-          el("snapHint").textContent = "Could not load market snapshot. Confirm backend has /market/snapshot and CORS allows this origin.";
-        }
       }
     }
 
@@ -1451,9 +1544,33 @@
         sells.length ? sells.map(x => cardHTML(x, "SELL")).join("") : "<div class='subtle'>No sells found.</div>";
     }
 
+    // Holdings normalization fix: accept many backend key shapes
+    function normalizeCommonHoldings(payload){
+      const p = payload || {};
+      const candidates = [
+        p.commonHoldings,
+        p.holdings,
+        p.items,
+        p.data?.commonHoldings,
+        p.data?.holdings,
+        p.result?.commonHoldings,
+        p.result?.holdings,
+      ];
+
+      for (const c of candidates){
+        if (Array.isArray(c)) return c;
+      }
+
+      // Some backends return {rows:[...]}
+      if (Array.isArray(p.rows)) return p.rows;
+      if (Array.isArray(p.data?.rows)) return p.data.rows;
+
+      return [];
+    }
+
     function holdingsRowHTML(item){
-      const t = String(item.ticker || "").toUpperCase();
-      const holders = Number(item.holders ?? 0);
+      const t = String(item.ticker || item.symbol || item.Ticker || "").toUpperCase();
+      const holders = Number(item.holders ?? item.holderCount ?? item.count ?? item.owners ?? 0);
       return `
         <div class="holdingsItem">
           <div class="cardTop">
@@ -1474,10 +1591,10 @@
     }
 
     function renderHoldingsCommon(payload){
-      const win = Number(payload?.windowDays || 365);
+      const win = Number(payload?.windowDays || payload?.window_days || 365);
       el("holdingsWindowBadge").textContent = `${win}D`;
 
-      const list = Array.isArray(payload?.commonHoldings) ? payload.commonHoldings : [];
+      const list = normalizeCommonHoldings(payload);
 
       if (!list.length){
         el("holdingsKpiSimple").innerHTML = `
@@ -1489,16 +1606,19 @@
             <span class="kpiBadge badgeNeu">${win}D</span>
           </div>
           <div class="kpiSub">
-            Backend must return JSON with <span class="mono">commonHoldings</span>.
+            Endpoint returned no rows. This usually means the backend key changed or the endpoint is erroring.
           </div>
         `;
         el("holdingsList").innerHTML = "<div class='subtle'>No holdings data returned.</div>";
-        el("holdingsHint").textContent = "If you see this, the backend endpoint is missing, failing, or blocked by CORS.";
+        el("holdingsHint").textContent = "Try 180D or 365D. If still empty, confirm backend is returning a holdings array and not a nested object.";
         return;
       }
 
       const sorted = list.slice()
-        .map(x => ({ ticker: x.ticker, holders: Number(x.holders||0) }))
+        .map(x => ({
+          ticker: String(x.ticker || x.symbol || x.Ticker || "").toUpperCase(),
+          holders: Number(x.holders ?? x.holderCount ?? x.count ?? x.owners ?? 0)
+        }))
         .filter(x => x.ticker)
         .sort((a,b) => (b.holders - a.holders) || String(a.ticker).localeCompare(String(b.ticker)));
 
@@ -1946,7 +2066,7 @@
       el("mainWindowTools").style.display = (tab === "Congress" || tab === "Crypto") ? "" : "none";
 
       if (tab === "News"){
-        loadMarketSnapshot(false);
+        loadMarketRead(false);
         loadBriefing(el("watchInput").value, false);
       }
       if (tab === "Congress"){
@@ -1986,6 +2106,7 @@
       if (!inCooldown){
         CACHE_BRIEFING.clear();
         CACHE_CRYPTO_NEWS.clear();
+        CACHE_MARKET_READ = null;
         LAST_HARD_REFRESH_MS = now;
       }
 
@@ -1996,7 +2117,7 @@
       }
 
       if (ACTIVE_TAB === "News"){
-        loadMarketSnapshot(!inCooldown);
+        loadMarketRead(!inCooldown);
         loadBriefing(el("watchInput").value, !inCooldown);
         return;
       }
@@ -2034,8 +2155,8 @@
       loadBriefing(el("watchInput").value, true);
     });
 
-    el("snapRefreshBtn").addEventListener("click", () => {
-      loadMarketSnapshot(true);
+    el("mktRefreshBtn").addEventListener("click", () => {
+      loadMarketRead(true);
     });
 
     el("cryptoNewsRefreshBtn").addEventListener("click", () => {
@@ -2044,7 +2165,7 @@
 
     // Default landing tab: News
     showTab("News");
-    loadMarketSnapshot(false);
+    loadMarketRead(false);
     loadBriefing(el("watchInput").value, false);
   </script>
 </body>
