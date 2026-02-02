@@ -583,21 +583,23 @@
     }
 
     function headlineHTML(h){
-      const title = String(h?.title || "").trim();
-      const link = String(h?.link || "").trim();
-      const pub = String(h?.published || "").trim();
-      const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
+  const title = String(h?.title || "").trim();
+  const link = String(h?.link || "").trim();
+  const pub = String(h?.published || "").trim();
+  const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
+  const summary = String(h?.summary || "").trim();
 
-      const safeTitle = escapeHtml(title);
+  return `
+    <div class="headlineItem">
+      <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
 
-      return `
-        <div class="headlineItem">
-          <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${safeTitle}</a>` : safeTitle}</div>
-          <div class="headlineMeta">
-            ${pub ? `<span>Published: <strong>${escapeHtml(pub)}</strong></span>` : ""}
-            ${bucket ? `<span>Source: <strong>${escapeHtml(bucket)}</strong></span>` : ""}
-          </div>
-        </div>
+      ${summary ? `<div class="kpiSub" style="margin-top:6px; color:rgba(255,255,255,.84);">${summary}</div>` : ""}
+
+      <div class="headlineMeta">
+        ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
+        ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
+      </div>
+    </div>
       `;
     }
 
