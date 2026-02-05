@@ -135,15 +135,6 @@
       text-transform:uppercase;
     }
 
-    .grid2{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
-    @media (min-width: 820px){
-      .grid2{grid-template-columns:1fr 1fr;}
-    }
-
     .grid3{
       display:grid;
       grid-template-columns:1fr;
@@ -212,7 +203,6 @@
     .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
     .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
     .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
-    .badgeBoth{border-color:rgba(179,139,255,.45); color:var(--both)}
 
     .card{
       background:var(--card);
@@ -262,9 +252,6 @@
       background:rgba(255,255,255,.04);
       white-space:nowrap;
     }
-    .tagDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
-    .tagRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
-    .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
     .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
@@ -480,7 +467,7 @@
       <div class="grid3">
         <div class="kpi" id="readKpiSPY"></div>
         <div class="kpi" id="readKpiQQQ"></div>
-        <div class="kpi" id="readKpiFG"></div>
+        <div class="kpi" id="readKpiMood"></div>
       </div>
       <div class="panel" style="margin-top:10px;">
         <div class="kpiSub" id="readSummary">Loading…</div>
@@ -621,9 +608,6 @@
       return `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent(c)}&include_top_n=15`;
     };
 
-    const NEWS_SUMMARY_URL = (url) => `${BACKEND_BASE}/news/article/summary?url=${encodeURIComponent(String(url||""))}`;
-    const CRYPTO_SUMMARY_URL = (url) => `${BACKEND_BASE}/crypto/article/summary?url=${encodeURIComponent(String(url||""))}`;
-
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "News";
@@ -634,9 +618,6 @@
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
     let CACHE_CRYPTO = new Map();
-
-    // per-URL summary cache: key = prefix + normalized URL
-    const SUMMARY_CACHE = new Map();
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -661,77 +642,6 @@
         throw err;
       }
       return data;
-    }
-
-    function normalizeTitleKey(t){
-      return String(t||"").trim().toLowerCase().replace(/\s+/g, " ");
-    }
-
-    function normalizeUrlKey(u){
-      const s = String(u||"").trim();
-      if (!s) return "";
-      try{
-        const url = new URL(s);
-        url.search = "";
-        url.hash = "";
-        return url.toString();
-      }catch(e){
-        return s;
-      }
-    }
-
-    async function getHeadlineSummary(kind, url){
-      const ukey = normalizeUrlKey(url);
-      const cacheKey = `${kind}:${ukey}`;
-      if (SUMMARY_CACHE.has(cacheKey)){
-        return SUMMARY_CACHE.get(cacheKey);
-      }
-      if (!ukey){
-        SUMMARY_CACHE.set(cacheKey, "");
-        return "";
-      }
-      try{
-        const endpoint = (kind === "crypto") ? CRYPTO_SUMMARY_URL(ukey) : NEWS_SUMMARY_URL(ukey);
-        const data = await fetchJson(endpoint);
-        const txt = String(data?.summary || "").trim();
-        SUMMARY_CACHE.set(cacheKey, txt);
-        return txt;
-      }catch(err){
-        SUMMARY_CACHE.set(cacheKey, "");
-        return "";
-      }
-    }
-
-    async function hydrateSummariesForContainer(containerEl, kind){
-      if (!containerEl) return;
-      const nodes = Array.from(containerEl.querySelectorAll("[data-sum-kind][data-url][data-sum-target]"));
-      if (!nodes.length) return;
-
-      // small concurrency
-      const queue = nodes.slice(0, 18);
-
-      await Promise.all(queue.map(async (node) => {
-        const url = node.getAttribute("data-url") || "";
-        const tgtId = node.getAttribute("data-sum-target") || "";
-        if (!tgtId) return;
-        const tgt = document.getElementById(tgtId);
-        if (!tgt) return;
-
-        // if backend already provided a summary, do nothing
-        if (String(tgt.textContent || "").trim() && String(tgt.textContent).trim() !== "Loading summary…"){
-          return;
-        }
-
-        const sum = await getHeadlineSummary(kind, url);
-        if (sum){
-          tgt.textContent = sum;
-          tgt.style.display = "";
-        } else {
-          // hide placeholder if no summary found
-          tgt.textContent = "";
-          tgt.style.display = "none";
-        }
-      }));
     }
 
     function setStockPanel(ticker){
@@ -803,10 +713,18 @@
       return `${s}${n.toFixed(2)}%`;
     }
 
+    function sentimentBadge(s){
+      const score = Number(s?.score ?? 50);
+      const label = String(s?.label ?? "NEUTRAL");
+      if (score >= 60) return { cls: "badgePos", label: label, score };
+      if (score <= 40) return { cls: "badgeNeg", label: label, score };
+      return { cls: "badgeNeu", label: label, score };
+    }
+
     function renderMarketRead(payload){
       const sp = payload?.sp500 || {};
       const nq = payload?.nasdaq || {};
-      const fg = payload?.fearGreed || {};
+      const mood = payload?.marketMood || {};
       const errs = Array.isArray(payload?.errors) ? payload.errors : [];
 
       el("readKpiSPY").innerHTML = `
@@ -835,21 +753,19 @@
         </div>
       `;
 
-      const fgScore = fg?.score;
-      const fgRating = fg?.rating;
-      const fgBadge = (typeof fgScore === "number")
-        ? (fgScore >= 60 ? "badgePos" : fgScore <= 40 ? "badgeNeg" : "badgeNeu")
-        : "badgeNeu";
+      const m = sentimentBadge({ label: mood?.label, score: mood?.score });
 
-      el("readKpiFG").innerHTML = `
+      el("readKpiMood").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Fear & greed</div>
-            <div class="kpiValue">${(typeof fgScore === "number") ? fgScore : "—"}</div>
+            <div class="kpiTitle">Market mood</div>
+            <div class="kpiValue">${(typeof mood?.score === "number") ? mood.score : "—"}</div>
           </div>
-          <span class="kpiBadge ${fgBadge}">${fgRating || "External index"}</span>
+          <span class="kpiBadge ${m.cls}">${m.label}</span>
         </div>
-        <div class="kpiSub">${(typeof fgScore === "number") ? "Loaded." : "Not available. Check backend /market/fear-greed."}</div>
+        <div class="kpiSub">
+          ${mood?.basis ? mood.basis : "Trend + momentum from SPY."}
+        </div>
       `;
 
       el("readSummary").textContent = String(payload?.summary || "—");
@@ -871,14 +787,6 @@
         el("readHint").textContent = `Could not load market read. ${err?.message || ""}`;
         el("readSummary").textContent = "—";
       }
-    }
-
-    function sentimentBadge(s){
-      const score = Number(s?.score ?? 50);
-      const label = String(s?.label ?? "NEUTRAL");
-      if (score >= 60) return { cls: "badgePos", label: label, score };
-      if (score <= 40) return { cls: "badgeNeg", label: label, score };
-      return { cls: "badgeNeu", label: label, score };
     }
 
     function normalizeNewsErrors(err){
@@ -903,48 +811,17 @@
       return [];
     }
 
-    function normalizeImplications(s){
-      if (!s || typeof s !== "object") return [];
-      if (Array.isArray(s.implications)) return s.implications.filter(Boolean).map(String);
-      if (typeof s.implications === "string" && s.implications.trim()) return [s.implications.trim()];
-      return [];
-    }
-
-    function dedupHeadlinesByTitle(headlines){
-      const seen = new Set();
-      const out = [];
-      for (const h of (headlines || [])){
-        const k = normalizeTitleKey(h?.title || "");
-        if (!k || seen.has(k)) continue;
-        seen.add(k);
-        out.push(h);
-      }
-      return out;
-    }
-
-    let _headlineIdSeq = 1;
-
-    function headlineHTML(h, kind){
+    function headlineHTML(h){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
       const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
       const summary = String(h?.summary || "").trim();
 
-      const sumId = `sum_${kind}_${_headlineIdSeq++}`;
-
-      // If summary not provided by backend, show placeholder that will be hydrated on expand
-      const sumBlock = summary
-        ? `<div class="headlineSummary" id="${sumId}">${summary}</div>`
-        : `<div class="headlineSummary" id="${sumId}">Loading summary…</div>`;
-
       return `
-        <div class="headlineItem"
-             data-sum-kind="${kind}"
-             data-url="${link}"
-             data-sum-target="${sumId}">
+        <div class="headlineItem">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
-          ${link ? sumBlock : ""}
+          ${summary ? `<div class="headlineSummary">${summary}</div>` : ""}
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
@@ -958,18 +835,18 @@
       const sent = sentimentBadge(s?.sentiment);
       const summary = String(s?.summary || "").trim();
 
-      let headlines = normalizeSectorHeadlines(s);
-      headlines = dedupHeadlinesByTitle(headlines);
-
-      const implications = normalizeImplications(s);
+      const headlines = normalizeSectorHeadlines(s);
+      const digest = Array.isArray(s?.digestBullets) ? s.digestBullets : [];
 
       const meta = [];
       meta.push(`${headlines.length} headlines`);
       meta.push(`Sentiment ${sent.score}/100`);
       const metaLine = meta.join(" · ");
 
+      const isWatchlist = sector.toLowerCase() === "watchlist";
+
       return `
-        <details class="briefingDetails" data-panel-kind="news">
+        <details class="briefingDetails">
           <summary>
             <div class="summaryLeft">
               <div class="summaryTitle">${sector}</div>
@@ -989,16 +866,23 @@
 
           <div class="divider"></div>
 
-          <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
-          <ul class="bulletList">
-            ${implications.length ? implications.map(x => `<li>${x}</li>`).join("") : "<li>No implications generated.</li>"}
-          </ul>
-
-          <div class="divider"></div>
+          ${isWatchlist ? `
+            <div class="kpiSub"><strong>Summary:</strong></div>
+            <ul class="bulletList">
+              ${digest.length ? digest.map(x => `<li>${String(x)}</li>`).join("") : "<li>No headline summary bullets returned.</li>"}
+            </ul>
+            <div class="divider"></div>
+          ` : `
+            <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
+            <ul class="bulletList">
+              ${(Array.isArray(s?.implications) && s.implications.length) ? s.implications.map(x => `<li>${String(x)}</li>`).join("") : "<li>No implications generated.</li>"}
+            </ul>
+            <div class="divider"></div>
+          `}
 
           <div class="kpiSub"><strong>Headlines:</strong></div>
           <div class="headlineList">
-            ${headlines.length ? headlines.map(h => headlineHTML(h, "news")).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
+            ${headlines.length ? headlines.map(headlineHTML).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
           </div>
         </details>
       `;
@@ -1010,7 +894,7 @@
       const date = String(data?.date || "");
       const note = String(data?.note || "");
 
-      const total = sectors.reduce((a, s) => a + dedupHeadlinesByTitle(normalizeSectorHeadlines(s)).length, 0);
+      const total = sectors.reduce((a, s) => a + normalizeSectorHeadlines(s).length, 0);
 
       el("briefKpiSentiment").innerHTML = `
         <div class="kpiTop">
@@ -1056,16 +940,6 @@
       el("briefingSectors").innerHTML = sectors.length
         ? sectors.map(sectorPanelHTML).join("")
         : "<div class='subtle'>No sectors returned.</div>";
-
-      // hydrate summaries when a panel is expanded
-      const panels = Array.from(el("briefingSectors").querySelectorAll("details.briefingDetails"));
-      panels.forEach((p) => {
-        p.addEventListener("toggle", async () => {
-          if (p.open){
-            await hydrateSummariesForContainer(p, "news");
-          }
-        });
-      });
 
       const errAll = normalizeNewsErrors(data?.errors);
       el("briefHint").textContent = errAll.length
@@ -1306,12 +1180,10 @@
           const sym = String(c?.symbol || "").toUpperCase();
           const sent = sentimentBadge(c?.sentiment);
           const sum = String(c?.summary || "").trim();
-
-          let heads = Array.isArray(c?.headlines) ? c.headlines : [];
-          heads = dedupHeadlinesByTitle(heads);
+          const heads = Array.isArray(c?.headlines) ? c.headlines : [];
 
           return `
-            <details class="briefingDetails" data-panel-kind="crypto">
+            <details class="briefingDetails">
               <summary>
                 <div class="summaryLeft">
                   <div class="summaryTitle">${sym}</div>
@@ -1335,24 +1207,14 @@
                   title: h.title,
                   link: h.link,
                   published: h.published,
-                  source: h.source,
+                  sourceFeed: h.source,
                   summary: h.summary
-                }, "crypto")).join("") : "<div class='subtle'>No headlines.</div>"}
+                })).join("") : "<div class='subtle'>No headlines.</div>"}
               </div>
             </details>
           `;
         }).join("");
       }
-
-      // hydrate on expand
-      const panels = Array.from(el("cryptoCoins").querySelectorAll("details.briefingDetails"));
-      panels.forEach((p) => {
-        p.addEventListener("toggle", async () => {
-          if (p.open){
-            await hydrateSummariesForContainer(p, "crypto");
-          }
-        });
-      });
 
       el("cryptoHint").textContent = errs.length
         ? ("Some feeds failed: " + errs.slice(0, 3).join(" | "))
@@ -1435,7 +1297,6 @@
       CACHE_HOLDINGS.clear();
       CACHE_DAILY.clear();
       CACHE_CRYPTO.clear();
-      SUMMARY_CACHE.clear();
 
       setStatus("", "Refreshing…", "");
       if (ACTIVE_TAB === "News"){
