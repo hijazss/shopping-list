@@ -212,7 +212,6 @@
     .badgePos{border-color:rgba(124,255,192,.45); color:var(--pos)}
     .badgeNeg{border-color:rgba(255,138,138,.45); color:var(--neg)}
     .badgeNeu{border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.85)}
-    .badgeBoth{border-color:rgba(179,139,255,.45); color:var(--both)}
 
     .card{
       background:var(--card);
@@ -262,12 +261,6 @@
       background:rgba(255,255,255,.04);
       white-space:nowrap;
     }
-    .tagDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
-    .tagRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
-    .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
-    .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
-    .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
-    .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
 
     .metaRow{
       margin-top:7px;
@@ -327,7 +320,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(3,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -461,7 +454,6 @@
       <button class="tabBtn tabBtnActive" id="tabNewsBtn">News</button>
       <button class="tabBtn" id="tabCongressBtn">Congress</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
-      <button class="tabBtn" id="tabPerfBtn">Performance</button>
 
       <div class="rightTools" id="mainWindowTools" style="display:none;">
         <div class="seg" aria-label="window toggle">
@@ -476,17 +468,18 @@
 
     <!-- NEWS TAB -->
     <section id="viewNews">
-      <div class="sectionTitle">Daily market read</div>
+      <div class="sectionTitle">Daily market index</div>
       <div class="grid3">
-        <div class="kpi" id="readKpiSPY"></div>
-        <div class="kpi" id="readKpiQQQ"></div>
-        <div class="kpi" id="readKpiFG"></div>
+        <div class="kpi" id="idxKpiSPY"></div>
+        <div class="kpi" id="idxKpiQQQ"></div>
+        <div class="kpi" id="idxKpiVOL"></div>
       </div>
+
       <div class="panel" style="margin-top:10px;">
-        <div class="kpiSub" id="readSummary">Loading…</div>
-        <div class="subtle" id="readHint" style="margin-top:8px;"></div>
+        <div class="kpiSub" id="idxSummary">Loading…</div>
+        <div class="subtle" id="idxHint" style="margin-top:8px;"></div>
         <div class="miniLinks" style="margin-top:10px;">
-          <button class="pillBtn" id="readRefreshBtn">Refresh market read</button>
+          <button class="pillBtn" id="idxRefreshBtn">Refresh market index</button>
         </div>
       </div>
 
@@ -562,7 +555,7 @@
 
         <div class="kpiSub">Coins (comma-separated):</div>
         <div style="margin-top:10px;">
-          <input class="input" id="coinInput" value="BTC,ETH,LINK,SHIB" />
+          <input class="input" id="coinInput" value="BTC,ETH,CHAINLINK,SHIB" />
         </div>
         <div class="miniLinks" style="margin-top:10px;">
           <button class="pillBtn" id="cryptoApplyBtn">Refresh crypto</button>
@@ -572,24 +565,6 @@
       <div id="cryptoCoins"></div>
       <div class="subtle" id="cryptoHint" style="margin-top:12px;"></div>
     </section>
-
-    <!-- PERFORMANCE TAB -->
-    <section id="viewPerf" style="display:none;">
-      <div class="sectionTitle">Politician performance</div>
-      <div class="panel">
-        <div class="kpiSub">
-          Portfolio performance inside the app needs a backend integration.
-          Use these trackers plus the Congress day-by-day feed.
-        </div>
-
-        <div class="miniLinks" style="margin-top:10px;">
-          <a class="miniLink" target="_blank" rel="noopener" href="https://www.capitoltrades.com/">Capitol Trades</a>
-          <a class="miniLink" target="_blank" rel="noopener" href="https://www.quiverquant.com/congresstrading/">QuiverQuant Congress Trading</a>
-          <a class="miniLink" target="_blank" rel="noopener" href="https://efdsearch.senate.gov/search/home/">Senate EFD Search</a>
-          <a class="miniLink" target="_blank" rel="noopener" href="https://disclosures-clerk.house.gov/">House Disclosures</a>
-        </div>
-      </div>
-    </section>
   </main>
 
   <nav class="tabsBottom">
@@ -597,14 +572,13 @@
       <div class="tabBottom tabBottomActive" id="navNews">News</div>
       <div class="tabBottom" id="navCongress">Congress</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
-      <div class="tabBottom" id="navPerf">Performance</div>
     </div>
   </nav>
 
   <script>
     const BACKEND_BASE = "https://finance-backend-1-bbi9.onrender.com";
 
-    const MARKET_READ_URL = () => `${BACKEND_BASE}/market/read`;
+    const MARKET_INDEX_URL = () => `${BACKEND_BASE}/market/index`;
     const NEWS_BRIEF_URL = (watchlist) => {
       const wl = String(watchlist || "");
       return `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(wl)}&max_general=60&max_per_ticker=6`;
@@ -626,7 +600,7 @@
     let ACTIVE_TAB = "News";
     let WINDOW_DAYS = 30;
 
-    let CACHE_READ = null;
+    let CACHE_INDEX = null;
     let CACHE_BRIEFING = new Map();
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
@@ -706,19 +680,6 @@
       setStockPanel("");
     }
 
-    function tickerLinksHTML(ticker){
-      const t = String(ticker||"").toUpperCase();
-      const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
-      const tvChart = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent("NASDAQ:" + t)}`;
-      return `
-        <div class="miniLinks">
-          <a class="miniLink" href="#stock=${t}">Chart</a>
-          <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Yahoo</a>
-          <a class="miniLink" href="${tvChart}" target="_blank" rel="noopener">TV</a>
-        </div>
-      `;
-    }
-
     function fmtPct(x){
       if (x === null || x === undefined || isNaN(Number(x))) return "—";
       const n = Number(x);
@@ -726,73 +687,102 @@
       return `${s}${n.toFixed(2)}%`;
     }
 
-    function renderMarketRead(payload){
-      const sp = payload?.sp500 || {};
-      const nq = payload?.nasdaq || {};
-      const fg = payload?.fearGreed || {};
+    function badgeForScore(score){
+      if (typeof score !== "number") return "badgeNeu";
+      if (score >= 60) return "badgePos";
+      if (score <= 40) return "badgeNeg";
+      return "badgeNeu";
+    }
+
+    function renderMarketIndex(payload){
+      const indices = Array.isArray(payload?.indices) ? payload.indices : [];
+      const vol = payload?.volatility || {};
+      const ra = payload?.riskAppetite || {};
       const errs = Array.isArray(payload?.errors) ? payload.errors : [];
 
-      el("readKpiSPY").innerHTML = `
+      const bySym = {};
+      for (const it of indices){
+        if (it?.symbol) bySym[String(it.symbol).toUpperCase()] = it;
+      }
+      const spy = bySym["SPY"] || {};
+      const qqq = bySym["QQQ"] || {};
+      const dia = bySym["DIA"] || {};
+      const iwm = bySym["IWM"] || {};
+
+      el("idxKpiSPY").innerHTML = `
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">S&P proxy</div>
-            <div class="kpiValue">${sp?.last ? sp.last : "—"}</div>
+            <div class="kpiValue">${spy?.last ? spy.last : "—"}</div>
           </div>
-          <span class="kpiBadge badgeNeu">${sp?.symbol || "SPY"}</span>
+          <span class="kpiBadge badgeNeu">SPY</span>
         </div>
         <div class="kpiSub">
-          1D: <strong>${fmtPct(sp?.ret1dPct)}</strong> · 5D: <strong>${fmtPct(sp?.ret5dPct)}</strong> · 1M: <strong>${fmtPct(sp?.ret1mPct)}</strong>
+          1D: <strong>${fmtPct(spy?.ret1dPct)}</strong> · 5D: <strong>${fmtPct(spy?.ret5dPct)}</strong> · 1M: <strong>${fmtPct(spy?.ret1mPct)}</strong>
         </div>
       `;
 
-      el("readKpiQQQ").innerHTML = `
+      el("idxKpiQQQ").innerHTML = `
         <div class="kpiTop">
           <div>
             <div class="kpiTitle">Nasdaq proxy</div>
-            <div class="kpiValue">${nq?.last ? nq.last : "—"}</div>
+            <div class="kpiValue">${qqq?.last ? qqq.last : "—"}</div>
           </div>
-          <span class="kpiBadge badgeNeu">${nq?.symbol || "QQQ"}</span>
+          <span class="kpiBadge badgeNeu">QQQ</span>
         </div>
         <div class="kpiSub">
-          1D: <strong>${fmtPct(nq?.ret1dPct)}</strong> · 5D: <strong>${fmtPct(nq?.ret5dPct)}</strong> · 1M: <strong>${fmtPct(nq?.ret1mPct)}</strong>
+          1D: <strong>${fmtPct(qqq?.ret1dPct)}</strong> · 5D: <strong>${fmtPct(qqq?.ret5dPct)}</strong> · 1M: <strong>${fmtPct(qqq?.ret1mPct)}</strong>
         </div>
       `;
 
-      const fgScore = fg?.score;
-      const fgRating = fg?.rating;
-      const fgBadge = (typeof fgScore === "number")
-        ? (fgScore >= 60 ? "badgePos" : fgScore <= 40 ? "badgeNeg" : "badgeNeu")
-        : "badgeNeu";
+      const vix = vol?.vix;
+      const vixPct = vol?.vixPercentile1y;
+      const rv20 = vol?.spyRealizedVol20dPct;
+      const score = typeof ra?.score === "number" ? ra.score : null;
+      const label = String(ra?.label || "NEUTRAL");
+      const cls = badgeForScore(score);
 
-      el("readKpiFG").innerHTML = `
+      el("idxKpiVOL").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Fear & greed</div>
-            <div class="kpiValue">${(typeof fgScore === "number") ? fgScore : "—"}</div>
+            <div class="kpiTitle">Volatility and risk</div>
+            <div class="kpiValue">${(typeof vix === "number") ? vix.toFixed(2) : "—"}</div>
           </div>
-          <span class="kpiBadge ${fgBadge}">${fgRating || "External index"}</span>
+          <span class="kpiBadge badgeNeu">VIX</span>
         </div>
-        <div class="kpiSub">${(typeof fgScore === "number") ? "Loaded." : "Not available. Check backend /market/fear-greed."}</div>
+        <div class="kpiSub">
+          VIX 1D: <strong>${fmtPct(vol?.vixRet1dPct)}</strong> · VIX 5D: <strong>${fmtPct(vol?.vixRet5dPct)}</strong><br/>
+          RV20 (SPY): <strong>${(typeof rv20 === "number") ? rv20.toFixed(1) + "%" : "—"}</strong> · VIX percentile (1Y): <strong>${(typeof vixPct === "number") ? vixPct + "/100" : "—"}</strong>
+        </div>
       `;
 
-      el("readSummary").textContent = String(payload?.summary || "—");
-      el("readHint").textContent = errs.length ? ("Market read issues: " + errs.slice(0,2).join(" | ")) : "Market read loaded.";
+      const extra = [];
+      if (dia?.last) extra.push(`DIA ${dia.last} (1D ${fmtPct(dia.ret1dPct)})`);
+      if (iwm?.last) extra.push(`IWM ${iwm.last} (1D ${fmtPct(iwm.ret1dPct)})`);
+
+      const summaryLines = [];
+      summaryLines.push(`<strong>Fear/Greed proxy:</strong> <span class="kpiBadge ${cls}">${label}${(typeof score === "number") ? " · " + score + "/100" : ""}</span>`);
+      if (extra.length) summaryLines.push(`<strong>Other indices:</strong> ${extra.join(" · ")}`);
+      if (ra?.notes) summaryLines.push(`<span class="subtle">${String(ra.notes)}</span>`);
+
+      el("idxSummary").innerHTML = summaryLines.join("<br/>");
+      el("idxHint").textContent = errs.length ? ("Market index issues: " + errs.slice(0,2).join(" | ")) : "Market index loaded.";
     }
 
-    async function loadMarketRead(force){
-      if (CACHE_READ && !force){
-        renderMarketRead(CACHE_READ);
+    async function loadMarketIndex(force){
+      if (CACHE_INDEX && !force){
+        renderMarketIndex(CACHE_INDEX);
         return;
       }
-      const url = MARKET_READ_URL();
-      el("readHint").textContent = `Loading from: ${url}`;
+      const url = MARKET_INDEX_URL();
+      el("idxHint").textContent = `Loading from: ${url}`;
       try{
         const data = await fetchJson(url);
-        CACHE_READ = data;
-        renderMarketRead(data);
+        CACHE_INDEX = data;
+        renderMarketIndex(data);
       }catch(err){
-        el("readHint").textContent = `Could not load market read. ${err?.message || ""}`;
-        el("readSummary").textContent = "—";
+        el("idxHint").textContent = `Could not load market index. ${err?.message || ""}`;
+        el("idxSummary").textContent = "—";
       }
     }
 
@@ -826,13 +816,6 @@
       return [];
     }
 
-    function normalizeImplications(s){
-      if (!s || typeof s !== "object") return [];
-      if (Array.isArray(s.implications)) return s.implications.filter(Boolean).map(String);
-      if (typeof s.implications === "string" && s.implications.trim()) return [s.implications.trim()];
-      return [];
-    }
-
     function headlineHTML(h){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
@@ -855,10 +838,9 @@
     function sectorPanelHTML(s){
       const sector = String(s?.sector || "General");
       const sent = sentimentBadge(s?.sentiment);
-      const summary = String(s?.summary || "").trim();
-
+      const summaryText = String(s?.summary || "").trim();
+      const bullets = Array.isArray(s?.summaryBullets) ? s.summaryBullets : [];
       const headlines = normalizeSectorHeadlines(s);
-      const implications = normalizeImplications(s);
 
       const meta = [];
       meta.push(`${headlines.length} headlines`);
@@ -870,7 +852,7 @@
           <summary>
             <div class="summaryLeft">
               <div class="summaryTitle">${sector}</div>
-              <div class="summaryMeta">${metaLine}${summary ? " · " + summary : ""}</div>
+              <div class="summaryMeta">${metaLine}${summaryText ? " · " + summaryText : ""}</div>
             </div>
             <div class="tags">
               <span class="kpiBadge badgeNeu">${headlines.length}</span>
@@ -880,15 +862,9 @@
 
           <div class="divider"></div>
 
-          <div class="kpiSub">
-            <strong>Today’s read:</strong> ${summary || "No summary available."}
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="kpiSub"><strong>Implications (next 2 to 12 weeks):</strong></div>
+          <div class="kpiSub"><strong>Summary:</strong></div>
           <ul class="bulletList">
-            ${implications.length ? implications.map(x => `<li>${x}</li>`).join("") : "<li>No implications generated.</li>"}
+            ${bullets.length ? bullets.map(x => `<li>${String(x)}</li>`).join("") : "<li>No summary available.</li>"}
           </ul>
 
           <div class="divider"></div>
@@ -984,6 +960,19 @@
       }
     }
 
+    function tickerLinksHTML(ticker){
+      const t = String(ticker||"").toUpperCase();
+      const yf = `https://finance.yahoo.com/quote/${encodeURIComponent(t)}`;
+      const tvChart = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent("NASDAQ:" + t)}`;
+      return `
+        <div class="miniLinks">
+          <a class="miniLink" href="#stock=${t}">Chart</a>
+          <a class="miniLink" href="${yf}" target="_blank" rel="noopener">Yahoo</a>
+          <a class="miniLink" href="${tvChart}" target="_blank" rel="noopener">TV</a>
+        </div>
+      `;
+    }
+
     function holdingsRowHTML(item){
       const t = String(item.ticker || "").toUpperCase();
       const holders = Number(item.holders ?? 0);
@@ -996,9 +985,6 @@
                 <span class="kpiBadge badgeNeu">Holders: <strong>${holders}</strong></span>
               </div>
               <div class="who">Popularity list (idea discovery)</div>
-            </div>
-            <div class="tags">
-              <span class="tag tagSEC">HOLDINGS</span>
             </div>
           </div>
           ${tickerLinksHTML(t)}
@@ -1099,8 +1085,8 @@
               </div>
             </div>
             <div class="tags">
-              ${kind === "BUY" ? `<span class="tag tagBuy">BUY</span>` : `<span class="tag tagSell">SELL</span>`}
-              <span class="tag tagSEC">DISCLOSURE</span>
+              <span class="kpiBadge ${kind === "BUY" ? "badgePos" : "badgeNeg"}">${kind}</span>
+              <span class="kpiBadge badgeNeu">DISCLOSURE</span>
             </div>
           </div>
 
@@ -1190,9 +1176,10 @@
         el("cryptoCoins").innerHTML = "<div class='subtle'>No coins returned.</div>";
       } else {
         el("cryptoCoins").innerHTML = coins.map(c => {
-          const sym = String(c?.symbol || "").toUpperCase();
+          const sym = String(c?.symbol || "").trim();
           const sent = sentimentBadge(c?.sentiment);
           const sum = String(c?.summary || "").trim();
+          const bullets = Array.isArray(c?.summaryBullets) ? c.summaryBullets : [];
           const heads = Array.isArray(c?.headlines) ? c.headlines : [];
 
           return `
@@ -1210,7 +1197,10 @@
 
               <div class="divider"></div>
 
-              <div class="kpiSub"><strong>Today’s read:</strong> ${sum || "No summary available."}</div>
+              <div class="kpiSub"><strong>Summary:</strong></div>
+              <ul class="bulletList">
+                ${bullets.length ? bullets.map(x => `<li>${String(x)}</li>`).join("") : "<li>No summary available.</li>"}
+              </ul>
 
               <div class="divider"></div>
 
@@ -1263,22 +1253,19 @@
       el("viewNews").style.display = tab === "News" ? "" : "none";
       el("viewCongress").style.display = tab === "Congress" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
-      el("viewPerf").style.display = tab === "Performance" ? "" : "none";
 
       el("tabNewsBtn").classList.toggle("tabBtnActive", tab === "News");
       el("tabCongressBtn").classList.toggle("tabBtnActive", tab === "Congress");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
-      el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
 
       el("navNews").classList.toggle("tabBottomActive", tab === "News");
       el("navCongress").classList.toggle("tabBottomActive", tab === "Congress");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
-      el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
 
       el("mainWindowTools").style.display = (tab === "Congress") ? "" : "none";
 
       if (tab === "News"){
-        loadMarketRead(false);
+        loadMarketIndex(false);
         loadBriefing(el("watchInput").value, false);
       }
       if (tab === "Congress"){
@@ -1305,7 +1292,7 @@
     }
 
     function handleRefresh(){
-      CACHE_READ = null;
+      CACHE_INDEX = null;
       CACHE_BRIEFING.clear();
       CACHE_HOLDINGS.clear();
       CACHE_DAILY.clear();
@@ -1313,7 +1300,7 @@
 
       setStatus("", "Refreshing…", "");
       if (ACTIVE_TAB === "News"){
-        loadMarketRead(true);
+        loadMarketIndex(true);
         loadBriefing(el("watchInput").value, true);
       } else if (ACTIVE_TAB === "Congress"){
         loadHoldingsCommon(WINDOW_DAYS, true);
@@ -1330,12 +1317,10 @@
     el("tabNewsBtn").addEventListener("click", () => showTab("News"));
     el("tabCongressBtn").addEventListener("click", () => showTab("Congress"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
-    el("tabPerfBtn").addEventListener("click", () => showTab("Performance"));
 
     el("navNews").addEventListener("click", () => showTab("News"));
     el("navCongress").addEventListener("click", () => showTab("Congress"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
-    el("navPerf").addEventListener("click", () => showTab("Performance"));
 
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
@@ -1344,8 +1329,8 @@
       loadBriefing(el("watchInput").value, true);
     });
 
-    el("readRefreshBtn").addEventListener("click", () => {
-      loadMarketRead(true);
+    el("idxRefreshBtn").addEventListener("click", () => {
+      loadMarketIndex(true);
     });
 
     el("cryptoApplyBtn").addEventListener("click", () => {
