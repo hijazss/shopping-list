@@ -57,6 +57,7 @@
       font-size:12px;
       cursor:pointer;
     }
+    .pillBtn:disabled{opacity:.5; cursor:not-allowed}
 
     .container{
       max-width:1100px;
@@ -133,15 +134,6 @@
       color:var(--muted);
       letter-spacing:.08em;
       text-transform:uppercase;
-    }
-
-    .grid2{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
-    @media (min-width: 820px){
-      .grid2{grid-template-columns:1fr 1fr;}
     }
 
     .grid3{
@@ -262,9 +254,6 @@
       background:rgba(255,255,255,.04);
       white-space:nowrap;
     }
-    .tagDem{border-color:rgba(74,163,255,.5); color:var(--dem)}
-    .tagRep{border-color:rgba(255,90,90,.5); color:var(--rep)}
-    .tagBoth{border-color:rgba(179,139,255,.55); color:var(--both)}
     .tagBuy{border-color:rgba(124,255,192,.45); color:var(--ok)}
     .tagSell{border-color:rgba(255,138,138,.45); color:var(--err)}
     .tagSEC{border-color:rgba(255,210,125,.40); color:var(--sec)}
@@ -432,6 +421,7 @@
       display:flex;
       gap:8px;
       flex-wrap:wrap;
+      align-items:center;
     }
     .headlineSummary{
       margin-top:6px;
@@ -439,6 +429,16 @@
       color:rgba(255,255,255,.84);
       line-height:1.25;
     }
+    .tinyBtn{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      padding:5px 8px;
+      border-radius:999px;
+      font-size:11px;
+      color:rgba(255,255,255,.92);
+      cursor:pointer;
+    }
+    .tinyBtn:disabled{opacity:.5; cursor:not-allowed}
   </style>
 </head>
 
@@ -589,6 +589,7 @@
       const wl = String(watchlist || "");
       return `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(wl)}&max_general=60&max_per_ticker=6`;
     };
+    const NEWS_SUMMARIZE_URL = (url) => `${BACKEND_BASE}/news/summarize?url=${encodeURIComponent(String(url||""))}`;
 
     const HOLDINGS_URL = (windowDays) =>
       `${BACKEND_BASE}/report/holdings/common?window_days=${encodeURIComponent(String(windowDays))}&top_n=30`;
@@ -601,14 +602,6 @@
       return `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent(c)}&include_top_n=15`;
     };
 
-    // IMPORTANT:
-    // This frontend can only "dig into" articles if the backend provides a summarizer endpoint
-    // that fetches the article content server-side (to avoid CORS) and returns 2-3 bullets.
-    // Expected response:
-    // { bullets: ["...", "...", "..."], summary: "optional", title: "optional", source: "optional" }
-    const SUMMARIZE_URL = (articleUrl) =>
-      `${BACKEND_BASE}/news/summarize?url=${encodeURIComponent(String(articleUrl || ""))}`;
-
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "News";
@@ -620,9 +613,77 @@
     let CACHE_DAILY = new Map();
     let CACHE_CRYPTO = new Map();
 
-    // per-article summary cache (keyed by URL)
-    const CACHE_ARTICLE_SUMMARY = new Map();
-    const INFLIGHT_SUMMARY = new Set();
+    // ---------------------------------------------------------
+    // Summarization queue (prevents "stuck summarizing")
+    // ---------------------------------------------------------
+    const SUMMARY_CACHE = new Map(); // url -> { bullets, resolvedUrl }
+    const SUMMARY_INFLIGHT = new Map(); // url -> Promise
+    let SUMMARY_QUEUE = [];
+    let SUMMARY_RUNNING = 0;
+    const SUMMARY_CONCURRENCY = 3;
+    const SUMMARY_TIMEOUT_MS = 9000;
+
+    function queueSummaries(urls){
+      const clean = urls
+        .map(u => String(u||"").trim())
+        .filter(u => u && !SUMMARY_CACHE.has(u) && !SUMMARY_INFLIGHT.has(u));
+
+      for (const u of clean){
+        SUMMARY_QUEUE.push(u);
+      }
+      pumpSummaryQueue();
+    }
+
+    function pumpSummaryQueue(){
+      while (SUMMARY_RUNNING < SUMMARY_CONCURRENCY && SUMMARY_QUEUE.length){
+        const url = SUMMARY_QUEUE.shift();
+        if (!url) continue;
+        if (SUMMARY_CACHE.has(url) || SUMMARY_INFLIGHT.has(url)) continue;
+
+        SUMMARY_RUNNING++;
+        const p = fetchSummary(url)
+          .catch(() => null)
+          .finally(() => {
+            SUMMARY_RUNNING--;
+            SUMMARY_INFLIGHT.delete(url);
+            pumpSummaryQueue();
+          });
+
+        SUMMARY_INFLIGHT.set(url, p);
+      }
+    }
+
+    async function fetchJson(url, { signal } = {}){
+      const res = await fetch(url, { cache: "no-store", signal });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok){
+        const msg = (data && (data.detail || data.error || data.message)) ? (data.detail || data.error || data.message) : ("HTTP " + res.status);
+        const err = new Error(msg);
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    }
+
+    async function fetchSummary(url){
+      if (SUMMARY_CACHE.has(url)) return SUMMARY_CACHE.get(url);
+      if (SUMMARY_INFLIGHT.has(url)) return SUMMARY_INFLIGHT.get(url);
+
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), SUMMARY_TIMEOUT_MS);
+
+      try{
+        const data = await fetchJson(NEWS_SUMMARIZE_URL(url), { signal: ctrl.signal });
+        const bullets = Array.isArray(data?.bullets) ? data.bullets.filter(Boolean).slice(0,3) : [];
+        const resolvedUrl = String(data?.resolvedUrl || data?.resolvedURL || data?.resolved || url);
+        const out = { bullets, resolvedUrl };
+        SUMMARY_CACHE.set(url, out);
+        return out;
+      } finally {
+        clearTimeout(t);
+      }
+    }
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -634,19 +695,6 @@
 
     function setTitleForTab(tab){
       el("pageTitle").textContent = tab;
-    }
-
-    async function fetchJson(url){
-      const res = await fetch(url, { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok){
-        const msg = (data && (data.detail || data.error || data.message)) ? (data.detail || data.error || data.message) : ("HTTP " + res.status);
-        const err = new Error(msg);
-        err.status = res.status;
-        err.data = data;
-        throw err;
-      }
-      return data;
     }
 
     function setStockPanel(ticker){
@@ -818,128 +866,59 @@
       return [];
     }
 
-    function extractBullets(h){
-      const candidates = []
-        .concat(h?.summaryBullets || [])
-        .concat(h?.bullets || [])
-        .concat(h?.keyPoints || [])
-        .concat(h?.key_points || [])
-        .concat(h?.points || [])
-        .concat(h?.highlights || [])
-        .concat(h?.takeaways || [])
-        .concat(h?.summary_points || [])
-        .concat(h?.summaryPoints || []);
-
-      const bullets = candidates
-        .map(x => String(x || "").trim())
-        .filter(x => x && x !== "Loading…" && x !== "Loading summary…" && x !== "—")
-        .slice(0, 3);
-
-      return bullets;
-    }
-
-    function summaryHTMLFromBullets(bullets){
-      const b = (Array.isArray(bullets) ? bullets : []).map(x => String(x||"").trim()).filter(Boolean).slice(0,3);
-      if (!b.length) return "";
-      return `<ul class="bulletList">${b.map(x => `<li>${x}</li>`).join("")}</ul>`;
-    }
-
-    function safeIdFromLink(link){
-      return "h_" + btoa(unescape(encodeURIComponent(String(link||"")))).replace(/=+$/,"").replace(/[+/]/g,"_").slice(0,64);
-    }
-
-    async function ensureArticleSummary(link, mountId){
-      const url = String(link || "").trim();
-      if (!url) return;
-
-      if (CACHE_ARTICLE_SUMMARY.has(url)){
-        const cached = CACHE_ARTICLE_SUMMARY.get(url);
-        const host = document.getElementById(mountId);
-        if (host && cached?.bullets?.length){
-          host.innerHTML = summaryHTMLFromBullets(cached.bullets);
-        }
-        return;
-      }
-
-      if (INFLIGHT_SUMMARY.has(url)) return;
-      INFLIGHT_SUMMARY.add(url);
-
-      const host = document.getElementById(mountId);
-      if (host) host.textContent = "Summarizing…";
-
-      try{
-        const data = await fetchJson(SUMMARIZE_URL(url));
-        const bullets = Array.isArray(data?.bullets) ? data.bullets.map(x => String(x||"").trim()).filter(Boolean).slice(0,3) : [];
-        CACHE_ARTICLE_SUMMARY.set(url, { bullets, raw: data });
-        if (host){
-          host.innerHTML = bullets.length ? summaryHTMLFromBullets(bullets) : "<div class='headlineSummary'>Could not summarize this article.</div>";
-        }
-      }catch(err){
-        if (host){
-          host.innerHTML = "<div class='headlineSummary'>Could not summarize this article.</div>";
-        }
-      }finally{
-        INFLIGHT_SUMMARY.delete(url);
-      }
-    }
-
-    // Render headline with a dedicated "summary mount" that can be filled later by /news/summarize
-    function headlineHTML(h){
+    function headlineHTML(h, sectorId){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
       const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
 
-      const bulletsInline = extractBullets(h);
-      const mountId = safeIdFromLink(link || title || Math.random().toString(36));
+      // If backend provided bullets, use them. Otherwise we will lazy-load.
+      const bullets = Array.isArray(h?.summaryBullets) ? h.summaryBullets.filter(Boolean).slice(0,3) : [];
 
-      const inlineHTML = bulletsInline.length
-        ? summaryHTMLFromBullets(bulletsInline)
-        : `<div class="headlineSummary" id="${mountId}">Summarizing…</div>`;
+      const summaryKeyUrl = link || "";
+      const sumId = `sum_${sectorId}_${btoa(unescape(encodeURIComponent(summaryKeyUrl))).slice(0,24)}`.replace(/=+/g,"");
+
+      const bulletsHTML = bullets.length
+        ? `<ul class="bulletList">${bullets.map(x => `<li>${x}</li>`).join("")}</ul>`
+        : `<div class="headlineSummary" id="${sumId}">Summarizing…</div>`;
+
+      const actions = link
+        ? `<button class="tinyBtn" data-sum-one="1" data-sum-target="${sumId}" data-sum-url="${encodeURIComponent(link)}">Summarize</button>`
+        : "";
 
       return `
         <div class="headlineItem">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
-          ${inlineHTML}
+          ${bulletsHTML}
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
+            ${actions}
           </div>
         </div>
       `;
     }
 
-    // After we inject HTML, this scans the sector headlines and calls the backend summarizer for ones missing bullets
-    function kickOffSummariesForSector(sectorObj){
-      const headlines = normalizeSectorHeadlines(sectorObj);
-      for (const h of headlines){
-        const link = String(h?.link || "").trim();
-        if (!link) continue;
-
-        const bulletsInline = extractBullets(h);
-        if (bulletsInline.length) continue;
-
-        const mountId = safeIdFromLink(link);
-        const mountEl = document.getElementById(mountId);
-        if (!mountEl) continue;
-
-        ensureArticleSummary(link, mountId);
-      }
-    }
-
-    function sectorPanelHTML(s){
+    function sectorPanelHTML(s, idx){
       const sector = String(s?.sector || "General");
       const sent = sentimentBadge(s?.sentiment);
       const summary = String(s?.summary || "").trim();
       const headlines = normalizeSectorHeadlines(s);
+
+      const sectorId = `sec_${idx}`;
 
       const meta = [];
       meta.push(`${headlines.length} headlines`);
       meta.push(`Sentiment ${sent.score}/100`);
       const metaLine = meta.join(" · ");
 
+      // Summary-all button triggers queue for that sector only.
+      const sumAllBtn = headlines.length
+        ? `<button class="pillBtn" style="padding:6px 10px;" data-sum-sector="1" data-sector-id="${sectorId}">Summarize all in this sector</button>`
+        : "";
+
       return `
-        <details class="briefingDetails">
+        <details class="briefingDetails" data-sector-details="1" data-sector-id="${sectorId}">
           <summary>
             <div class="summaryLeft">
               <div class="summaryTitle">${sector}</div>
@@ -957,11 +936,19 @@
             <strong>Sector scan:</strong> ${summary || "No summary available."}
           </div>
 
+          <div class="miniLinks" style="margin-top:10px; justify-content:flex-end;">
+            ${sumAllBtn}
+          </div>
+
           <div class="divider"></div>
 
           <div class="kpiSub"><strong>Headlines:</strong></div>
           <div class="headlineList">
-            ${headlines.length ? headlines.map(headlineHTML).join("") : "<div class='subtle'>No headlines in this sector.</div>"}
+            ${
+              headlines.length
+                ? headlines.map(h => headlineHTML(h, sectorId)).join("")
+                : "<div class='subtle'>No headlines in this sector.</div>"
+            }
           </div>
         </details>
       `;
@@ -1017,20 +1004,16 @@
       `;
 
       el("briefingSectors").innerHTML = sectors.length
-        ? sectors.map(sectorPanelHTML).join("")
+        ? sectors.map((sec, i) => sectorPanelHTML(sec, i)).join("")
         : "<div class='subtle'>No sectors returned.</div>";
 
       const errAll = normalizeNewsErrors(data?.errors);
       el("briefHint").textContent = errAll.length
         ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
-        : "Daily briefing loaded.";
+        : "Daily briefing loaded. Expand a sector to summarize headlines.";
 
-      // Kick off per-article summaries after DOM is updated
-      setTimeout(() => {
-        for (const s of sectors){
-          kickOffSummariesForSector(s);
-        }
-      }, 0);
+      // Attach listeners after render
+      wireSectorSummarizers();
     }
 
     async function loadBriefing(watchlist, force){
@@ -1055,6 +1038,101 @@
         el("briefKpiScope").innerHTML = "";
         el("briefKpiNotes").innerHTML = "";
       }
+    }
+
+    function wireSectorSummarizers(){
+      // When a sector opens, queue summaries for that sector only (lazy).
+      document.querySelectorAll('details[data-sector-details="1"]').forEach(d => {
+        d.addEventListener("toggle", () => {
+          if (!d.open) return;
+          const sectorId = d.getAttribute("data-sector-id") || "";
+          const urls = Array.from(d.querySelectorAll('button[data-sum-one="1"]'))
+            .map(btn => decodeURIComponent(btn.getAttribute("data-sum-url") || ""))
+            .filter(Boolean);
+          queueSummaries(urls);
+          // Immediately attempt to paint from cache while queue runs
+          repaintSectorSummaries(d);
+        });
+      });
+
+      // Summarize one headline button
+      document.querySelectorAll('button[data-sum-one="1"]').forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const targetId = btn.getAttribute("data-sum-target");
+          const url = decodeURIComponent(btn.getAttribute("data-sum-url") || "");
+          if (!targetId || !url) return;
+
+          btn.disabled = true;
+          const target = document.getElementById(targetId);
+          if (target) target.textContent = "Summarizing…";
+
+          try{
+            const out = await fetchSummary(url);
+            paintSummaryIntoTarget(targetId, url, out);
+          }catch{
+            if (target) target.textContent = "Could not summarize this article (blocked or timed out).";
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // Summarize all in sector button
+      document.querySelectorAll('button[data-sum-sector="1"]').forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const details = btn.closest('details[data-sector-details="1"]');
+          if (!details) return;
+
+          const urls = Array.from(details.querySelectorAll('button[data-sum-one="1"]'))
+            .map(b => decodeURIComponent(b.getAttribute("data-sum-url") || ""))
+            .filter(Boolean);
+
+          queueSummaries(urls);
+          repaintSectorSummaries(details);
+        });
+      });
+
+      // Periodic repaint so "Summarizing…" turns into bullets as cache fills
+      // This is lightweight and prevents looking stuck.
+      setInterval(() => {
+        document.querySelectorAll('details[data-sector-details="1"][open]').forEach(d => repaintSectorSummaries(d));
+      }, 700);
+    }
+
+    function repaintSectorSummaries(detailsEl){
+      const buttons = Array.from(detailsEl.querySelectorAll('button[data-sum-one="1"]'));
+      for (const btn of buttons){
+        const targetId = btn.getAttribute("data-sum-target");
+        const url = decodeURIComponent(btn.getAttribute("data-sum-url") || "");
+        if (!targetId || !url) continue;
+
+        if (SUMMARY_CACHE.has(url)){
+          const out = SUMMARY_CACHE.get(url);
+          paintSummaryIntoTarget(targetId, url, out);
+        }
+      }
+    }
+
+    function paintSummaryIntoTarget(targetId, url, out){
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const bullets = Array.isArray(out?.bullets) ? out.bullets.filter(Boolean).slice(0,3) : [];
+      if (!bullets.length){
+        target.textContent = "Could not summarize this article (blocked or no extractable text).";
+        return;
+      }
+      target.innerHTML = `<ul class="bulletList">${bullets.map(b => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`;
+    }
+
+    function escapeHtml(s){
+      return String(s || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
     }
 
     function holdingsRowHTML(item){
@@ -1290,7 +1368,22 @@
 
               <div class="kpiSub"><strong>Headlines:</strong></div>
               <div class="headlineList">
-                ${heads.length ? heads.map(headlineHTML).join("") : "<div class='subtle'>No headlines.</div>"}
+                ${heads.length ? heads.map(h => {
+                  const bullets = Array.isArray(h?.summaryBullets) ? h.summaryBullets.filter(Boolean).slice(0,3) : [];
+                  const bhtml = bullets.length
+                    ? `<ul class="bulletList">${bullets.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>`
+                    : (h?.summary ? `<div class="headlineSummary">${escapeHtml(h.summary)}</div>` : `<div class="headlineSummary">No summary.</div>`);
+                  return `
+                    <div class="headlineItem">
+                      <div class="headlineTitle">${h.link ? `<a href="${h.link}" target="_blank" rel="noopener">${escapeHtml(h.title||"")}</a>` : escapeHtml(h.title||"")}</div>
+                      ${bhtml}
+                      <div class="headlineMeta">
+                        ${h.published ? `<span>Published: <strong>${escapeHtml(h.published)}</strong></span>` : ""}
+                        ${h.source ? `<span>Source: <strong>${escapeHtml(h.source)}</strong></span>` : ""}
+                      </div>
+                    </div>
+                  `;
+                }).join("") : "<div class='subtle'>No headlines.</div>"}
               </div>
             </details>
           `;
@@ -1300,19 +1393,6 @@
       el("cryptoHint").textContent = errs.length
         ? ("Some feeds failed: " + errs.slice(0, 3).join(" | "))
         : (note || "Crypto briefing loaded.");
-
-      // Summarize crypto headlines too (same summarize endpoint)
-      setTimeout(() => {
-        for (const c of coins){
-          const heads = Array.isArray(c?.headlines) ? c.headlines : [];
-          for (const h of heads){
-            const link = String(h?.link || "").trim();
-            if (!link) continue;
-            if (extractBullets(h).length) continue;
-            ensureArticleSummary(link, safeIdFromLink(link));
-          }
-        }
-      }, 0);
     }
 
     async function loadCrypto(coins, force){
@@ -1388,8 +1468,11 @@
       CACHE_HOLDINGS.clear();
       CACHE_DAILY.clear();
       CACHE_CRYPTO.clear();
-      CACHE_ARTICLE_SUMMARY.clear();
-      INFLIGHT_SUMMARY.clear();
+
+      // do not clear SUMMARY_CACHE by default, keeps app snappy
+      SUMMARY_QUEUE = [];
+      SUMMARY_INFLIGHT.clear();
+      SUMMARY_RUNNING = 0;
 
       setStatus("", "Refreshing…", "");
       if (ACTIVE_TAB === "News"){
