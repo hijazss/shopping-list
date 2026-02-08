@@ -327,7 +327,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(3,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -461,7 +461,6 @@
       <button class="tabBtn tabBtnActive" id="tabNewsBtn">News</button>
       <button class="tabBtn" id="tabCongressBtn">Congress</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
-      <button class="tabBtn" id="tabPerfBtn">Performance</button>
 
       <div class="rightTools" id="mainWindowTools" style="display:none;">
         <div class="seg" aria-label="window toggle">
@@ -572,24 +571,6 @@
       <div id="cryptoCoins"></div>
       <div class="subtle" id="cryptoHint" style="margin-top:12px;"></div>
     </section>
-
-    <!-- PERFORMANCE TAB -->
-    <section id="viewPerf" style="display:none;">
-      <div class="sectionTitle">Politician performance</div>
-      <div class="panel">
-        <div class="kpiSub">
-          Portfolio performance inside the app needs a backend integration.
-          Use these trackers plus the Congress day-by-day feed.
-        </div>
-
-        <div class="miniLinks" style="margin-top:10px;">
-          <a class="miniLink" target="_blank" rel="noopener" href="https://www.capitoltrades.com/">Capitol Trades</a>
-          <a class="miniLink" target="_blank" rel="noopener" href="https://www.quiverquant.com/congresstrading/">QuiverQuant Congress Trading</a>
-          <a class="miniLink" target="_blank" rel="noopener" href="https://efdsearch.senate.gov/search/home/">Senate EFD Search</a>
-          <a class="miniLink" target="_blank" rel="noopener" href="https://disclosures-clerk.house.gov/">House Disclosures</a>
-        </div>
-      </div>
-    </section>
   </main>
 
   <nav class="tabsBottom">
@@ -597,7 +578,6 @@
       <div class="tabBottom tabBottomActive" id="navNews">News</div>
       <div class="tabBottom" id="navCongress">Congress</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
-      <div class="tabBottom" id="navPerf">Performance</div>
     </div>
   </nav>
 
@@ -621,6 +601,14 @@
       return `${BACKEND_BASE}/crypto/news/briefing?coins=${encodeURIComponent(c)}&include_top_n=15`;
     };
 
+    // IMPORTANT:
+    // This frontend can only "dig into" articles if the backend provides a summarizer endpoint
+    // that fetches the article content server-side (to avoid CORS) and returns 2-3 bullets.
+    // Expected response:
+    // { bullets: ["...", "...", "..."], summary: "optional", title: "optional", source: "optional" }
+    const SUMMARIZE_URL = (articleUrl) =>
+      `${BACKEND_BASE}/news/summarize?url=${encodeURIComponent(String(articleUrl || ""))}`;
+
     const el = (id) => document.getElementById(id);
 
     let ACTIVE_TAB = "News";
@@ -631,6 +619,10 @@
     let CACHE_HOLDINGS = new Map();
     let CACHE_DAILY = new Map();
     let CACHE_CRYPTO = new Map();
+
+    // per-article summary cache (keyed by URL)
+    const CACHE_ARTICLE_SUMMARY = new Map();
+    const INFLIGHT_SUMMARY = new Set();
 
     function setStatus(kind, text, detail){
       const st = el("statusText");
@@ -826,13 +818,7 @@
       return [];
     }
 
-    // UPDATED: render 2-3 bullet summaries from many possible key names, and never show blanks
-    function headlineHTML(h){
-      const title = String(h?.title || "").trim();
-      const link = String(h?.link || "").trim();
-      const pub = String(h?.published || "").trim();
-      const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
-
+    function extractBullets(h){
       const candidates = []
         .concat(h?.summaryBullets || [])
         .concat(h?.bullets || [])
@@ -849,23 +835,96 @@
         .filter(x => x && x !== "Loading…" && x !== "Loading summary…" && x !== "—")
         .slice(0, 3);
 
-      const summary =
-        String(h?.summary || h?.aiSummary || h?.snippet || h?.description || "").trim();
+      return bullets;
+    }
 
-      const summaryHTML = bullets.length
-        ? `<ul class="bulletList">${bullets.map(x => `<li>${x}</li>`).join("")}</ul>`
-        : (summary ? `<div class="headlineSummary">${summary}</div>` : `<div class="headlineSummary">No summary provided by backend.</div>`);
+    function summaryHTMLFromBullets(bullets){
+      const b = (Array.isArray(bullets) ? bullets : []).map(x => String(x||"").trim()).filter(Boolean).slice(0,3);
+      if (!b.length) return "";
+      return `<ul class="bulletList">${b.map(x => `<li>${x}</li>`).join("")}</ul>`;
+    }
+
+    function safeIdFromLink(link){
+      return "h_" + btoa(unescape(encodeURIComponent(String(link||"")))).replace(/=+$/,"").replace(/[+/]/g,"_").slice(0,64);
+    }
+
+    async function ensureArticleSummary(link, mountId){
+      const url = String(link || "").trim();
+      if (!url) return;
+
+      if (CACHE_ARTICLE_SUMMARY.has(url)){
+        const cached = CACHE_ARTICLE_SUMMARY.get(url);
+        const host = document.getElementById(mountId);
+        if (host && cached?.bullets?.length){
+          host.innerHTML = summaryHTMLFromBullets(cached.bullets);
+        }
+        return;
+      }
+
+      if (INFLIGHT_SUMMARY.has(url)) return;
+      INFLIGHT_SUMMARY.add(url);
+
+      const host = document.getElementById(mountId);
+      if (host) host.textContent = "Summarizing…";
+
+      try{
+        const data = await fetchJson(SUMMARIZE_URL(url));
+        const bullets = Array.isArray(data?.bullets) ? data.bullets.map(x => String(x||"").trim()).filter(Boolean).slice(0,3) : [];
+        CACHE_ARTICLE_SUMMARY.set(url, { bullets, raw: data });
+        if (host){
+          host.innerHTML = bullets.length ? summaryHTMLFromBullets(bullets) : "<div class='headlineSummary'>Could not summarize this article.</div>";
+        }
+      }catch(err){
+        if (host){
+          host.innerHTML = "<div class='headlineSummary'>Could not summarize this article.</div>";
+        }
+      }finally{
+        INFLIGHT_SUMMARY.delete(url);
+      }
+    }
+
+    // Render headline with a dedicated "summary mount" that can be filled later by /news/summarize
+    function headlineHTML(h){
+      const title = String(h?.title || "").trim();
+      const link = String(h?.link || "").trim();
+      const pub = String(h?.published || "").trim();
+      const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
+
+      const bulletsInline = extractBullets(h);
+      const mountId = safeIdFromLink(link || title || Math.random().toString(36));
+
+      const inlineHTML = bulletsInline.length
+        ? summaryHTMLFromBullets(bulletsInline)
+        : `<div class="headlineSummary" id="${mountId}">Summarizing…</div>`;
 
       return `
         <div class="headlineItem">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
-          ${summaryHTML}
+          ${inlineHTML}
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
           </div>
         </div>
       `;
+    }
+
+    // After we inject HTML, this scans the sector headlines and calls the backend summarizer for ones missing bullets
+    function kickOffSummariesForSector(sectorObj){
+      const headlines = normalizeSectorHeadlines(sectorObj);
+      for (const h of headlines){
+        const link = String(h?.link || "").trim();
+        if (!link) continue;
+
+        const bulletsInline = extractBullets(h);
+        if (bulletsInline.length) continue;
+
+        const mountId = safeIdFromLink(link);
+        const mountEl = document.getElementById(mountId);
+        if (!mountEl) continue;
+
+        ensureArticleSummary(link, mountId);
+      }
     }
 
     function sectorPanelHTML(s){
@@ -965,6 +1024,13 @@
       el("briefHint").textContent = errAll.length
         ? ("Some feeds failed: " + errAll.slice(0, 3).join(" | "))
         : "Daily briefing loaded.";
+
+      // Kick off per-article summaries after DOM is updated
+      setTimeout(() => {
+        for (const s of sectors){
+          kickOffSummariesForSector(s);
+        }
+      }, 0);
     }
 
     async function loadBriefing(watchlist, force){
@@ -1224,7 +1290,7 @@
 
               <div class="kpiSub"><strong>Headlines:</strong></div>
               <div class="headlineList">
-                ${heads.length ? heads.map(h => headlineHTML(h)).join("") : "<div class='subtle'>No headlines.</div>"}
+                ${heads.length ? heads.map(headlineHTML).join("") : "<div class='subtle'>No headlines.</div>"}
               </div>
             </details>
           `;
@@ -1234,6 +1300,19 @@
       el("cryptoHint").textContent = errs.length
         ? ("Some feeds failed: " + errs.slice(0, 3).join(" | "))
         : (note || "Crypto briefing loaded.");
+
+      // Summarize crypto headlines too (same summarize endpoint)
+      setTimeout(() => {
+        for (const c of coins){
+          const heads = Array.isArray(c?.headlines) ? c.headlines : [];
+          for (const h of heads){
+            const link = String(h?.link || "").trim();
+            if (!link) continue;
+            if (extractBullets(h).length) continue;
+            ensureArticleSummary(link, safeIdFromLink(link));
+          }
+        }
+      }, 0);
     }
 
     async function loadCrypto(coins, force){
@@ -1265,17 +1344,14 @@
       el("viewNews").style.display = tab === "News" ? "" : "none";
       el("viewCongress").style.display = tab === "Congress" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
-      el("viewPerf").style.display = tab === "Performance" ? "" : "none";
 
       el("tabNewsBtn").classList.toggle("tabBtnActive", tab === "News");
       el("tabCongressBtn").classList.toggle("tabBtnActive", tab === "Congress");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
-      el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
 
       el("navNews").classList.toggle("tabBottomActive", tab === "News");
       el("navCongress").classList.toggle("tabBottomActive", tab === "Congress");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
-      el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
 
       el("mainWindowTools").style.display = (tab === "Congress") ? "" : "none";
 
@@ -1312,6 +1388,8 @@
       CACHE_HOLDINGS.clear();
       CACHE_DAILY.clear();
       CACHE_CRYPTO.clear();
+      CACHE_ARTICLE_SUMMARY.clear();
+      INFLIGHT_SUMMARY.clear();
 
       setStatus("", "Refreshing…", "");
       if (ACTIVE_TAB === "News"){
@@ -1332,12 +1410,10 @@
     el("tabNewsBtn").addEventListener("click", () => showTab("News"));
     el("tabCongressBtn").addEventListener("click", () => showTab("Congress"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
-    el("tabPerfBtn").addEventListener("click", () => showTab("Performance"));
 
     el("navNews").addEventListener("click", () => showTab("News"));
     el("navCongress").addEventListener("click", () => showTab("Congress"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
-    el("navPerf").addEventListener("click", () => showTab("Performance"));
 
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
