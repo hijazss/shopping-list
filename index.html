@@ -327,7 +327,7 @@
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(4,1fr);
     }
     .tabBottom{
       text-align:center;
@@ -461,6 +461,7 @@
       <button class="tabBtn tabBtnActive" id="tabNewsBtn">News</button>
       <button class="tabBtn" id="tabCongressBtn">Congress</button>
       <button class="tabBtn" id="tabCryptoBtn">Crypto</button>
+      <button class="tabBtn" id="tabPerfBtn">Performance</button>
 
       <div class="rightTools" id="mainWindowTools" style="display:none;">
         <div class="seg" aria-label="window toggle">
@@ -475,7 +476,7 @@
 
     <!-- NEWS TAB -->
     <section id="viewNews">
-      <div class="sectionTitle">Daily market index</div>
+      <div class="sectionTitle">Daily market read</div>
       <div class="grid3">
         <div class="kpi" id="readKpiSPY"></div>
         <div class="kpi" id="readKpiQQQ"></div>
@@ -485,7 +486,7 @@
         <div class="kpiSub" id="readSummary">Loading…</div>
         <div class="subtle" id="readHint" style="margin-top:8px;"></div>
         <div class="miniLinks" style="margin-top:10px;">
-          <button class="pillBtn" id="readRefreshBtn">Refresh market index</button>
+          <button class="pillBtn" id="readRefreshBtn">Refresh market read</button>
         </div>
       </div>
 
@@ -571,6 +572,24 @@
       <div id="cryptoCoins"></div>
       <div class="subtle" id="cryptoHint" style="margin-top:12px;"></div>
     </section>
+
+    <!-- PERFORMANCE TAB -->
+    <section id="viewPerf" style="display:none;">
+      <div class="sectionTitle">Politician performance</div>
+      <div class="panel">
+        <div class="kpiSub">
+          Portfolio performance inside the app needs a backend integration.
+          Use these trackers plus the Congress day-by-day feed.
+        </div>
+
+        <div class="miniLinks" style="margin-top:10px;">
+          <a class="miniLink" target="_blank" rel="noopener" href="https://www.capitoltrades.com/">Capitol Trades</a>
+          <a class="miniLink" target="_blank" rel="noopener" href="https://www.quiverquant.com/congresstrading/">QuiverQuant Congress Trading</a>
+          <a class="miniLink" target="_blank" rel="noopener" href="https://efdsearch.senate.gov/search/home/">Senate EFD Search</a>
+          <a class="miniLink" target="_blank" rel="noopener" href="https://disclosures-clerk.house.gov/">House Disclosures</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <nav class="tabsBottom">
@@ -578,15 +597,14 @@
       <div class="tabBottom tabBottomActive" id="navNews">News</div>
       <div class="tabBottom" id="navCongress">Congress</div>
       <div class="tabBottom" id="navCrypto">Crypto</div>
+      <div class="tabBottom" id="navPerf">Performance</div>
     </div>
   </nav>
 
   <script>
     const BACKEND_BASE = "https://finance-backend-1-bbi9.onrender.com";
 
-    // Keep your backend endpoint as-is. This change is purely UI labeling.
     const MARKET_READ_URL = () => `${BACKEND_BASE}/market/read`;
-
     const NEWS_BRIEF_URL = (watchlist) => {
       const wl = String(watchlist || "");
       return `${BACKEND_BASE}/news/briefing?tickers=${encodeURIComponent(wl)}&max_general=60&max_per_ticker=6`;
@@ -749,16 +767,16 @@
       el("readKpiFG").innerHTML = `
         <div class="kpiTop">
           <div>
-            <div class="kpiTitle">Risk appetite</div>
+            <div class="kpiTitle">Fear & greed</div>
             <div class="kpiValue">${(typeof fgScore === "number") ? fgScore : "—"}</div>
           </div>
-          <span class="kpiBadge ${fgBadge}">${fgRating || "Index"}</span>
+          <span class="kpiBadge ${fgBadge}">${fgRating || "External index"}</span>
         </div>
         <div class="kpiSub">${(typeof fgScore === "number") ? "Loaded." : "Not available right now."}</div>
       `;
 
       el("readSummary").textContent = String(payload?.summary || "—");
-      el("readHint").textContent = errs.length ? ("Market index issues: " + errs.slice(0,2).join(" | ")) : "Market index loaded.";
+      el("readHint").textContent = errs.length ? ("Market read issues: " + errs.slice(0,2).join(" | ")) : "Market read loaded.";
     }
 
     async function loadMarketRead(force){
@@ -773,7 +791,7 @@
         CACHE_READ = data;
         renderMarketRead(data);
       }catch(err){
-        el("readHint").textContent = `Could not load market index. ${err?.message || ""}`;
+        el("readHint").textContent = `Could not load market read. ${err?.message || ""}`;
         el("readSummary").textContent = "—";
       }
     }
@@ -808,28 +826,35 @@
       return [];
     }
 
-    // Bullet summaries per headline
-    // Supports either:
-    //  - h.summaryBullets: ["...", "..."]
-    //  - h.summary: "..."
-    // Also avoids rendering blank bullets
+    // UPDATED: render 2-3 bullet summaries from many possible key names, and never show blanks
     function headlineHTML(h){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
       const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
 
-      const rawBullets = Array.isArray(h?.summaryBullets) ? h.summaryBullets : [];
-      const bullets = rawBullets
+      const candidates = []
+        .concat(h?.summaryBullets || [])
+        .concat(h?.bullets || [])
+        .concat(h?.keyPoints || [])
+        .concat(h?.key_points || [])
+        .concat(h?.points || [])
+        .concat(h?.highlights || [])
+        .concat(h?.takeaways || [])
+        .concat(h?.summary_points || [])
+        .concat(h?.summaryPoints || []);
+
+      const bullets = candidates
         .map(x => String(x || "").trim())
-        .filter(x => x && x !== "Loading summary…" && x !== "Loading…" && x !== "—")
+        .filter(x => x && x !== "Loading…" && x !== "Loading summary…" && x !== "—")
         .slice(0, 3);
 
-      const summary = String(h?.summary || "").trim();
+      const summary =
+        String(h?.summary || h?.aiSummary || h?.snippet || h?.description || "").trim();
 
       const summaryHTML = bullets.length
         ? `<ul class="bulletList">${bullets.map(x => `<li>${x}</li>`).join("")}</ul>`
-        : (summary ? `<div class="headlineSummary">${summary}</div>` : "");
+        : (summary ? `<div class="headlineSummary">${summary}</div>` : `<div class="headlineSummary">No summary provided by backend.</div>`);
 
       return `
         <div class="headlineItem">
@@ -1199,14 +1224,7 @@
 
               <div class="kpiSub"><strong>Headlines:</strong></div>
               <div class="headlineList">
-                ${heads.length ? heads.map(h => headlineHTML({
-                  title: h.title,
-                  link: h.link,
-                  published: h.published,
-                  sourceFeed: h.source,
-                  summary: h.summary,
-                  summaryBullets: h.summaryBullets
-                })).join("") : "<div class='subtle'>No headlines.</div>"}
+                ${heads.length ? heads.map(h => headlineHTML(h)).join("") : "<div class='subtle'>No headlines.</div>"}
               </div>
             </details>
           `;
@@ -1247,14 +1265,17 @@
       el("viewNews").style.display = tab === "News" ? "" : "none";
       el("viewCongress").style.display = tab === "Congress" ? "" : "none";
       el("viewCrypto").style.display = tab === "Crypto" ? "" : "none";
+      el("viewPerf").style.display = tab === "Performance" ? "" : "none";
 
       el("tabNewsBtn").classList.toggle("tabBtnActive", tab === "News");
       el("tabCongressBtn").classList.toggle("tabBtnActive", tab === "Congress");
       el("tabCryptoBtn").classList.toggle("tabBtnActive", tab === "Crypto");
+      el("tabPerfBtn").classList.toggle("tabBtnActive", tab === "Performance");
 
       el("navNews").classList.toggle("tabBottomActive", tab === "News");
       el("navCongress").classList.toggle("tabBottomActive", tab === "Congress");
       el("navCrypto").classList.toggle("tabBottomActive", tab === "Crypto");
+      el("navPerf").classList.toggle("tabBottomActive", tab === "Performance");
 
       el("mainWindowTools").style.display = (tab === "Congress") ? "" : "none";
 
@@ -1311,10 +1332,12 @@
     el("tabNewsBtn").addEventListener("click", () => showTab("News"));
     el("tabCongressBtn").addEventListener("click", () => showTab("Congress"));
     el("tabCryptoBtn").addEventListener("click", () => showTab("Crypto"));
+    el("tabPerfBtn").addEventListener("click", () => showTab("Performance"));
 
     el("navNews").addEventListener("click", () => showTab("News"));
     el("navCongress").addEventListener("click", () => showTab("Congress"));
     el("navCrypto").addEventListener("click", () => showTab("Crypto"));
+    el("navPerf").addEventListener("click", () => showTab("Performance"));
 
     el("refreshBtn").addEventListener("click", handleRefresh);
     window.addEventListener("hashchange", handleHash);
