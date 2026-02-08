@@ -826,17 +826,24 @@
       return [];
     }
 
+    // UPDATED: render 2-3 bullet summaries when available
     function headlineHTML(h){
       const title = String(h?.title || "").trim();
       const link = String(h?.link || "").trim();
       const pub = String(h?.published || "").trim();
       const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
+
+      const bullets = Array.isArray(h?.summaryBullets) ? h.summaryBullets.filter(Boolean) : [];
       const summary = String(h?.summary || "").trim();
+
+      const bulletsHTML = bullets.length
+        ? `<ul class="bulletList">${bullets.slice(0,3).map(x => `<li>${x}</li>`).join("")}</ul>`
+        : (summary ? `<div class="headlineSummary">${summary}</div>` : "");
 
       return `
         <div class="headlineItem">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
-          ${summary ? `<div class="headlineSummary">${summary}</div>` : ""}
+          ${bulletsHTML}
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
@@ -1206,7 +1213,8 @@
                   link: h.link,
                   published: h.published,
                   sourceFeed: h.source,
-                  summary: h.summary
+                  summary: h.summary,
+                  summaryBullets: h.summaryBullets
                 })).join("") : "<div class='subtle'>No headlines.</div>"}
               </div>
             </details>
