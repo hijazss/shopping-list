@@ -485,7 +485,9 @@
 
       <div class="sectionTitle">Your watchlist</div>
       <div class="panel">
-        <div class="kpiSub">Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL</div>
+        <div class="kpiSub">
+          Comma-separated tickers. Example: SPY,QQQ,NVDA,AAPL
+        </div>
         <div style="margin-top:10px;">
           <input class="input" id="watchInput" value="SPY,QQQ,NVDA,AAPL,MSFT,AMZN,GOOGL,META,TSLA,BRK-B" />
         </div>
@@ -798,21 +800,16 @@
       const bucket = String(h?.bucket || h?.sourceFeed || h?.source || "").trim();
 
       const bullets = Array.isArray(h?.summaryBullets) ? h.summaryBullets.filter(Boolean) : [];
-      const raw = String(h?.rawSummary || "").trim();
+      const summary = String(h?.summary || "").trim();
 
-      let bodyHTML = "";
-      if (bullets.length){
-        bodyHTML = `<ul class="bulletList">${bullets.slice(0,3).map(x => `<li>${x}</li>`).join("")}</ul>`;
-      } else if (raw){
-        bodyHTML = `<div class="headlineSummary">${raw}</div>`;
-      } else {
-        bodyHTML = `<div class="headlineSummary">No summary available.</div>`;
-      }
+      const bulletsHTML = bullets.length
+        ? `<ul class="bulletList">${bullets.slice(0,3).map(x => `<li>${x}</li>`).join("")}</ul>`
+        : (summary ? `<div class="headlineSummary">${summary}</div>` : `<div class="headlineSummary">No summary available.</div>`);
 
       return `
         <div class="headlineItem">
           <div class="headlineTitle">${link ? `<a href="${link}" target="_blank" rel="noopener">${title}</a>` : title}</div>
-          ${bodyHTML}
+          ${bulletsHTML}
           <div class="headlineMeta">
             ${pub ? `<span>Published: <strong>${pub}</strong></span>` : ""}
             ${bucket ? `<span>Source: <strong>${bucket}</strong></span>` : ""}
@@ -1177,7 +1174,14 @@
 
               <div class="kpiSub"><strong>Headlines:</strong></div>
               <div class="headlineList">
-                ${heads.length ? heads.map(headlineHTML).join("") : "<div class='subtle'>No headlines.</div>"}
+                ${heads.length ? heads.map(h => headlineHTML({
+                  title: h.title,
+                  link: h.link,
+                  published: h.published,
+                  sourceFeed: h.source,
+                  summary: h.summary,
+                  summaryBullets: h.summaryBullets
+                })).join("") : "<div class='subtle'>No headlines.</div>"}
               </div>
             </details>
           `;
